@@ -56,7 +56,21 @@ const AddChildModal = ({ isOpen, onClose, onSuccess, districts }) => {
       const response = await axios.post(`${API}/students`, formData, {
         withCredentials: true
       });
-      toast.success('Conta de aluno criada com sucesso!');
+      
+      // Show success with temporary password
+      if (response.data.temp_password) {
+        toast.success(
+          <div>
+            <p className="font-bold">Conta criada com sucesso!</p>
+            <p className="text-sm mt-1">Password temporária: <span className="font-mono bg-slate-100 px-1 rounded">{response.data.temp_password}</span></p>
+            <p className="text-xs mt-1 text-slate-500">Guarde esta password para o primeiro login do aluno.</p>
+          </div>,
+          { duration: 10000 }
+        );
+      } else {
+        toast.success('Conta de aluno criada com sucesso!');
+      }
+      
       onSuccess(response.data);
       onClose();
       setFormData({
