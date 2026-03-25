@@ -67,7 +67,10 @@ class ParentProfile(BaseModel):
     children_ids: List[str] = []
     subscription_type: SubscriptionType = SubscriptionType.FREE
     subscription_expiry: Optional[datetime] = None
+    premium_active: bool = False
     association_code: Optional[str] = None
+    association_code_registered_at: Optional[datetime] = None  # When the code was registered
+    first_subscription_date: Optional[datetime] = None  # When the first subscription was made
 
 # Student Models
 class StudentProfile(BaseModel):
@@ -76,8 +79,11 @@ class StudentProfile(BaseModel):
     nickname: str
     parent_id: str
     school_year: SchoolYear
+    school_id: Optional[str] = None
     school_name: str
     district: str
+    municipality: Optional[str] = None
+    locality: Optional[str] = None
     approved_by_parent: bool = False
     is_premium: bool = False
     coins: int = 0
@@ -104,7 +110,11 @@ class AssociationProfile(BaseModel):
     user_id: str
     association_id: str
     association_name: str
+    school_id: str
     school_name: str
+    district: str
+    municipality: str
+    locality: str
     iban: str
     responsible_names: List[str]
     association_code: str
@@ -112,11 +122,16 @@ class AssociationProfile(BaseModel):
     total_commissions: float = 0.0
     pending_payout: float = 0.0
     documents_urls: List[str] = []
+    created_at: Optional[datetime] = None
 
 class AssociationCreate(BaseModel):
     email: EmailStr
     name: str
     association_name: str
+    district: str
+    municipality: str
+    locality: str
+    school_id: str
     school_name: str
     iban: str
     responsible_names: List[str]

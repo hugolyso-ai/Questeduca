@@ -14,7 +14,11 @@ from models import *
 from auth import get_current_user, create_session, hash_password, verify_password, process_google_session
 from question_generator import QuestionGenerator, SUBJECTS_BY_YEAR
 from payment_service import PaymentService, SUBSCRIPTION_PRICES, SUBSCRIPTION_PACKAGES
-from schools_data import PORTUGUESE_DISTRICTS, PORTUGUESE_SCHOOLS, get_schools_by_district_and_cycle, get_cycle_from_year
+from schools_data import (
+    PORTUGUESE_DISTRICTS, PORTUGUESE_SCHOOLS, 
+    get_schools_by_district_and_cycle, get_cycle_from_year,
+    get_unique_municipalities, get_unique_localities, get_schools_by_filters
+)
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -670,14 +674,45 @@ async def create_association(data: AssociationCreate):
         user_id=user_id,
         association_id=association_id,
         association_name=data.association_name,
+        school_id=data.school_id,
         school_name=data.school_name,
+        district=data.district,
+        municipality=data.municipality,
+        locality=data.locality,
         iban=data.iban,
         responsible_names=data.responsible_names,
         association_code=association_code,
-        documents_urls=data.documents_urls
+        documents_urls=data.documents_urls,
+        created_at=datetime.now(timezone.utc)
     )
     
-    await db.associations.insert_one(association.model_dump())
+    assoc_dict = association.model_dump()
+    assoc_dict['created_at'] = assoc_dict['created_at'].isoformat() if assoc_dict['created_at'] else None
+    await db.associations.insert_one(assoc_dict)
+    
+    # Notify parents who have children at this school
+    # Find students at this school
+    students_at_school = await db.students.find(
+        {"school_id": data.school_id},
+        {"_id": 0, "parent_id": 1}
+    ).to_list(1000)
+    
+    parent_ids = list(set([s["parent_id"] for s in students_at_school]))
+    
+    # Create notifications for these parents
+    for parent_id in parent_ids:
+        notification = {
+            "notification_id": f"notif_{uuid.uuid4().hex[:12]}",
+            "user_id": parent_id,
+            "type": "association_registered",
+            "title": "Nova Associação de Pais!",
+            "message": f"A Associação de Pais '{data.association_name}' da escola '{data.school_name}' já está no QUESTEDUCA! Peça o código e ajude com 10% da sua próxima subscrição!",
+            "association_code": association_code,
+            "school_name": data.school_name,
+            "read": False,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.notifications.insert_one(notification)
     
     return association
 
@@ -703,6 +738,185 @@ async def get_my_commissions(
         "pending_payout": association['pending_payout'],
         "commissions": commissions
     }
+
+@api_router.get("/associations/me")
+async def get_my_association(
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Get the current association's profile"""
+    if current_user.role != UserRole.ASSOCIATION:
+        raise HTTPException(status_code=403, detail="Apenas associações")
+    
+    association = await db.associations.find_one({"user_id": current_user.user_id}, {"_id": 0})
+    
+    if not association:
+        raise HTTPException(status_code=404, detail="Associação não encontrada")
+    
+    return association
+
+# ==================== ASSOCIATION CODE ROUTES ====================
+
+@api_router.post("/parents/me/association-code")
+async def register_association_code(
+    code: str,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """
+    Register an association code for a parent.
+    Rules:
+    - If registered within 10 days of first subscription, retroactive commission applies
+    - If registered after 10 days, only future payments get commission
+    - Code stays permanently linked to the parent for all future payments
+    """
+    if current_user.role != UserRole.PARENT:
+        raise HTTPException(status_code=403, detail="Apenas pais podem registar códigos")
+    
+    # Validate the association code exists
+    association = await db.associations.find_one({"association_code": code.upper()}, {"_id": 0})
+    if not association:
+        raise HTTPException(status_code=404, detail="Código de associação não encontrado")
+    
+    # Get parent profile
+    parent = await db.parents.find_one({"user_id": current_user.user_id}, {"_id": 0})
+    if not parent:
+        raise HTTPException(status_code=404, detail="Perfil de pai não encontrado")
+    
+    now = datetime.now(timezone.utc)
+    first_sub_date = parent.get("first_subscription_date")
+    
+    # Determine if retroactive commission applies (within 10 days of first subscription)
+    retroactive = False
+    if first_sub_date:
+        if isinstance(first_sub_date, str):
+            first_sub_date = datetime.fromisoformat(first_sub_date.replace('Z', '+00:00'))
+        days_since_sub = (now - first_sub_date).days
+        retroactive = days_since_sub <= 10
+    
+    # Update parent profile with the association code
+    await db.parents.update_one(
+        {"user_id": current_user.user_id},
+        {
+            "$set": {
+                "association_code": code.upper(),
+                "association_code_registered_at": now.isoformat()
+            }
+        }
+    )
+    
+    result = {
+        "success": True,
+        "association_name": association["association_name"],
+        "association_code": code.upper(),
+        "retroactive_commission": retroactive,
+        "message": ""
+    }
+    
+    if retroactive:
+        # Apply retroactive commission to the most recent subscription
+        recent_sub = await db.subscriptions.find_one(
+            {"user_id": current_user.user_id, "status": "active"},
+            {"_id": 0},
+            sort=[("start_date", -1)]
+        )
+        
+        if recent_sub and not recent_sub.get("association_code"):
+            # Find the corresponding payment
+            payment = await db.payment_transactions.find_one(
+                {"session_id": recent_sub.get("payment_reference"), "payment_status": "paid"},
+                {"_id": 0}
+            )
+            
+            if payment:
+                commission_amount = payment["amount"] * 0.10
+                
+                # Update subscription with association code
+                await db.subscriptions.update_one(
+                    {"subscription_id": recent_sub["subscription_id"]},
+                    {"$set": {"association_code": code.upper()}}
+                )
+                
+                # Create commission record
+                commission = Commission(
+                    commission_id=f"com_{uuid.uuid4().hex[:12]}",
+                    association_id=association['association_id'],
+                    amount=commission_amount,
+                    subscription_id=recent_sub["subscription_id"],
+                    created_at=now
+                )
+                
+                com_dict = commission.model_dump()
+                com_dict['created_at'] = com_dict['created_at'].isoformat()
+                await db.commissions.insert_one(com_dict)
+                
+                # Update association totals
+                await db.associations.update_one(
+                    {"association_id": association['association_id']},
+                    {
+                        "$inc": {
+                            "total_commissions": commission_amount,
+                            "pending_payout": commission_amount
+                        }
+                    }
+                )
+                
+                result["message"] = f"Código registado com sucesso! A comissão de €{commission_amount:.2f} foi aplicada retroativamente à associação."
+        else:
+            result["message"] = "Código registado! A comissão será aplicada às próximas subscrições."
+    else:
+        result["message"] = "Código registado! A comissão de 10% será aplicada a partir da próxima subscrição."
+    
+    return result
+
+@api_router.get("/parents/me/notifications")
+async def get_parent_notifications(
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Get notifications for the current parent"""
+    if current_user.role != UserRole.PARENT:
+        raise HTTPException(status_code=403, detail="Apenas pais")
+    
+    notifications = await db.notifications.find(
+        {"user_id": current_user.user_id},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(50)
+    
+    return notifications
+
+@api_router.put("/parents/me/notifications/{notification_id}/read")
+async def mark_notification_read(
+    notification_id: str,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Mark a notification as read"""
+    if current_user.role != UserRole.PARENT:
+        raise HTTPException(status_code=403, detail="Apenas pais")
+    
+    result = await db.notifications.update_one(
+        {"notification_id": notification_id, "user_id": current_user.user_id},
+        {"$set": {"read": True}}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Notificação não encontrada")
+    
+    return {"success": True}
+
+@api_router.get("/associations/by-school/{school_id}")
+async def get_association_by_school(school_id: str):
+    """Check if there's an association registered for a specific school"""
+    association = await db.associations.find_one(
+        {"school_id": school_id, "approved": True},
+        {"_id": 0, "association_code": 0, "iban": 0}  # Don't expose sensitive data
+    )
+    
+    if association:
+        return {
+            "exists": True,
+            "association_name": association["association_name"],
+            "school_name": association["school_name"]
+        }
+    
+    return {"exists": False}
 
 # ==================== GAME ROUTES ====================
 
@@ -821,23 +1035,33 @@ async def get_friends(
 async def get_districts():
     return PORTUGUESE_DISTRICTS
 
+@api_router.get("/municipalities")
+async def get_municipalities(district: Optional[str] = None):
+    """Get municipalities (concelhos) filtered by district"""
+    return get_unique_municipalities(district)
+
+@api_router.get("/localities")
+async def get_localities(district: Optional[str] = None, municipality: Optional[str] = None):
+    """Get localities (localidades/freguesias) filtered by district and/or municipality"""
+    return get_unique_localities(district, municipality)
+
 @api_router.get("/schools")
-async def get_schools(district: Optional[str] = None, cycle: Optional[str] = None, school_year: Optional[str] = None):
+async def get_schools(
+    district: Optional[str] = None, 
+    municipality: Optional[str] = None,
+    locality: Optional[str] = None,
+    cycle: Optional[str] = None, 
+    school_year: Optional[str] = None
+):
     """
-    Get schools filtered by district and/or cycle.
+    Get schools filtered by district, municipality, locality and/or cycle.
     If school_year is provided, it will be converted to the corresponding cycle.
     """
     # Convert school year to cycle if provided
     if school_year and not cycle:
         cycle = get_cycle_from_year(school_year)
     
-    if district and cycle:
-        return get_schools_by_district_and_cycle(district, cycle)
-    elif district:
-        return [s for s in PORTUGUESE_SCHOOLS if s['district'] == district]
-    elif cycle:
-        return [s for s in PORTUGUESE_SCHOOLS if cycle in s.get('cycles', [])]
-    return PORTUGUESE_SCHOOLS
+    return get_schools_by_filters(district, municipality, locality, cycle)
 
 # ==================== BASIC ROUTES ====================
 

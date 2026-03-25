@@ -1,12 +1,82 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Users, CreditCard, Settings, LogOut, TrendingUp, Award, Plus, X, School, BookOpen, User } from 'lucide-react';
+import { Users, CreditCard, Settings, LogOut, TrendingUp, Award, Plus, X, School, BookOpen, User, Bell, Gift, Check } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
+
+// Notification Bell Component
+const NotificationBell = ({ notifications, onMarkRead }) => {
+  const [showDropdown, setShowDropdown] = useState(false);
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setShowDropdown(!showDropdown)}
+        className="relative p-2 hover:bg-slate-100 rounded-full transition"
+        data-testid="notification-bell"
+      >
+        <Bell size={22} className="text-slate-600" />
+        {unreadCount > 0 && (
+          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full font-bold">
+            {unreadCount}
+          </span>
+        )}
+      </button>
+
+      {showDropdown && (
+        <div className="absolute right-0 top-12 w-80 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden z-50">
+          <div className="p-3 border-b border-slate-100 bg-slate-50">
+            <h4 className="font-bold text-slate-800" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+              Notificações
+            </h4>
+          </div>
+          <div className="max-h-80 overflow-y-auto">
+            {notifications.length === 0 ? (
+              <p className="p-4 text-center text-slate-500 text-sm">
+                Sem notificações
+              </p>
+            ) : (
+              notifications.map(notif => (
+                <div
+                  key={notif.notification_id}
+                  className={`p-4 border-b border-slate-100 hover:bg-slate-50 transition ${!notif.read ? 'bg-blue-50' : ''}`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className={`p-2 rounded-full ${notif.type === 'association_registered' ? 'bg-green-100' : 'bg-blue-100'}`}>
+                      <Gift size={16} className={notif.type === 'association_registered' ? 'text-green-600' : 'text-blue-600'} />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold text-slate-800 text-sm">{notif.title}</p>
+                      <p className="text-slate-600 text-xs mt-1">{notif.message}</p>
+                      {notif.association_code && (
+                        <p className="text-xs mt-2 font-mono bg-slate-100 px-2 py-1 rounded inline-block">
+                          Código: {notif.association_code}
+                        </p>
+                      )}
+                    </div>
+                    {!notif.read && (
+                      <button
+                        onClick={() => onMarkRead(notif.notification_id)}
+                        className="text-blue-500 hover:text-blue-600"
+                      >
+                        <Check size={16} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 // Modal component for adding children
 const AddChildModal = ({ isOpen, onClose, onSuccess, districts }) => {
@@ -263,19 +333,23 @@ const ParentDashboard = () => {
   const [showAddChildModal, setShowAddChildModal] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [associationCode, setAssociationCode] = useState('');
-  const [checkoutLoading, setCheckoutLoading] = useState(null); // Track which plan is loading
+  const [checkoutLoading, setCheckoutLoading] = useState(null);
+  const [notifications, setNotifications] = useState([]);
+  const [codeRegistering, setCodeRegistering] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [pricesRes, districtsRes, childrenRes] = await Promise.all([
+        const [pricesRes, districtsRes, childrenRes, notificationsRes] = await Promise.all([
           axios.get(`${API}/subscriptions/prices`),
           axios.get(`${API}/districts`),
-          axios.get(`${API}/parents/me/children`, { withCredentials: true })
+          axios.get(`${API}/parents/me/children`, { withCredentials: true }),
+          axios.get(`${API}/parents/me/notifications`, { withCredentials: true }).catch(() => ({ data: [] }))
         ]);
         setSubscriptionPrices(pricesRes.data);
         setDistricts(districtsRes.data);
         setChildren(childrenRes.data || []);
+        setNotifications(notificationsRes.data || []);
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -292,6 +366,47 @@ const ParentDashboard = () => {
 
   const handleChildCreated = (newChild) => {
     setChildren(prev => [...prev, newChild]);
+  };
+
+  const handleMarkNotificationRead = async (notificationId) => {
+    try {
+      await axios.put(`${API}/parents/me/notifications/${notificationId}/read`, {}, { withCredentials: true });
+      setNotifications(prev => 
+        prev.map(n => n.notification_id === notificationId ? { ...n, read: true } : n)
+      );
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
+  };
+
+  const handleRegisterAssociationCode = async () => {
+    if (!associationCode.trim()) {
+      toast.error('Por favor insira um código de associação');
+      return;
+    }
+
+    setCodeRegistering(true);
+    try {
+      const response = await axios.post(
+        `${API}/parents/me/association-code?code=${encodeURIComponent(associationCode)}`,
+        {},
+        { withCredentials: true }
+      );
+      
+      toast.success(
+        <div>
+          <p className="font-bold">{response.data.association_name}</p>
+          <p className="text-sm mt-1">{response.data.message}</p>
+        </div>,
+        { duration: 8000 }
+      );
+      
+    } catch (error) {
+      const message = error.response?.data?.detail || 'Erro ao registar código';
+      toast.error(message);
+    } finally {
+      setCodeRegistering(false);
+    }
   };
 
   // Handle Stripe checkout
@@ -340,6 +455,10 @@ const ParentDashboard = () => {
               Dashboard Pais
             </h1>
             <div className="flex items-center gap-4">
+              <NotificationBell 
+                notifications={notifications} 
+                onMarkRead={handleMarkNotificationRead} 
+              />
               <span className="text-slate-600" style={{ fontFamily: 'Nunito, sans-serif' }}>
                 {user?.name}
               </span>
@@ -676,8 +795,8 @@ const ParentDashboard = () => {
                 Tem um código de Associação de Pais?
               </h4>
               <p className="text-white/90 mb-4" style={{ fontFamily: 'Nunito, sans-serif' }}>
-                Se a associação de pais da escola do seu filho é parceira QUESTEDUCA, 
-                insira o código na compra e 10% vai para a associação!
+                Registe o código e 10% vai para a associação! Se registar até 10 dias após a subscrição, 
+                a comissão aplica-se retroativamente. Depois disso, aplica-se às próximas subscrições.
               </p>
               <div className="flex gap-2">
                 <input
@@ -689,19 +808,21 @@ const ParentDashboard = () => {
                   data-testid="association-code-input"
                 />
                 <button 
-                  onClick={() => {
-                    if (associationCode) {
-                      toast.success(`Código "${associationCode}" será aplicado na próxima subscrição!`);
-                    }
-                  }}
-                  className="px-6 py-3 bg-white/20 rounded-xl font-semibold hover:bg-white/30 transition"
+                  onClick={handleRegisterAssociationCode}
+                  disabled={codeRegistering || !associationCode}
+                  className="px-6 py-3 bg-white/20 rounded-xl font-semibold hover:bg-white/30 transition disabled:opacity-50 flex items-center gap-2"
+                  data-testid="register-code-btn"
                 >
-                  Aplicar
+                  {codeRegistering ? (
+                    <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                  ) : (
+                    'Registar Código'
+                  )}
                 </button>
               </div>
               {associationCode && (
                 <p className="mt-2 text-sm text-white/80">
-                  ✓ Código ativo: {associationCode}
+                  O código será permanentemente associado à sua conta para todas as subscrições futuras.
                 </p>
               )}
             </div>
