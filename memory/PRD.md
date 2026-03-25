@@ -48,9 +48,23 @@ Criar jogo educativo RTS (QUESTEDUCA) para o 1º, 2º e 3º ciclos do ensino bá
 - [x] Suporte para códigos de associação (comissões 10%)
 - [x] Polling de status de pagamento no frontend
 
+### ✅ Fase 5: Sistema de Associações de Pais (Concluído - 25/03/2025)
+- [x] **Filtros hierárquicos**: Distrito → Concelho → Localidade → Escola
+- [x] APIs: `/municipalities`, `/localities`, `/schools` com filtros
+- [x] Registo de associações com seleção de escola via filtros
+- [x] Geração automática de código único (ASSOC-XXXXXX)
+- [x] **Regra dos 10 dias**: 
+  - Código registado até 10 dias após subscrição = comissão retroativa
+  - Código registado após 10 dias = apenas pagamentos futuros
+  - Código permanentemente vinculado ao pai para todas as subscrições
+- [x] Sistema de notificações:
+  - Notificação automática quando associação da escola do filho se regista
+  - Sino de notificações no ParentDashboard
+  - Marcação de notificações como lidas
+
 ### ✅ UI/UX (Parcialmente Concluído)
 - [x] Landing page com estética "Vibrant Play"
-- [x] Login e Registo
+- [x] Login e Registo (com formulário de associação)
 - [x] ParentDashboard com abas (Visão Geral, Meus Filhos, Subscrição)
 - [x] Componentes Shadcn/UI
 
@@ -72,14 +86,15 @@ Criar jogo educativo RTS (QUESTEDUCA) para o 1º, 2º e 3º ciclos do ensino bá
 
 ### P1 - Importante
 3. **Dashboard Associações de Pais**
-   - Tracking de comissões (10%)
+   - Visualização do código gerado
+   - Tracking de comissões recebidas
    - Listagem de subscrições referidas
-   - Solicitação de pagamentos
+   - Solicitação de pagamentos (payout)
 
 4. **Sistema de Giftcards**
-   - Geração de códigos
+   - Geração de códigos de giftcard
    - Resgate de giftcards
-   - Tracking para comissões
+   - Tracking para comissões de associações
 
 5. **Mapa Interativo de Portugal**
    - Pesquisa de amigos por escola/distrito
@@ -115,22 +130,41 @@ Criar jogo educativo RTS (QUESTEDUCA) para o 1º, 2º e 3º ciclos do ensino bá
 │   ├── models.py          # Pydantic models
 │   ├── auth.py            # Authentication
 │   ├── payment_service.py # Stripe integration
-│   ├── schools_data.py    # 243 Portuguese schools
+│   ├── schools_data.py    # Portuguese schools with hierarchy
 │   └── question_generator.py
 ├── frontend/
 │   └── src/
 │       ├── pages/
 │       │   ├── LandingPage.js
 │       │   ├── LoginPage.js
-│       │   ├── RegisterPage.js
+│       │   ├── RegisterPage.js (com formulário de associação)
 │       │   ├── StudentDashboard.js
-│       │   ├── ParentDashboard.js
+│       │   ├── ParentDashboard.js (com notificações)
 │       │   ├── AssociationDashboard.js
 │       │   ├── PaymentSuccess.js
 │       │   └── PaymentCancel.js
 │       └── context/AuthContext.js
 └── memory/PRD.md
 ```
+
+## APIs Principais
+
+### Escolas e Localização
+- `GET /api/districts` - Lista 20 distritos
+- `GET /api/municipalities?district=X` - Lista concelhos
+- `GET /api/localities?district=X&municipality=Y` - Lista localidades
+- `GET /api/schools?district=X&municipality=Y&locality=Z&cycle=1` - Escolas filtradas
+
+### Associações
+- `POST /api/associations` - Regista nova associação
+- `GET /api/associations/me` - Perfil da associação
+- `GET /api/associations/me/commissions` - Comissões da associação
+- `GET /api/associations/by-school/{school_id}` - Verifica se escola tem associação
+
+### Códigos e Notificações
+- `POST /api/parents/me/association-code?code=X` - Regista código
+- `GET /api/parents/me/notifications` - Lista notificações
+- `PUT /api/parents/me/notifications/{id}/read` - Marca como lida
 
 ## Credenciais de Teste
 - **Stripe**: sk_test_emergent (modo teste)
