@@ -90,10 +90,14 @@ class StudentCreate(BaseModel):
     email: EmailStr
     name: str
     nickname: str
-    parent_id: str
     school_year: SchoolYear
     school_name: str
     district: str
+
+# Response model for student creation (includes temp_password for parent)
+class StudentCreateResponse(StudentProfile):
+    temp_password: Optional[str] = None
+
 
 # Association Models
 class AssociationProfile(BaseModel):
@@ -296,3 +300,30 @@ class RegisterRequest(BaseModel):
 class TokenResponse(BaseModel):
     session_token: str
     user: User
+
+
+# Payment Models
+class CheckoutRequest(BaseModel):
+    package_id: str  # e.g., 'individual_monthly', 'family_annual'
+    origin_url: str  # Frontend origin for building success/cancel URLs
+    association_code: Optional[str] = None
+
+class CheckoutResponse(BaseModel):
+    url: str
+    session_id: str
+    amount: float
+    package_id: str
+
+class PaymentTransaction(BaseModel):
+    transaction_id: str
+    session_id: str
+    user_id: str
+    user_email: str
+    package_id: str
+    amount: float
+    currency: str = "eur"
+    status: str = "pending"  # pending, completed, failed, expired
+    payment_status: str = "unpaid"  # unpaid, paid
+    association_code: Optional[str] = None
+    created_at: datetime
+    updated_at: Optional[datetime] = None

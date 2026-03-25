@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 Script para inicializar dados básicos do QUESTEDUCA no MongoDB
+Dados reais de escolas portuguesas extraídos dos ficheiros Excel oficiais
 """
 import sys
 sys.path.append('/app/backend')
@@ -9,7 +10,7 @@ import asyncio
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 from dotenv import load_dotenv
-from schools_data import PORTUGUESE_DISTRICTS, SAMPLE_SCHOOLS
+from schools_data import PORTUGUESE_DISTRICTS, PORTUGUESE_SCHOOLS
 
 load_dotenv('/app/backend/.env')
 
@@ -29,12 +30,12 @@ async def init_database():
         await db.districts.insert_many(PORTUGUESE_DISTRICTS)
         print(f"✅ {len(PORTUGUESE_DISTRICTS)} distritos inseridos")
     
-    # Initialize Schools
-    print("Inicializando escolas...")
+    # Initialize Schools with real Portuguese school data
+    print("Inicializando escolas (dados reais)...")
     await db.schools.delete_many({})
-    if SAMPLE_SCHOOLS:
-        await db.schools.insert_many(SAMPLE_SCHOOLS)
-        print(f"✅ {len(SAMPLE_SCHOOLS)} escolas inseridas")
+    if PORTUGUESE_SCHOOLS:
+        await db.schools.insert_many(PORTUGUESE_SCHOOLS)
+        print(f"✅ {len(PORTUGUESE_SCHOOLS)} escolas reais inseridas")
     
     # Create indexes
     print("Criando índices...")

@@ -13,6 +13,8 @@ import RegisterPage from "./pages/RegisterPage";
 import StudentDashboard from "./pages/StudentDashboard";
 import ParentDashboard from "./pages/ParentDashboard";
 import AssociationDashboard from "./pages/AssociationDashboard";
+import PaymentSuccess from "./pages/PaymentSuccess";
+import PaymentCancel from "./pages/PaymentCancel";
 
 function AppRouter() {
   const location = useLocation();
@@ -30,6 +32,24 @@ function AppRouter() {
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
 
+      {/* Payment Routes */}
+      <Route
+        path="/payment/success"
+        element={
+          <ProtectedRoute allowedRoles={['parent']}>
+            <PaymentSuccess />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/payment/cancel"
+        element={
+          <ProtectedRoute allowedRoles={['parent']}>
+            <PaymentCancel />
+          </ProtectedRoute>
+        }
+      />
+
       {/* Student Routes */}
       <Route
         path="/student/dashboard"
@@ -43,6 +63,14 @@ function AppRouter() {
       {/* Parent Routes */}
       <Route
         path="/parent/dashboard"
+        element={
+          <ProtectedRoute allowedRoles={['parent']}>
+            <ParentDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/parent"
         element={
           <ProtectedRoute allowedRoles={['parent']}>
             <ParentDashboard />
