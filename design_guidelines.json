@@ -1,0 +1,103 @@
+{
+  "theme": "light",
+  "archetype": "6 (Vibrant Play)",
+  "design_philosophy": "A cheerful, accessible, and highly gamified experience tailored for children (1st to 9th grade), their parents, and associations. Vibrant colors, rounded organic shapes, clear typography, and an isometric RTS game feel. Every interaction should feel tactile and rewarding. Emphasis on accessibility (dyslexia, color blindness) and clear parental controls.",
+  "color_palette": {
+    "primary": "#4ade80",
+    "secondary": "#60a5fa",
+    "accent": "#f472b6",
+    "warning": "#fbbf24",
+    "danger": "#ef4444",
+    "background": "#f8fafc",
+    "surface": "#ffffff",
+    "text": {
+      "main": "#0f172a",
+      "muted": "#64748b",
+      "inverse": "#ffffff"
+    }
+  },
+  "typography": {
+    "heading_font": "Fredoka",
+    "body_font": "Nunito",
+    "accessible_font": "OpenDyslexic",
+    "scale": {
+      "h1": "text-4xl sm:text-5xl lg:text-6xl tracking-tight font-bold",
+      "h2": "text-2xl sm:text-3xl lg:text-4xl tracking-tight font-bold",
+      "h3": "text-xl sm:text-2xl font-bold",
+      "body": "text-base leading-relaxed",
+      "small": "text-sm",
+      "labels": "text-xs tracking-widest uppercase font-bold"
+    }
+  },
+  "layout_and_spacing": {
+    "philosophy": "Generous spacing. Bento grid for dashboards. Rounded containers.",
+    "spacing_scale": "p-4, p-6, p-8 for cards; gap-6, gap-8 for grids.",
+    "border_radius": "rounded-2xl or rounded-3xl for a soft, friendly feel. Button rounded-full.",
+    "shadows": "shadow-lg shadow-blue-500/10 for soft elevation. Inner shadows for pressed states."
+  },
+  "components": {
+    "cards": {
+      "style": "Neumorphism but tactile & crisp. bg-white, soft shadow, rounded-3xl, 2px border-b-4 border-slate-200 to look like a physical block."
+    },
+    "buttons": {
+      "primary": "bg-primary text-white font-bold rounded-full px-8 py-3 transform transition hover:-translate-y-1 hover:shadow-xl active:translate-y-0 active:shadow-md border-b-4 border-green-600",
+      "secondary": "bg-white text-slate-800 font-bold rounded-full px-8 py-3 border-2 border-slate-200 hover:border-secondary hover:text-secondary transition"
+    },
+    "navigation": {
+      "style": "Sticky top nav with glassmorphism (backdrop-blur-xl bg-white/80). Vibrant logo area. Prominent user profile/avatar. Rounded pill shape for the nav container on desktop."
+    },
+    "forms": {
+      "inputs": "bg-slate-50 border-2 border-slate-200 rounded-xl px-4 py-3 focus:border-secondary focus:ring-4 focus:ring-secondary/20 transition-all font-body text-base"
+    }
+  },
+  "motion_and_interaction": {
+    "hover": "Playful scaling (scale-105) and subtle rotation on game elements.",
+    "page_transitions": "Soft fade and slide up.",
+    "micro_interactions": "Bouncy physics for coin collection, level ups, and button presses."
+  },
+  "icons": "lucide-react with strokeWidth={2.5} for a chunkier, friendlier look.",
+  "media": {
+    "image_urls": {
+      "hero_isometric_village": {
+        "url": "https://static.prod-images.emergentagent.com/jobs/1c04fa23-329a-417f-8b99-b41bfcdab50b/images/e7147ab3cacc2a4855073e805a2e1474d108e5955baccdf1629637b660e95571.png",
+        "description": "Vibrant cartoonish isometric medieval village, bright green grass, blue river, red and purple roofs on small houses, clean outlines, mobile game art style"
+      },
+      "map_portugal_vibrant": {
+        "url": "https://static.prod-images.emergentagent.com/jobs/1c04fa23-329a-417f-8b99-b41bfcdab50b/images/173fdf656a70d03d29d86f5513476fb101e3581d358de6b828e29d9105230ad9.png",
+        "description": "A colorful, highly stylized and playful map of Portugal with islands, distinct vibrant colors for each district"
+      },
+      "dashboard_kids_bg": {
+        "url": "https://static.prod-images.emergentagent.com/jobs/1c04fa23-329a-417f-8b99-b41bfcdab50b/images/a511f6a84aa96847cf9839b7f9051d3f17b66366e11e7dd56f51afaea128730d.png",
+        "description": "A playful kids educational game dashboard background, soft pastel blue and green hills, floating gold coins and diamonds"
+      },
+      "student_studying_1": {
+        "url": "https://images.unsplash.com/photo-1769201153045-98827f62996b?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA3MDR8MHwxfHNlYXJjaHw0fHxoYXBweSUyMHN0dWRlbnQlMjBjaGlsZCUyMHN0dWR5aW5nfGVufDB8fHx8MTc3NDQ3MzY4OHww&ixlib=rb-4.1.0&q=85",
+        "description": "Children making heart shapes, good for parents or associative landing pages"
+      },
+      "student_studying_2": {
+        "url": "https://images.unsplash.com/photo-1758612898788-38a249839c1d?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA3MDR8MHwxfHNlYXJjaHwyfHxoYXBweSUyMHN0dWRlbnQlMjBjaGlsZCUyMHN0dWR5aW5nfGVufDB8fHx8MTc3NDQ3MzY4OHww&ixlib=rb-4.1.0&q=85",
+        "description": "Smiling boy wearing glasses studying at a desk"
+      },
+      "aspecto_reference": {
+        "url": "https://customer-assets.emergentagent.com/job_1c04fa23-329a-417f-8b99-b41bfcdab50b/artifacts/h17mj3c7_aspecto.jpg",
+        "description": "Original user reference for the game aspect"
+      },
+      "mapa_reference": {
+        "url": "https://customer-assets.emergentagent.com/job_1c04fa23-329a-417f-8b99-b41bfcdab50b/artifacts/g16mstak_mapa.jpg",
+        "description": "Original user reference for the map of Portugal"
+      }
+    }
+  },
+  "specific_screens": {
+    "landing_page": "Hero section with 'hero_isometric_village' image as a dynamic background. Large bubbly CTA buttons. Features bento grid with playful micro-animations.",
+    "student_dashboard": "Background 'dashboard_kids_bg'. Gamified layout. Top bar shows Coins, Diamonds, Level. Main area is the RTS village map ('aspecto_reference' style). Bottom bar for Mini-games, Quizzes (by subject), Friends Map ('map_portugal_vibrant' style).",
+    "parent_dashboard": "Cleaner, more structured but still friendly. Analytics on child's progress. Subscription management (Premium cards). Settings for accessibility (dyslexia font toggle, color blind mode).",
+    "association_dashboard": "Professional yet approachable. Real-time commission tracking charts. Export features."
+  },
+  "accessibility": {
+    "dyslexia_support": "Toggle to switch body font to OpenDyslexic or increase line-height/letter-spacing.",
+    "color_blindness": "High contrast mode toggle. Ensure all colored indicators (like green for correct, red for wrong) also have distinct icons (checkmarks, crosses) and patterns.",
+    "visual_impairment": "Support for text scaling up to 200% without breaking layout. Aria labels on all interactive elements."
+  },
+  "testing": "All interactive elements MUST include a data-testid attribute in kebab-case."
+}
