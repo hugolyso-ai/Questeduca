@@ -106,6 +106,21 @@ Criar jogo educativo RTS (QUESTEDUCA) para o 1º, 2º e 3º ciclos do ensino bá
    - Modo daltónico
    - Alto contraste
 
+### ✅ Fase 9: Sistema de Rankings e Amigos (Concluído - 27/03/2025)
+- [x] **Rankings**:
+  - Ranking por escola (filtrado por school_id)
+  - Ranking por distrito
+  - Ranking nacional (top 100)
+  - Posição do utilizador destacada
+  - Medalhas visuais para top 3
+  - Ordenado por XP
+- [x] **Amigos**:
+  - Pesquisa por nome ou escola
+  - Sistema de pedidos de amizade
+  - Notificação aos pais para aprovação
+  - Lista de amigos aprovados
+  - Visualização de nível e cidade de cada amigo
+
 ### P2 - Futuro
 4. **Mini-jogos Pais vs Filhos**
    - Batalhas cooperativas
@@ -114,10 +129,6 @@ Criar jogo educativo RTS (QUESTEDUCA) para o 1º, 2º e 3º ciclos do ensino bá
 5. **Webhooks Stripe**
    - Processamento automático de eventos
    - Renovações automáticas
-
-6. **Sistema de Rankings**
-   - Ranking por escola
-   - Ranking por distrito
 
 ---
 
@@ -154,6 +165,17 @@ Criar jogo educativo RTS (QUESTEDUCA) para o 1º, 2º e 3º ciclos do ensino bá
 - `GET /api/subjects/{year}` - Disciplinas por ano
 - `GET /api/quiz/generate` - Gerar quiz com Claude
 - `POST /api/quiz/submit` - Submeter resposta
+
+### Rankings
+- `GET /api/rankings/school/{school_id}` - Ranking da escola
+- `GET /api/rankings/district/{district}` - Ranking do distrito
+- `GET /api/rankings/national` - Ranking nacional
+
+### Amigos
+- `GET /api/friends/my` - Lista de amigos
+- `GET /api/friends/search` - Pesquisa de potenciais amigos
+- `POST /api/friends/request` - Enviar pedido de amizade
+- `PUT /api/friends/request/{id}/approve` - Aprovar pedido (pais)
 
 ### Associações
 - `POST /api/associations` - Registar associação
