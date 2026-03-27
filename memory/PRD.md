@@ -90,21 +90,39 @@ Criar jogo educativo RTS (QUESTEDUCA) para o 1º, 2º e 3º ciclos do ensino bá
 
 ## Backlog (Por Ordem de Prioridade)
 
-### P1 - Importante
-1. **Sistema de Giftcards**
-   - Geração de códigos de giftcard
-   - Resgate de giftcards
-   - Tracking para comissões
+### ✅ Fase 10: Tarefas P1 Concluídas (27/03/2025)
 
-2. **Mapa Interativo de Portugal**
-   - Pesquisa de amigos por escola/distrito
-   - Sistema de pedidos de amizade
-   - Aprovação parental
+#### ✅ Sistema de Giftcards
+- [x] Tab de Giftcards no ParentDashboard
+- [x] Botões de compra (€5, €10, €20) via Stripe
+- [x] Campo de resgate de códigos GIFT-XXXXXXXX
+- [x] Exibição de saldo da conta (credit_balance)
+- [x] Lista de giftcards comprados
+- [x] API `/api/parents/me` com perfil do pai
+- [x] API `/api/giftcards/purchase` integrada com Stripe
+- [x] API `/api/giftcards/redeem` para resgate
 
-3. **Opções de Acessibilidade**
-   - Fonte para dislexia (OpenDyslexic)
-   - Modo daltónico
-   - Alto contraste
+#### ✅ Mapa Interativo de Portugal
+- [x] Componente SVG com 20 distritos de Portugal continental
+- [x] Açores e Madeira incluídos
+- [x] Cores únicas por distrito
+- [x] Hover e seleção de distritos
+- [x] Integração com `/api/friends/search?district=XXX`
+- [x] Toggle entre vista de Mapa e Lista
+- [x] Pesquisa combinada por nome + distrito
+
+#### ✅ Opções de Acessibilidade
+- [x] Contexto React para gerir configurações globais
+- [x] Painel de acessibilidade acessível via ícone de olho
+- [x] **Fonte para Dislexia**: OpenDyslexic font
+- [x] **Alto Contraste**: Modo preto e branco
+- [x] **Modo Daltónico**: 
+  - Protanopia (dificuldade com vermelho)
+  - Deuteranopia (dificuldade com verde)
+  - Tritanopia (dificuldade com azul)
+- [x] **Tamanho do Texto**: Pequeno, Médio, Grande, Extra Grande
+- [x] Persistência em localStorage
+- [x] Botão de repor definições
 
 ### ✅ Fase 9: Sistema de Rankings e Amigos (Concluído - 27/03/2025)
 - [x] **Rankings**:
