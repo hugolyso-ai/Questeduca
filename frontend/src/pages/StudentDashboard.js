@@ -6,13 +6,14 @@ import {
   LogOut, Coins, Diamond, Star, Building2, BookOpen, 
   Trophy, Clock, ChevronUp, Play, Check, X, Sparkles,
   Home, School, Library, Store, TreePine, Award, Medal,
-  Crown, Users, MapPin, Search, UserPlus, Settings, Eye
+  Crown, Users, MapPin, Search, UserPlus, Settings, Eye, Calendar
 } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { PortugalFriendMap } from '../components/PortugalMap';
 import AccessibilityPanel from '../components/AccessibilityPanel';
 import { AchievementsList } from '../components/AchievementsSystem';
+import WeeklyChallenges from '../components/WeeklyChallenges';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -635,6 +636,7 @@ const StudentDashboard = () => {
             {[
               { id: 'city', label: 'Minha Cidade', icon: Building2 },
               { id: 'quiz', label: 'Aprender', icon: BookOpen },
+              { id: 'challenges', label: 'Desafios', icon: Calendar },
               { id: 'rankings', label: 'Rankings', icon: Trophy },
               { id: 'friends', label: 'Amigos', icon: Users },
               { id: 'achievements', label: 'Conquistas', icon: Award },
@@ -1065,6 +1067,11 @@ const StudentDashboard = () => {
               )}
             </div>
           </div>
+        )}
+
+        {/* Challenges Tab */}
+        {activeTab === 'challenges' && (
+          <WeeklyChallenges />
         )}
 
         {/* Achievements Tab */}

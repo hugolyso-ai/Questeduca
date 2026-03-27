@@ -2201,6 +2201,163 @@ async def root():
 async def health():
     return {"status": "ok"}
 
+# ==================== WEEKLY CHALLENGES ROUTES ====================
+
+@api_router.get("/challenges/weekly")
+async def get_weekly_challenges(
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Get weekly challenges for current user"""
+    if current_user.role != UserRole.STUDENT:
+        raise HTTPException(status_code=403, detail="Apenas alunos")
+    
+    # Get current week identifier
+    now = datetime.now(timezone.utc)
+    week_id = f"{now.year}-W{now.isocalendar()[1]}"
+    
+    # Check if user has challenges for this week
+    user_challenges = await db.weekly_challenges.find_one(
+        {"user_id": current_user.user_id, "week_id": week_id},
+        {"_id": 0}
+    )
+    
+    if not user_challenges:
+        # Generate new challenges for this week
+        challenges = [
+            {
+                "challenge_id": f"weekly_quizzes_{week_id}",
+                "type": "quizzes_completed",
+                "title": "Estudante da Semana",
+                "description": "Completa 10 quizzes esta semana",
+                "target": 10,
+                "current": 0,
+                "reward_coins": 100,
+                "reward_diamonds": 5,
+                "reward_xp": 50,
+                "claimed": False
+            },
+            {
+                "challenge_id": f"weekly_perfect_{week_id}",
+                "type": "perfect_quizzes",
+                "title": "Perfecionista",
+                "description": "Acerta todas as perguntas em 3 quizzes",
+                "target": 3,
+                "current": 0,
+                "reward_coins": 150,
+                "reward_diamonds": 10,
+                "reward_xp": 100,
+                "claimed": False
+            },
+            {
+                "challenge_id": f"weekly_xp_{week_id}",
+                "type": "xp_earned",
+                "title": "Caça XP",
+                "description": "Ganha 500 XP esta semana",
+                "target": 500,
+                "current": 0,
+                "reward_coins": 200,
+                "reward_diamonds": 0,
+                "reward_xp": 0,
+                "claimed": False
+            },
+            {
+                "challenge_id": f"weekly_streak_{week_id}",
+                "type": "login_streak",
+                "title": "Dedicação",
+                "description": "Joga 5 dias seguidos",
+                "target": 5,
+                "current": 0,
+                "reward_coins": 75,
+                "reward_diamonds": 15,
+                "reward_xp": 75,
+                "claimed": False
+            }
+        ]
+        
+        user_challenges = {
+            "user_id": current_user.user_id,
+            "week_id": week_id,
+            "challenges": challenges,
+            "created_at": now.isoformat()
+        }
+        
+        await db.weekly_challenges.insert_one(user_challenges)
+    
+    # Update challenge progress from real data
+    game_state = await db.game_states.find_one({"user_id": current_user.user_id}, {"_id": 0})
+    
+    for challenge in user_challenges["challenges"]:
+        if challenge["type"] == "quizzes_completed" and game_state:
+            challenge["current"] = game_state.get("quizzes_today", 0)
+        elif challenge["type"] == "xp_earned" and game_state:
+            challenge["current"] = game_state.get("xp", 0)
+    
+    return user_challenges["challenges"]
+
+@api_router.post("/challenges/claim/{challenge_id}")
+async def claim_challenge_reward(
+    challenge_id: str,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Claim reward for completed challenge"""
+    if current_user.role != UserRole.STUDENT:
+        raise HTTPException(status_code=403, detail="Apenas alunos")
+    
+    now = datetime.now(timezone.utc)
+    week_id = f"{now.year}-W{now.isocalendar()[1]}"
+    
+    # Find user's challenges
+    user_challenges = await db.weekly_challenges.find_one(
+        {"user_id": current_user.user_id, "week_id": week_id}
+    )
+    
+    if not user_challenges:
+        raise HTTPException(status_code=404, detail="Desafios não encontrados")
+    
+    # Find the specific challenge
+    challenge = None
+    for c in user_challenges["challenges"]:
+        if c["challenge_id"] == challenge_id:
+            challenge = c
+            break
+    
+    if not challenge:
+        raise HTTPException(status_code=404, detail="Desafio não encontrado")
+    
+    if challenge["claimed"]:
+        raise HTTPException(status_code=400, detail="Recompensa já resgatada")
+    
+    if challenge["current"] < challenge["target"]:
+        raise HTTPException(status_code=400, detail="Desafio não concluído")
+    
+    # Mark as claimed
+    await db.weekly_challenges.update_one(
+        {"user_id": current_user.user_id, "week_id": week_id, "challenges.challenge_id": challenge_id},
+        {"$set": {"challenges.$.claimed": True}}
+    )
+    
+    # Give rewards
+    await db.game_states.update_one(
+        {"user_id": current_user.user_id},
+        {
+            "$inc": {
+                "coins": challenge["reward_coins"],
+                "diamonds": challenge["reward_diamonds"],
+                "xp": challenge["reward_xp"]
+            }
+        },
+        upsert=True
+    )
+    
+    return {
+        "success": True,
+        "rewards": {
+            "coins": challenge["reward_coins"],
+            "diamonds": challenge["reward_diamonds"],
+            "xp": challenge["reward_xp"]
+        }
+    }
+
 app.include_router(api_router)
 
 app.add_middleware(

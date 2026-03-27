@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Users, Trophy, Gamepad2, Zap, Brain, Clock, Star, X, Check, ArrowRight, Crown } from 'lucide-react';
+import { Users, Trophy, Gamepad2, Zap, Brain, Clock, Star, X, Check, ArrowRight, Crown, Calculator } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
+import MemoryMatchGame from './MemoryMatchGame';
+import SpeedMathGame from './SpeedMathGame';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -24,18 +26,18 @@ const MINIGAMES = {
     description: 'Encontra os pares mais rápido!',
     icon: Zap,
     color: 'from-amber-500 to-orange-600',
-    players: 2,
-    duration: '3 min',
+    players: 1,
+    duration: '2 min',
     rewards: { winner: 40, loser: 15 }
   },
   speed_math: {
     id: 'speed_math',
     name: 'Matemática Rápida',
     description: 'Resolve operações contra o tempo!',
-    icon: Clock,
+    icon: Calculator,
     color: 'from-green-500 to-teal-600',
-    players: 2,
-    duration: '2 min',
+    players: 1,
+    duration: '1 min',
     rewards: { winner: 35, loser: 10 }
   }
 };
@@ -371,29 +373,17 @@ const MiniGamesHub = ({ childId, childName, onClose }) => {
               )}
               
               {selectedGame.id === 'memory_match' && (
-                <div className="text-center py-12">
-                  <Zap className="mx-auto text-amber-500 mb-4" size={48} />
-                  <p className="text-slate-600">Jogo da Memória - Em breve!</p>
-                  <button
-                    onClick={() => handleGameEnd(15)}
-                    className="mt-4 px-6 py-2 bg-slate-200 rounded-xl"
-                  >
-                    Voltar
-                  </button>
-                </div>
+                <MemoryMatchGame
+                  onGameEnd={handleGameEnd}
+                  difficulty="medium"
+                />
               )}
               
               {selectedGame.id === 'speed_math' && (
-                <div className="text-center py-12">
-                  <Clock className="mx-auto text-green-500 mb-4" size={48} />
-                  <p className="text-slate-600">Matemática Rápida - Em breve!</p>
-                  <button
-                    onClick={() => handleGameEnd(10)}
-                    className="mt-4 px-6 py-2 bg-slate-200 rounded-xl"
-                  >
-                    Voltar
-                  </button>
-                </div>
+                <SpeedMathGame
+                  onGameEnd={handleGameEnd}
+                  difficulty="medium"
+                />
               )}
             </div>
           ) : (
