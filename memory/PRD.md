@@ -139,14 +139,53 @@ Criar jogo educativo RTS (QUESTEDUCA) para o 1º, 2º e 3º ciclos do ensino bá
   - Lista de amigos aprovados
   - Visualização de nível e cidade de cada amigo
 
-### P2 - Futuro
-4. **Mini-jogos Pais vs Filhos**
-   - Batalhas cooperativas
-   - Desafios de conhecimento
+### ✅ Fase 11: Tarefas P2 + Sistema de Conquistas Expandido (Concluído - 27/03/2025)
 
-5. **Webhooks Stripe**
-   - Processamento automático de eventos
-   - Renovações automáticas
+#### ✅ Mini-jogos Pais vs Filhos
+- [x] **MiniGamesHub** no ParentDashboard (botão "Jogar" em cada filho)
+- [x] **Quiz Duel** - Jogo completo com:
+  - Timer de 10 segundos por pergunta
+  - Placar em tempo real (jogador vs oponente simulado)
+  - 5 perguntas por partida
+  - Recompensas: Vitória +50, Empate +25, Derrota +10 moedas
+- [x] **Memory Match** - Placeholder "Em breve!"
+- [x] **Speed Math** - Placeholder "Em breve!"
+- [x] APIs:
+  - `GET /api/minigames/quiz-questions` - Perguntas para o quiz
+  - `POST /api/minigames/result` - Guardar resultado e atribuir moedas
+  - `GET /api/minigames/history` - Histórico de jogos
+
+#### ✅ Webhooks Stripe Expandidos
+- [x] `checkout.session.completed` - Cria subscrição e ativa premium
+- [x] `invoice.payment_succeeded` - Estende subscrição para renovações
+- [x] `customer.subscription.deleted` - Trata cancelamento
+- [x] Processamento de comissões para associações (10%)
+- [x] Atualização automática de status premium dos pais
+
+#### ✅ Sistema de Conquistas Expandido (22 Badges)
+- [x] **4 Categorias**:
+  - Quiz (7 conquistas): Primeiro Passo, Estudante Aplicado, Mestre do Conhecimento, Génio, Perfeição, Em Chamas!, Dedicação Máxima
+  - Cidade (6 conquistas): Construtor, Aldeia Completa, De Aldeia a Vila, Metrópole Nascente, Imperador, Arquiteto Mestre
+  - Social (4 conquistas): Primeiro Amigo, Popular, Companheiro de Jogo, Campeão Familiar
+  - Recursos (5 conquistas): Poupador, Tesouro, Milionário, Estudante Dedicado, Veterano
+- [x] **5 Raridades**: Comum, Incomum, Raro, Épico, Lendário
+- [x] **Recompensas** por conquista (XP + Moedas)
+- [x] **Barra de progresso** (desbloqueadas/total)
+- [x] **Filtros por categoria**
+- [x] APIs:
+  - `GET /api/achievements/my` - Conquistas e estatísticas do aluno
+  - `POST /api/achievements/unlock` - Desbloquear conquista
+
+---
+
+## Backlog Futuro
+
+### P3 - Melhorias Futuras
+1. **Memory Match completo** - Jogo de memória funcional
+2. **Speed Math completo** - Desafios matemáticos contra o tempo
+3. **Notificações push** - Alertas para pais e alunos
+4. **Modo offline** - Cache de perguntas para jogar sem internet
+5. **Relatórios de progresso** - Dashboard analítico para pais
 
 ---
 
