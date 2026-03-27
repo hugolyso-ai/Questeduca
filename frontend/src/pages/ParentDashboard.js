@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Users, CreditCard, Settings, LogOut, TrendingUp, Award, Plus, X, School, BookOpen, User, Bell, Gift, Check } from 'lucide-react';
+import { Users, CreditCard, Settings, LogOut, TrendingUp, Award, Plus, X, School, BookOpen, User, Bell, Gift, Check, Gamepad2 } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
+import MiniGamesHub from '../components/MiniGamesHub';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -337,6 +338,8 @@ const ParentDashboard = () => {
   const [notifications, setNotifications] = useState([]);
   const [codeRegistering, setCodeRegistering] = useState(false);
   const [parentProfile, setParentProfile] = useState({ credit_balance: 0 });
+  const [showMiniGames, setShowMiniGames] = useState(false);
+  const [selectedChildForGame, setSelectedChildForGame] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -661,8 +664,16 @@ const ParentDashboard = () => {
                       <button className="flex-1 py-2 bg-blue-100 text-blue-700 font-semibold rounded-lg hover:bg-blue-200 transition text-sm">
                         Ver Progresso
                       </button>
-                      <button className="flex-1 py-2 bg-slate-100 text-slate-700 font-semibold rounded-lg hover:bg-slate-200 transition text-sm">
-                        Definições
+                      <button 
+                        onClick={() => {
+                          setSelectedChildForGame(child);
+                          setShowMiniGames(true);
+                        }}
+                        className="flex-1 py-2 bg-gradient-to-r from-purple-500 to-blue-600 text-white font-semibold rounded-lg hover:opacity-90 transition text-sm flex items-center justify-center gap-1"
+                        data-testid={`play-with-${child.student_id}`}
+                      >
+                        <Gamepad2 size={16} />
+                        Jogar
                       </button>
                     </div>
                   </div>
@@ -994,6 +1005,18 @@ const ParentDashboard = () => {
         onSuccess={handleChildCreated}
         districts={districts}
       />
+
+      {/* Mini Games Modal */}
+      {showMiniGames && (
+        <MiniGamesHub
+          childId={selectedChildForGame?.user_id}
+          childName={selectedChildForGame?.nickname}
+          onClose={() => {
+            setShowMiniGames(false);
+            setSelectedChildForGame(null);
+          }}
+        />
+      )}
     </div>
   );
 };

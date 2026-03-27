@@ -1380,7 +1380,7 @@ async def stripe_webhook(request: Request):
     try:
         event = await payment_service.handle_webhook(body, signature, origin_url)
         
-        # Process the webhook event
+        # Process different webhook events
         if event.event_type == "checkout.session.completed":
             session_id = event.session_id
             
@@ -1396,13 +1396,312 @@ async def stripe_webhook(request: Request):
                 }
             )
             
+            # Activate subscription if applicable
+            transaction = await db.payment_transactions.find_one({"session_id": session_id}, {"_id": 0})
+            if transaction:
+                package_id = transaction.get('package_id')
+                if package_id:
+                    duration_days = 30 if "monthly" in package_id else 365
+                    
+                    subscription_id = f"sub_{uuid.uuid4().hex[:12]}"
+                    sub_dict = {
+                        "subscription_id": subscription_id,
+                        "user_id": transaction['user_id'],
+                        "type": package_id,
+                        "start_date": datetime.now(timezone.utc).isoformat(),
+                        "end_date": (datetime.now(timezone.utc) + timedelta(days=duration_days)).isoformat(),
+                        "association_code": transaction.get('association_code'),
+                        "payment_reference": session_id,
+                        "status": "active"
+                    }
+                    
+                    await db.subscriptions.insert_one(sub_dict)
+                    
+                    # Update parent premium status
+                    await db.parents.update_one(
+                        {"user_id": transaction['user_id']},
+                        {
+                            "$set": {
+                                "subscription_type": package_id,
+                                "subscription_expiry": sub_dict['end_date'],
+                                "premium_active": True,
+                                "first_subscription_date": datetime.now(timezone.utc).isoformat()
+                            }
+                        },
+                        upsert=True
+                    )
+                    
+                    # Process commission if association code was used
+                    if transaction.get('association_code'):
+                        commission_amount = transaction['amount'] * 0.10
+                        association = await db.associations.find_one(
+                            {"association_code": transaction['association_code']},
+                            {"_id": 0}
+                        )
+                        
+                        if association:
+                            commission = {
+                                "commission_id": f"com_{uuid.uuid4().hex[:12]}",
+                                "association_id": association['association_id'],
+                                "amount": commission_amount,
+                                "subscription_id": subscription_id,
+                                "created_at": datetime.now(timezone.utc).isoformat()
+                            }
+                            await db.commissions.insert_one(commission)
+                            
+                            await db.associations.update_one(
+                                {"association_id": association['association_id']},
+                                {
+                                    "$inc": {
+                                        "total_commissions": commission_amount,
+                                        "pending_payout": commission_amount
+                                    }
+                                }
+                            )
+            
             logger.info(f"Webhook: Payment completed for session {session_id}")
+        
+        elif event.event_type == "invoice.payment_succeeded":
+            # Handle subscription renewal
+            customer_email = event.metadata.get("customer_email") if hasattr(event, 'metadata') else None
+            if customer_email:
+                user = await db.users.find_one({"email": customer_email}, {"_id": 0})
+                if user:
+                    # Extend subscription
+                    await db.subscriptions.update_one(
+                        {"user_id": user["user_id"], "status": "active"},
+                        {
+                            "$set": {
+                                "end_date": (datetime.now(timezone.utc) + timedelta(days=30)).isoformat(),
+                                "updated_at": datetime.now(timezone.utc).isoformat()
+                            }
+                        }
+                    )
+                    logger.info(f"Webhook: Subscription renewed for {customer_email}")
+        
+        elif event.event_type == "customer.subscription.deleted":
+            # Handle subscription cancellation
+            logger.info(f"Webhook: Subscription cancelled")
         
         return {"status": "received"}
         
     except Exception as e:
         logger.error(f"Webhook error: {e}")
         raise HTTPException(status_code=400, detail="Webhook error")
+
+# ==================== MINI-GAMES ROUTES ====================
+
+@api_router.get("/minigames/quiz-questions")
+async def get_minigame_quiz_questions(
+    count: int = 5,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Get random questions for mini-game quiz duel"""
+    if current_user.role not in [UserRole.PARENT, UserRole.STUDENT]:
+        raise HTTPException(status_code=403, detail="Apenas pais e alunos")
+    
+    # Try to get questions from database first
+    questions = await db.questions.aggregate([
+        {"$sample": {"size": count}},
+        {"$project": {"_id": 0, "question_text": 1, "options": 1, "correct_answer": 1}}
+    ]).to_list(count)
+    
+    if len(questions) < count:
+        # Generate fallback questions
+        fallback = [
+            {"question_text": "Qual é a capital de Portugal?", "options": ["Lisboa", "Porto", "Braga", "Coimbra"], "correct_answer": 0},
+            {"question_text": "Quanto é 7 x 8?", "options": ["54", "56", "58", "62"], "correct_answer": 1},
+            {"question_text": "Quem escreveu 'Os Lusíadas'?", "options": ["Fernando Pessoa", "Camões", "Eça de Queirós", "Saramago"], "correct_answer": 1},
+            {"question_text": "Qual é o maior planeta do Sistema Solar?", "options": ["Terra", "Marte", "Júpiter", "Saturno"], "correct_answer": 2},
+            {"question_text": "Em que ano foi o 25 de Abril?", "options": ["1970", "1972", "1974", "1976"], "correct_answer": 2},
+            {"question_text": "Qual é o rio mais longo de Portugal?", "options": ["Tejo", "Douro", "Mondego", "Guadiana"], "correct_answer": 0},
+            {"question_text": "Quantos lados tem um hexágono?", "options": ["4", "5", "6", "8"], "correct_answer": 2}
+        ]
+        import random
+        questions = random.sample(fallback, min(count, len(fallback)))
+    
+    return questions
+
+@api_router.post("/minigames/result")
+async def save_minigame_result(
+    game_id: str,
+    opponent_id: str,
+    coins_won: int,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Save mini-game result"""
+    if current_user.role not in [UserRole.PARENT, UserRole.STUDENT]:
+        raise HTTPException(status_code=403, detail="Apenas pais e alunos")
+    
+    result = {
+        "result_id": f"mgr_{uuid.uuid4().hex[:12]}",
+        "game_id": game_id,
+        "player_id": current_user.user_id,
+        "opponent_id": opponent_id,
+        "coins_won": coins_won,
+        "played_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.minigame_results.insert_one(result)
+    
+    # Add coins to both players
+    if current_user.role == UserRole.PARENT:
+        # Parent won - add coins to their children
+        parent = await db.parents.find_one({"user_id": current_user.user_id}, {"_id": 0})
+        if parent and parent.get("children_ids"):
+            for child_id in parent["children_ids"]:
+                await db.game_states.update_one(
+                    {"user_id": child_id},
+                    {"$inc": {"coins": 10}},  # Participation reward
+                    upsert=True
+                )
+    else:
+        # Student won
+        await db.game_states.update_one(
+            {"user_id": current_user.user_id},
+            {"$inc": {"coins": coins_won}},
+            upsert=True
+        )
+    
+    # Check and unlock achievements
+    await check_minigame_achievements(current_user.user_id)
+    
+    return {"success": True, "coins_won": coins_won}
+
+@api_router.get("/minigames/history")
+async def get_minigame_history(
+    limit: int = 10,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Get mini-game history"""
+    results = await db.minigame_results.find(
+        {"$or": [{"player_id": current_user.user_id}, {"opponent_id": current_user.user_id}]},
+        {"_id": 0}
+    ).sort("played_at", -1).limit(limit).to_list(limit)
+    
+    return results
+
+# ==================== ACHIEVEMENTS ROUTES ====================
+
+@api_router.get("/achievements/my")
+async def get_my_achievements(
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Get current user's achievements and stats"""
+    if current_user.role != UserRole.STUDENT:
+        raise HTTPException(status_code=403, detail="Apenas alunos")
+    
+    # Get user's achievement record
+    achievements_record = await db.achievements.find_one(
+        {"user_id": current_user.user_id},
+        {"_id": 0}
+    )
+    
+    if not achievements_record:
+        achievements_record = {
+            "user_id": current_user.user_id,
+            "unlocked": [],
+            "stats": {
+                "quizzesCompleted": 0,
+                "perfectQuizzes": 0,
+                "longestStreak": 0,
+                "currentStreak": 0,
+                "totalBuildingLevel": 0,
+                "maxLevelBuildings": 0,
+                "allBuildingsLevel1": False,
+                "settlementLevel": "village",
+                "friendsCount": 0,
+                "minigamesPlayed": 0,
+                "minigamesWon": 0,
+                "totalCoinsEarned": 0,
+                "totalXp": 0
+            }
+        }
+        await db.achievements.insert_one(achievements_record)
+    
+    # Enrich with current data
+    game_state = await db.game_states.find_one({"user_id": current_user.user_id}, {"_id": 0})
+    if game_state:
+        buildings = game_state.get("buildings", {})
+        total_level = sum(buildings.values()) if isinstance(buildings, dict) else 0
+        max_level_buildings = sum(1 for v in buildings.values() if v >= 5) if isinstance(buildings, dict) else 0
+        all_level_1 = all(v >= 1 for v in buildings.values()) if isinstance(buildings, dict) and len(buildings) >= 6 else False
+        
+        if total_level >= 50:
+            settlement = "metropolis"
+        elif total_level >= 25:
+            settlement = "city"
+        elif total_level >= 10:
+            settlement = "town"
+        else:
+            settlement = "village"
+        
+        achievements_record["stats"]["totalBuildingLevel"] = total_level
+        achievements_record["stats"]["maxLevelBuildings"] = max_level_buildings
+        achievements_record["stats"]["allBuildingsLevel1"] = all_level_1
+        achievements_record["stats"]["settlementLevel"] = settlement
+        achievements_record["stats"]["totalXp"] = game_state.get("xp", 0)
+        achievements_record["stats"]["totalCoinsEarned"] = game_state.get("coins", 0)
+    
+    # Count friends
+    friends_count = await db.friend_requests.count_documents({
+        "$or": [
+            {"from_user_id": current_user.user_id, "status": "approved"},
+            {"to_user_id": current_user.user_id, "status": "approved"}
+        ]
+    })
+    achievements_record["stats"]["friendsCount"] = friends_count
+    
+    # Count minigames
+    minigames_count = await db.minigame_results.count_documents({"player_id": current_user.user_id})
+    achievements_record["stats"]["minigamesPlayed"] = minigames_count
+    
+    return achievements_record
+
+@api_router.post("/achievements/unlock")
+async def unlock_achievement(
+    achievement_id: str,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Unlock an achievement and claim rewards"""
+    if current_user.role != UserRole.STUDENT:
+        raise HTTPException(status_code=403, detail="Apenas alunos")
+    
+    # Check if already unlocked
+    record = await db.achievements.find_one(
+        {"user_id": current_user.user_id, "unlocked": achievement_id}
+    )
+    
+    if record:
+        raise HTTPException(status_code=400, detail="Conquista já desbloqueada")
+    
+    # Add to unlocked list
+    await db.achievements.update_one(
+        {"user_id": current_user.user_id},
+        {
+            "$push": {"unlocked": achievement_id},
+            "$set": {"last_unlocked_at": datetime.now(timezone.utc).isoformat()}
+        },
+        upsert=True
+    )
+    
+    return {"success": True, "achievement_id": achievement_id}
+
+async def check_minigame_achievements(user_id: str):
+    """Check and unlock mini-game related achievements"""
+    minigames_count = await db.minigame_results.count_documents({"player_id": user_id})
+    minigames_won = await db.minigame_results.count_documents({"player_id": user_id, "coins_won": {"$gte": 30}})
+    
+    await db.achievements.update_one(
+        {"user_id": user_id},
+        {
+            "$set": {
+                "stats.minigamesPlayed": minigames_count,
+                "stats.minigamesWon": minigames_won
+            }
+        },
+        upsert=True
+    )
 
 # ==================== GIFTCARD ROUTES ====================
 

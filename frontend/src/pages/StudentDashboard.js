@@ -12,6 +12,7 @@ import axios from 'axios';
 import { toast } from 'sonner';
 import { PortugalFriendMap } from '../components/PortugalMap';
 import AccessibilityPanel from '../components/AccessibilityPanel';
+import { AchievementsList } from '../components/AchievementsSystem';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -1068,44 +1069,24 @@ const StudentDashboard = () => {
 
         {/* Achievements Tab */}
         {activeTab === 'achievements' && (
-          <div className="bg-white rounded-3xl p-8 shadow-xl">
-            <h2 className="text-2xl font-bold text-slate-800 mb-6" style={{ fontFamily: 'Fredoka, sans-serif' }}>
-              <Trophy className="inline mr-2 text-yellow-500" />
-              Conquistas
-            </h2>
-            
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[
-                { name: "Primeiro Quiz", desc: "Completa o teu primeiro quiz", unlocked: gameState.xp > 0 },
-                { name: "Construtor", desc: "Constrói o teu primeiro edifício", unlocked: Object.values(gameState.buildings).filter(l => l > 0).length > 1 },
-                { name: "Estudante Dedicado", desc: "Ganha 500 XP", unlocked: gameState.xp >= 500 },
-                { name: "Rico", desc: "Junta 1000 moedas", unlocked: gameState.coins >= 1000 },
-                { name: "Arquiteto", desc: "Melhora um edifício ao nível 3", unlocked: Object.values(gameState.buildings).some(l => l >= 3) },
-                { name: "Mestre", desc: "Atinge o nível de Cidade", unlocked: totalBuildingLevel >= 25 },
-              ].map((achievement, i) => (
-                <div 
-                  key={i}
-                  className={`p-4 rounded-xl border-2 ${
-                    achievement.unlocked 
-                      ? 'border-yellow-400 bg-yellow-50' 
-                      : 'border-slate-200 bg-slate-50 opacity-60'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                      achievement.unlocked ? 'bg-yellow-400' : 'bg-slate-300'
-                    }`}>
-                      <Award className={achievement.unlocked ? 'text-yellow-900' : 'text-slate-500'} size={24} />
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-slate-800">{achievement.name}</h4>
-                      <p className="text-sm text-slate-500">{achievement.desc}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <AchievementsList 
+            stats={{
+              quizzesCompleted: gameState.quizzes_today || 0,
+              perfectQuizzes: 0,
+              longestStreak: 1,
+              currentStreak: 1,
+              totalBuildingLevel: totalBuildingLevel,
+              maxLevelBuildings: Object.values(gameState.buildings).filter(l => l >= 5).length,
+              allBuildingsLevel1: Object.values(gameState.buildings).every(l => l >= 1) && Object.values(gameState.buildings).length >= 6,
+              settlementLevel: settlement.name.toLowerCase(),
+              friendsCount: friends.length,
+              minigamesPlayed: 0,
+              minigamesWon: 0,
+              totalCoinsEarned: gameState.coins,
+              totalXp: gameState.xp
+            }}
+            unlockedIds={[]}
+          />
         )}
       </div>
 
