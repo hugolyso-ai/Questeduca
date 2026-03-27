@@ -342,3 +342,70 @@ class PaymentTransaction(BaseModel):
     association_code: Optional[str] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
+
+
+# Ranking Models
+class RankingEntry(BaseModel):
+    rank: int
+    user_id: str
+    nickname: str
+    school_name: str
+    district: str
+    xp: int
+    level: int
+    quizzes_completed: int
+    accuracy_rate: float  # 0-100
+    settlement_level: str
+
+class RankingResponse(BaseModel):
+    ranking_type: str  # school, district, national
+    filter_value: Optional[str] = None  # school_id or district name
+    entries: List[RankingEntry]
+    user_position: Optional[int] = None
+    total_players: int
+
+# Giftcard Models
+class GiftcardCreate(BaseModel):
+    amount: float  # 5, 10, 20
+    
+class Giftcard(BaseModel):
+    giftcard_id: str
+    code: str  # GIFT-XXXXXXXX
+    amount: float
+    currency: str = "eur"
+    created_by: str  # user_id of purchaser
+    redeemed_by: Optional[str] = None
+    redeemed_at: Optional[datetime] = None
+    status: str = "active"  # active, redeemed, expired
+    association_code: Optional[str] = None  # for commission tracking
+    created_at: datetime
+    expires_at: datetime
+
+class GiftcardRedeem(BaseModel):
+    code: str
+
+# Friendship Models
+class FriendRequest(BaseModel):
+    request_id: str
+    from_user_id: str
+    from_nickname: str
+    to_user_id: str
+    to_nickname: str
+    status: str = "pending"  # pending, approved, rejected
+    parent_approved: bool = False
+    created_at: datetime
+
+class Friend(BaseModel):
+    user_id: str
+    nickname: str
+    school_name: str
+    district: str
+    level: int
+    settlement_level: str
+
+# Accessibility Settings
+class AccessibilitySettings(BaseModel):
+    dyslexia_font: bool = False
+    colorblind_mode: str = "none"  # none, protanopia, deuteranopia, tritanopia
+    high_contrast: bool = False
+    text_size: str = "medium"  # small, medium, large, xlarge

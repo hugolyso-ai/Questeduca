@@ -470,6 +470,617 @@ async def submit_quiz_answer(
     
     return {"success": True}
 
+# ==================== RANKING ROUTES ====================
+
+@api_router.get("/rankings/school/{school_id}")
+async def get_school_ranking(
+    school_id: str,
+    limit: int = 10,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Get ranking for a specific school"""
+    if current_user.role != UserRole.STUDENT:
+        raise HTTPException(status_code=403, detail="Apenas para alunos")
+    
+    # Get all students from this school with their game states
+    pipeline = [
+        {"$match": {"school_id": school_id}},
+        {"$lookup": {
+            "from": "game_states",
+            "localField": "user_id",
+            "foreignField": "user_id",
+            "as": "game_state"
+        }},
+        {"$unwind": {"path": "$game_state", "preserveNullAndEmptyArrays": True}},
+        {"$lookup": {
+            "from": "quiz_answers",
+            "localField": "user_id",
+            "foreignField": "user_id",
+            "as": "answers"
+        }},
+        {"$project": {
+            "_id": 0,
+            "user_id": 1,
+            "nickname": 1,
+            "school_name": 1,
+            "district": 1,
+            "xp": {"$ifNull": ["$game_state.xp", 0]},
+            "level": {"$ifNull": ["$game_state.level", 1]},
+            "buildings": {"$ifNull": ["$game_state.buildings", {}]},
+            "answers_count": {"$size": "$answers"}
+        }},
+        {"$sort": {"xp": -1}},
+        {"$limit": limit}
+    ]
+    
+    students = await db.students.aggregate(pipeline).to_list(limit)
+    
+    # Calculate rankings and find user position
+    entries = []
+    user_position = None
+    
+    for i, student in enumerate(students):
+        # Calculate total building level for settlement
+        buildings = student.get("buildings", {})
+        total_level = sum(buildings.values()) if isinstance(buildings, dict) else 0
+        
+        if total_level >= 50:
+            settlement = "metropolis"
+        elif total_level >= 25:
+            settlement = "city"
+        elif total_level >= 10:
+            settlement = "town"
+        else:
+            settlement = "village"
+        
+        entry = {
+            "rank": i + 1,
+            "user_id": student["user_id"],
+            "nickname": student.get("nickname", "Anónimo"),
+            "school_name": student.get("school_name", ""),
+            "district": student.get("district", ""),
+            "xp": student.get("xp", 0),
+            "level": student.get("level", 1),
+            "quizzes_completed": student.get("answers_count", 0) // 5,  # Approximate
+            "accuracy_rate": 0,  # Would need more data
+            "settlement_level": settlement
+        }
+        entries.append(entry)
+        
+        if student["user_id"] == current_user.user_id:
+            user_position = i + 1
+    
+    return {
+        "ranking_type": "school",
+        "filter_value": school_id,
+        "entries": entries,
+        "user_position": user_position,
+        "total_players": len(entries)
+    }
+
+@api_router.get("/rankings/district/{district}")
+async def get_district_ranking(
+    district: str,
+    limit: int = 10,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Get ranking for a specific district"""
+    if current_user.role != UserRole.STUDENT:
+        raise HTTPException(status_code=403, detail="Apenas para alunos")
+    
+    pipeline = [
+        {"$match": {"district": district}},
+        {"$lookup": {
+            "from": "game_states",
+            "localField": "user_id",
+            "foreignField": "user_id",
+            "as": "game_state"
+        }},
+        {"$unwind": {"path": "$game_state", "preserveNullAndEmptyArrays": True}},
+        {"$project": {
+            "_id": 0,
+            "user_id": 1,
+            "nickname": 1,
+            "school_name": 1,
+            "district": 1,
+            "xp": {"$ifNull": ["$game_state.xp", 0]},
+            "level": {"$ifNull": ["$game_state.level", 1]},
+            "buildings": {"$ifNull": ["$game_state.buildings", {}]}
+        }},
+        {"$sort": {"xp": -1}},
+        {"$limit": limit}
+    ]
+    
+    students = await db.students.aggregate(pipeline).to_list(limit)
+    
+    entries = []
+    user_position = None
+    
+    for i, student in enumerate(students):
+        buildings = student.get("buildings", {})
+        total_level = sum(buildings.values()) if isinstance(buildings, dict) else 0
+        
+        if total_level >= 50:
+            settlement = "metropolis"
+        elif total_level >= 25:
+            settlement = "city"
+        elif total_level >= 10:
+            settlement = "town"
+        else:
+            settlement = "village"
+        
+        entry = {
+            "rank": i + 1,
+            "user_id": student["user_id"],
+            "nickname": student.get("nickname", "Anónimo"),
+            "school_name": student.get("school_name", ""),
+            "district": student.get("district", ""),
+            "xp": student.get("xp", 0),
+            "level": student.get("level", 1),
+            "quizzes_completed": 0,
+            "accuracy_rate": 0,
+            "settlement_level": settlement
+        }
+        entries.append(entry)
+        
+        if student["user_id"] == current_user.user_id:
+            user_position = i + 1
+    
+    return {
+        "ranking_type": "district",
+        "filter_value": district,
+        "entries": entries,
+        "user_position": user_position,
+        "total_players": len(entries)
+    }
+
+@api_router.get("/rankings/national")
+async def get_national_ranking(
+    limit: int = 100,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Get national ranking (top players in Portugal)"""
+    if current_user.role != UserRole.STUDENT:
+        raise HTTPException(status_code=403, detail="Apenas para alunos")
+    
+    pipeline = [
+        {"$lookup": {
+            "from": "game_states",
+            "localField": "user_id",
+            "foreignField": "user_id",
+            "as": "game_state"
+        }},
+        {"$unwind": {"path": "$game_state", "preserveNullAndEmptyArrays": True}},
+        {"$project": {
+            "_id": 0,
+            "user_id": 1,
+            "nickname": 1,
+            "school_name": 1,
+            "district": 1,
+            "xp": {"$ifNull": ["$game_state.xp", 0]},
+            "level": {"$ifNull": ["$game_state.level", 1]},
+            "buildings": {"$ifNull": ["$game_state.buildings", {}]}
+        }},
+        {"$sort": {"xp": -1}},
+        {"$limit": limit}
+    ]
+    
+    students = await db.students.aggregate(pipeline).to_list(limit)
+    
+    entries = []
+    user_position = None
+    
+    for i, student in enumerate(students):
+        buildings = student.get("buildings", {})
+        total_level = sum(buildings.values()) if isinstance(buildings, dict) else 0
+        
+        if total_level >= 50:
+            settlement = "metropolis"
+        elif total_level >= 25:
+            settlement = "city"
+        elif total_level >= 10:
+            settlement = "town"
+        else:
+            settlement = "village"
+        
+        entry = {
+            "rank": i + 1,
+            "user_id": student["user_id"],
+            "nickname": student.get("nickname", "Anónimo"),
+            "school_name": student.get("school_name", ""),
+            "district": student.get("district", ""),
+            "xp": student.get("xp", 0),
+            "level": student.get("level", 1),
+            "quizzes_completed": 0,
+            "accuracy_rate": 0,
+            "settlement_level": settlement
+        }
+        entries.append(entry)
+        
+        if student["user_id"] == current_user.user_id:
+            user_position = i + 1
+    
+    # Get total count
+    total_count = await db.students.count_documents({})
+    
+    return {
+        "ranking_type": "national",
+        "filter_value": None,
+        "entries": entries,
+        "user_position": user_position,
+        "total_players": total_count
+    }
+
+# ==================== GIFTCARD ROUTES ====================
+
+GIFTCARD_AMOUNTS = [5.0, 10.0, 20.0]
+
+@api_router.post("/giftcards/purchase")
+async def purchase_giftcard(
+    amount: float,
+    origin_url: str,
+    association_code: Optional[str] = None,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Purchase a giftcard via Stripe"""
+    if current_user.role != UserRole.PARENT:
+        raise HTTPException(status_code=403, detail="Apenas pais podem comprar giftcards")
+    
+    if amount not in GIFTCARD_AMOUNTS:
+        raise HTTPException(status_code=400, detail=f"Valor inválido. Valores aceites: {GIFTCARD_AMOUNTS}")
+    
+    # Create checkout session for giftcard
+    try:
+        webhook_url = f"{origin_url}/api/webhook/stripe"
+        from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionRequest
+        
+        stripe_checkout = StripeCheckout(
+            api_key=os.environ.get('STRIPE_SECRET_KEY'),
+            webhook_url=webhook_url
+        )
+        
+        success_url = f"{origin_url}/giftcard/success?session_id={{CHECKOUT_SESSION_ID}}"
+        cancel_url = f"{origin_url}/giftcard/cancel"
+        
+        giftcard_id = f"gift_{uuid.uuid4().hex[:12]}"
+        
+        checkout_request = CheckoutSessionRequest(
+            amount=amount,
+            currency="eur",
+            success_url=success_url,
+            cancel_url=cancel_url,
+            metadata={
+                "type": "giftcard",
+                "giftcard_id": giftcard_id,
+                "user_id": current_user.user_id,
+                "association_code": association_code or ""
+            }
+        )
+        
+        session = await stripe_checkout.create_checkout_session(checkout_request)
+        
+        # Pre-create giftcard (will be activated after payment)
+        giftcard = {
+            "giftcard_id": giftcard_id,
+            "code": f"GIFT-{uuid.uuid4().hex[:8].upper()}",
+            "amount": amount,
+            "currency": "eur",
+            "created_by": current_user.user_id,
+            "redeemed_by": None,
+            "redeemed_at": None,
+            "status": "pending",  # Will become "active" after payment
+            "association_code": association_code,
+            "session_id": session.session_id,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "expires_at": (datetime.now(timezone.utc) + timedelta(days=365)).isoformat()
+        }
+        
+        await db.giftcards.insert_one(giftcard)
+        
+        return {
+            "url": session.url,
+            "session_id": session.session_id,
+            "giftcard_id": giftcard_id
+        }
+        
+    except Exception as e:
+        logger.error(f"Giftcard purchase error: {e}")
+        raise HTTPException(status_code=500, detail="Erro ao processar compra")
+
+@api_router.get("/giftcards/status/{session_id}")
+async def get_giftcard_status(
+    session_id: str,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Get giftcard purchase status and code if paid"""
+    giftcard = await db.giftcards.find_one(
+        {"session_id": session_id, "created_by": current_user.user_id},
+        {"_id": 0}
+    )
+    
+    if not giftcard:
+        raise HTTPException(status_code=404, detail="Giftcard não encontrado")
+    
+    # If still pending, check with Stripe
+    if giftcard["status"] == "pending":
+        try:
+            origin_url = os.environ.get('FRONTEND_URL', 'https://edu-empire-1.preview.emergentagent.com')
+            status = await payment_service.get_checkout_status(session_id, origin_url)
+            
+            if status.payment_status == "paid":
+                # Activate giftcard
+                await db.giftcards.update_one(
+                    {"giftcard_id": giftcard["giftcard_id"]},
+                    {"$set": {"status": "active"}}
+                )
+                giftcard["status"] = "active"
+                
+                # Process association commission if applicable
+                if giftcard.get("association_code"):
+                    commission_amount = giftcard["amount"] * 0.10
+                    association = await db.associations.find_one(
+                        {"association_code": giftcard["association_code"]},
+                        {"_id": 0}
+                    )
+                    
+                    if association:
+                        commission = {
+                            "commission_id": f"com_{uuid.uuid4().hex[:12]}",
+                            "association_id": association["association_id"],
+                            "amount": commission_amount,
+                            "source": "giftcard",
+                            "giftcard_id": giftcard["giftcard_id"],
+                            "created_at": datetime.now(timezone.utc).isoformat()
+                        }
+                        await db.commissions.insert_one(commission)
+                        
+                        await db.associations.update_one(
+                            {"association_id": association["association_id"]},
+                            {"$inc": {"total_commissions": commission_amount, "pending_payout": commission_amount}}
+                        )
+        except Exception as e:
+            logger.error(f"Error checking giftcard status: {e}")
+    
+    return {
+        "giftcard_id": giftcard["giftcard_id"],
+        "code": giftcard["code"] if giftcard["status"] == "active" else None,
+        "amount": giftcard["amount"],
+        "status": giftcard["status"]
+    }
+
+@api_router.post("/giftcards/redeem")
+async def redeem_giftcard(
+    code: str,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Redeem a giftcard code"""
+    if current_user.role != UserRole.PARENT:
+        raise HTTPException(status_code=403, detail="Apenas pais podem resgatar giftcards")
+    
+    giftcard = await db.giftcards.find_one(
+        {"code": code.upper(), "status": "active"},
+        {"_id": 0}
+    )
+    
+    if not giftcard:
+        raise HTTPException(status_code=404, detail="Código inválido ou já utilizado")
+    
+    # Mark as redeemed
+    await db.giftcards.update_one(
+        {"giftcard_id": giftcard["giftcard_id"]},
+        {
+            "$set": {
+                "status": "redeemed",
+                "redeemed_by": current_user.user_id,
+                "redeemed_at": datetime.now(timezone.utc).isoformat()
+            }
+        }
+    )
+    
+    # Add credit to parent's account
+    await db.parents.update_one(
+        {"user_id": current_user.user_id},
+        {"$inc": {"credit_balance": giftcard["amount"]}}
+    )
+    
+    return {
+        "success": True,
+        "amount": giftcard["amount"],
+        "message": f"€{giftcard['amount']:.2f} adicionados à sua conta!"
+    }
+
+@api_router.get("/giftcards/my")
+async def get_my_giftcards(
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Get giftcards purchased by the current user"""
+    if current_user.role != UserRole.PARENT:
+        raise HTTPException(status_code=403, detail="Apenas pais")
+    
+    giftcards = await db.giftcards.find(
+        {"created_by": current_user.user_id, "status": {"$in": ["active", "redeemed"]}},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(50)
+    
+    return giftcards
+
+# ==================== FRIENDSHIP ROUTES ====================
+
+@api_router.post("/friends/request")
+async def send_friend_request(
+    to_user_id: str,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Send a friend request to another student"""
+    if current_user.role != UserRole.STUDENT:
+        raise HTTPException(status_code=403, detail="Apenas alunos podem enviar pedidos de amizade")
+    
+    # Check if target user exists and is a student
+    target_student = await db.students.find_one({"user_id": to_user_id}, {"_id": 0})
+    if not target_student:
+        raise HTTPException(status_code=404, detail="Utilizador não encontrado")
+    
+    # Check if already friends or request pending
+    existing = await db.friend_requests.find_one({
+        "$or": [
+            {"from_user_id": current_user.user_id, "to_user_id": to_user_id},
+            {"from_user_id": to_user_id, "to_user_id": current_user.user_id}
+        ],
+        "status": {"$in": ["pending", "approved"]}
+    })
+    
+    if existing:
+        raise HTTPException(status_code=400, detail="Pedido já existe ou já são amigos")
+    
+    # Get current user's student profile
+    from_student = await db.students.find_one({"user_id": current_user.user_id}, {"_id": 0})
+    
+    request = {
+        "request_id": f"freq_{uuid.uuid4().hex[:12]}",
+        "from_user_id": current_user.user_id,
+        "from_nickname": from_student.get("nickname", "Anónimo"),
+        "to_user_id": to_user_id,
+        "to_nickname": target_student.get("nickname", "Anónimo"),
+        "status": "pending",
+        "parent_approved": False,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.friend_requests.insert_one(request)
+    
+    # Notify parent of the target student
+    notification = {
+        "notification_id": f"notif_{uuid.uuid4().hex[:12]}",
+        "user_id": target_student.get("parent_id"),
+        "type": "friend_request",
+        "title": "Pedido de Amizade",
+        "message": f"{from_student.get('nickname', 'Um aluno')} quer ser amigo do seu filho {target_student.get('nickname')}",
+        "request_id": request["request_id"],
+        "read": False,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.notifications.insert_one(notification)
+    
+    return {"success": True, "request_id": request["request_id"]}
+
+@api_router.put("/friends/request/{request_id}/approve")
+async def approve_friend_request(
+    request_id: str,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Approve a friend request (parent only)"""
+    if current_user.role != UserRole.PARENT:
+        raise HTTPException(status_code=403, detail="Apenas pais podem aprovar pedidos de amizade")
+    
+    # Get the request
+    request = await db.friend_requests.find_one({"request_id": request_id}, {"_id": 0})
+    if not request:
+        raise HTTPException(status_code=404, detail="Pedido não encontrado")
+    
+    # Check if parent is authorized (parent of the target student)
+    target_student = await db.students.find_one({"user_id": request["to_user_id"]}, {"_id": 0})
+    if not target_student or target_student.get("parent_id") != current_user.user_id:
+        raise HTTPException(status_code=403, detail="Não autorizado")
+    
+    # Approve the request
+    await db.friend_requests.update_one(
+        {"request_id": request_id},
+        {"$set": {"status": "approved", "parent_approved": True}}
+    )
+    
+    return {"success": True}
+
+@api_router.get("/friends/my")
+async def get_my_friends(
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Get list of friends for the current student"""
+    if current_user.role != UserRole.STUDENT:
+        raise HTTPException(status_code=403, detail="Apenas alunos")
+    
+    # Get approved friend requests
+    requests = await db.friend_requests.find({
+        "$or": [
+            {"from_user_id": current_user.user_id},
+            {"to_user_id": current_user.user_id}
+        ],
+        "status": "approved"
+    }, {"_id": 0}).to_list(100)
+    
+    # Get friend user IDs
+    friend_ids = []
+    for req in requests:
+        if req["from_user_id"] == current_user.user_id:
+            friend_ids.append(req["to_user_id"])
+        else:
+            friend_ids.append(req["from_user_id"])
+    
+    # Get friend profiles
+    friends = []
+    for friend_id in friend_ids:
+        student = await db.students.find_one({"user_id": friend_id}, {"_id": 0})
+        if student:
+            game_state = await db.game_states.find_one({"user_id": friend_id}, {"_id": 0})
+            
+            buildings = game_state.get("buildings", {}) if game_state else {}
+            total_level = sum(buildings.values()) if isinstance(buildings, dict) else 0
+            
+            if total_level >= 50:
+                settlement = "metropolis"
+            elif total_level >= 25:
+                settlement = "city"
+            elif total_level >= 10:
+                settlement = "town"
+            else:
+                settlement = "village"
+            
+            friends.append({
+                "user_id": friend_id,
+                "nickname": student.get("nickname", "Anónimo"),
+                "school_name": student.get("school_name", ""),
+                "district": student.get("district", ""),
+                "level": game_state.get("level", 1) if game_state else 1,
+                "settlement_level": settlement
+            })
+    
+    return friends
+
+@api_router.get("/friends/search")
+async def search_potential_friends(
+    district: Optional[str] = None,
+    school_id: Optional[str] = None,
+    query: Optional[str] = None,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Search for potential friends"""
+    if current_user.role != UserRole.STUDENT:
+        raise HTTPException(status_code=403, detail="Apenas alunos")
+    
+    filters = {"user_id": {"$ne": current_user.user_id}}
+    
+    if district:
+        filters["district"] = district
+    if school_id:
+        filters["school_id"] = school_id
+    if query:
+        filters["nickname"] = {"$regex": query, "$options": "i"}
+    
+    students = await db.students.find(filters, {"_id": 0}).limit(20).to_list(20)
+    
+    results = []
+    for student in students:
+        game_state = await db.game_states.find_one({"user_id": student["user_id"]}, {"_id": 0})
+        
+        results.append({
+            "user_id": student["user_id"],
+            "nickname": student.get("nickname", "Anónimo"),
+            "school_name": student.get("school_name", ""),
+            "district": student.get("district", ""),
+            "level": game_state.get("level", 1) if game_state else 1
+        })
+    
+    return results
+
 # ==================== SUBSCRIPTION ROUTES ====================
 
 @api_router.post("/subscriptions")

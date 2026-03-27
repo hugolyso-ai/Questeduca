@@ -4,7 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { 
   LogOut, Coins, Diamond, Star, Building2, BookOpen, 
   Trophy, Clock, ChevronUp, Play, Check, X, Sparkles,
-  Home, School, Library, Store, TreePine, Award
+  Home, School, Library, Store, TreePine, Award, Medal,
+  Crown, Users, MapPin, Search, UserPlus, Settings
 } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
@@ -282,6 +283,17 @@ const StudentDashboard = () => {
   const [isCorrect, setIsCorrect] = useState(false);
   const [quizResults, setQuizResults] = useState({ correct: 0, coins: 0, xp: 0 });
 
+  // Rankings state
+  const [rankings, setRankings] = useState({ school: null, district: null, national: null });
+  const [rankingType, setRankingType] = useState('school');
+  const [rankingsLoading, setRankingsLoading] = useState(false);
+
+  // Friends state
+  const [friends, setFriends] = useState([]);
+  const [friendSearch, setFriendSearch] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [friendsLoading, setFriendsLoading] = useState(false);
+
   // Calcular nível total dos edifícios
   const totalBuildingLevel = Object.values(gameState.buildings).reduce((a, b) => a + b, 0);
   
@@ -518,16 +530,18 @@ const StudentDashboard = () => {
       {/* Tab Navigation */}
       <div className="bg-white/60 backdrop-blur-sm border-b border-white/50">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="flex gap-1">
+          <div className="flex gap-1 overflow-x-auto">
             {[
               { id: 'city', label: 'Minha Cidade', icon: Building2 },
               { id: 'quiz', label: 'Aprender', icon: BookOpen },
-              { id: 'achievements', label: 'Conquistas', icon: Trophy },
+              { id: 'rankings', label: 'Rankings', icon: Trophy },
+              { id: 'friends', label: 'Amigos', icon: Users },
+              { id: 'achievements', label: 'Conquistas', icon: Award },
             ].map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-6 py-4 font-semibold transition border-b-3 ${
+                className={`flex items-center gap-2 px-5 py-4 font-semibold transition border-b-3 whitespace-nowrap ${
                   activeTab === tab.id 
                     ? 'text-purple-600 border-purple-500 bg-white/50' 
                     : 'text-slate-500 border-transparent hover:text-slate-700'
