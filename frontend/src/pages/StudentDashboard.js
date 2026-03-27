@@ -462,6 +462,90 @@ const StudentDashboard = () => {
     }
   };
 
+  // Fetch rankings data
+  const fetchRankings = useCallback(async (type) => {
+    if (!studentProfile) return;
+    
+    setRankingsLoading(true);
+    try {
+      let endpoint = '';
+      if (type === 'school') {
+        endpoint = `${API}/rankings/school/${studentProfile.school_id || 'default'}`;
+      } else if (type === 'district') {
+        endpoint = `${API}/rankings/district/${studentProfile.district}`;
+      } else {
+        endpoint = `${API}/rankings/national`;
+      }
+      
+      const response = await axios.get(endpoint, { withCredentials: true });
+      setRankings(prev => ({ ...prev, [type]: response.data }));
+    } catch (error) {
+      console.error('Error fetching rankings:', error);
+      toast.error('Erro ao carregar rankings');
+    } finally {
+      setRankingsLoading(false);
+    }
+  }, [studentProfile]);
+
+  // Fetch friends data
+  const fetchFriends = useCallback(async () => {
+    setFriendsLoading(true);
+    try {
+      const response = await axios.get(`${API}/friends/my`, { withCredentials: true });
+      setFriends(response.data || []);
+    } catch (error) {
+      console.error('Error fetching friends:', error);
+    } finally {
+      setFriendsLoading(false);
+    }
+  }, []);
+
+  // Search for friends
+  const handleSearchFriends = async () => {
+    if (!friendSearch.trim()) return;
+    
+    try {
+      const response = await axios.get(`${API}/friends/search`, {
+        params: { query: friendSearch },
+        withCredentials: true
+      });
+      setSearchResults(response.data || []);
+    } catch (error) {
+      console.error('Error searching friends:', error);
+      toast.error('Erro ao pesquisar');
+    }
+  };
+
+  // Send friend request
+  const handleSendFriendRequest = async (toUserId) => {
+    try {
+      await axios.post(`${API}/friends/request`, null, {
+        params: { to_user_id: toUserId },
+        withCredentials: true
+      });
+      toast.success('Pedido de amizade enviado! O pai do aluno será notificado.');
+      setSearchResults(prev => prev.filter(r => r.user_id !== toUserId));
+    } catch (error) {
+      console.error('Error sending friend request:', error);
+      const msg = error.response?.data?.detail || 'Erro ao enviar pedido';
+      toast.error(msg);
+    }
+  };
+
+  // Load rankings when tab changes
+  useEffect(() => {
+    if (activeTab === 'rankings' && studentProfile) {
+      fetchRankings(rankingType);
+    }
+  }, [activeTab, rankingType, studentProfile, fetchRankings]);
+
+  // Load friends when tab changes
+  useEffect(() => {
+    if (activeTab === 'friends') {
+      fetchFriends();
+    }
+  }, [activeTab, fetchFriends]);
+
   const handleLogout = async () => {
     await logout();
     navigate('/login');
@@ -670,6 +754,242 @@ const StudentDashboard = () => {
                 <div className="col-span-full text-center py-12">
                   <BookOpen className="mx-auto text-slate-300 mb-4" size={48} />
                   <p className="text-slate-500">A carregar disciplinas...</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Rankings Tab */}
+        {activeTab === 'rankings' && (
+          <div>
+            <div className="bg-white rounded-3xl p-6 shadow-xl mb-6">
+              <h2 className="text-2xl font-bold text-slate-800 mb-2" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+                <Trophy className="inline mr-2 text-yellow-500" />
+                Rankings
+              </h2>
+              <p className="text-slate-600" style={{ fontFamily: 'Nunito, sans-serif' }}>
+                Vê como te comparas com outros alunos!
+              </p>
+            </div>
+
+            {/* Ranking Type Selector */}
+            <div className="flex gap-2 mb-6">
+              {[
+                { id: 'school', label: 'Minha Escola', icon: School },
+                { id: 'district', label: 'Meu Distrito', icon: MapPin },
+                { id: 'national', label: 'Nacional', icon: Crown },
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setRankingType(tab.id)}
+                  className={`flex items-center gap-2 px-4 py-3 rounded-xl font-semibold transition ${
+                    rankingType === tab.id
+                      ? 'bg-gradient-to-r from-purple-500 to-blue-600 text-white shadow-lg'
+                      : 'bg-white text-slate-600 hover:bg-slate-50 shadow'
+                  }`}
+                  data-testid={`ranking-type-${tab.id}`}
+                >
+                  <tab.icon size={18} />
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Rankings List */}
+            <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
+              {rankingsLoading ? (
+                <div className="p-12 text-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-purple-500 mx-auto"></div>
+                  <p className="mt-4 text-slate-500">A carregar rankings...</p>
+                </div>
+              ) : rankings[rankingType]?.entries?.length > 0 ? (
+                <div>
+                  {/* User's Position Highlight */}
+                  {rankings[rankingType]?.user_position && (
+                    <div className="bg-gradient-to-r from-purple-100 to-blue-100 p-4 border-b border-slate-200">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-slate-700">A tua posição:</span>
+                        <span className="text-2xl font-bold text-purple-600">
+                          #{rankings[rankingType].user_position} de {rankings[rankingType].total_players}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Rankings Table */}
+                  <div className="divide-y divide-slate-100">
+                    {rankings[rankingType].entries.map((entry, index) => (
+                      <div
+                        key={entry.user_id}
+                        className={`flex items-center gap-4 p-4 ${
+                          entry.user_id === studentProfile?.user_id
+                            ? 'bg-purple-50'
+                            : 'hover:bg-slate-50'
+                        } transition`}
+                      >
+                        {/* Rank */}
+                        <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg ${
+                          index === 0 ? 'bg-gradient-to-br from-yellow-400 to-amber-500 text-white' :
+                          index === 1 ? 'bg-gradient-to-br from-slate-300 to-slate-400 text-white' :
+                          index === 2 ? 'bg-gradient-to-br from-amber-600 to-orange-700 text-white' :
+                          'bg-slate-100 text-slate-600'
+                        }`}>
+                          {index < 3 ? (
+                            <Crown size={20} />
+                          ) : (
+                            entry.rank
+                          )}
+                        </div>
+
+                        {/* Player Info */}
+                        <div className="flex-1">
+                          <h4 className="font-bold text-slate-800" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+                            {entry.nickname}
+                            {entry.user_id === studentProfile?.user_id && (
+                              <span className="ml-2 text-xs bg-purple-500 text-white px-2 py-0.5 rounded-full">Tu</span>
+                            )}
+                          </h4>
+                          <p className="text-sm text-slate-500">
+                            {entry.school_name} • {entry.district}
+                          </p>
+                        </div>
+
+                        {/* Stats */}
+                        <div className="text-right">
+                          <div className="flex items-center gap-1 text-purple-600 font-bold">
+                            <Star size={16} className="text-yellow-500" />
+                            {entry.xp} XP
+                          </div>
+                          <p className="text-xs text-slate-500 capitalize">
+                            {entry.settlement_level === 'village' ? 'Aldeia' :
+                             entry.settlement_level === 'town' ? 'Vila' :
+                             entry.settlement_level === 'city' ? 'Cidade' : 'Metrópole'}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="p-12 text-center">
+                  <Trophy className="mx-auto text-slate-300 mb-4" size={48} />
+                  <p className="text-slate-500">Ainda não há rankings disponíveis.</p>
+                  <p className="text-sm text-slate-400 mt-1">Completa quizzes para aparecer no ranking!</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Friends Tab */}
+        {activeTab === 'friends' && (
+          <div>
+            <div className="bg-white rounded-3xl p-6 shadow-xl mb-6">
+              <h2 className="text-2xl font-bold text-slate-800 mb-2" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+                <Users className="inline mr-2 text-blue-500" />
+                Amigos
+              </h2>
+              <p className="text-slate-600" style={{ fontFamily: 'Nunito, sans-serif' }}>
+                Conecta-te com outros alunos e compara progressos!
+              </p>
+            </div>
+
+            {/* Search Bar */}
+            <div className="bg-white rounded-2xl p-4 shadow-lg mb-6">
+              <div className="flex gap-3">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={20} />
+                  <input
+                    type="text"
+                    placeholder="Pesquisar por nome ou escola..."
+                    value={friendSearch}
+                    onChange={(e) => setFriendSearch(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                    data-testid="friend-search-input"
+                  />
+                </div>
+                <button
+                  onClick={handleSearchFriends}
+                  className="px-6 py-3 bg-gradient-to-r from-purple-500 to-blue-600 text-white font-semibold rounded-xl hover:opacity-90 transition"
+                  data-testid="friend-search-btn"
+                >
+                  Pesquisar
+                </button>
+              </div>
+            </div>
+
+            {/* Search Results */}
+            {searchResults.length > 0 && (
+              <div className="bg-white rounded-3xl shadow-xl mb-6 overflow-hidden">
+                <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-4">
+                  <h3 className="font-bold text-white" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+                    Resultados da Pesquisa
+                  </h3>
+                </div>
+                <div className="divide-y divide-slate-100">
+                  {searchResults.map(result => (
+                    <div key={result.user_id} className="flex items-center gap-4 p-4 hover:bg-slate-50 transition">
+                      <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold">
+                        {result.nickname?.[0]?.toUpperCase() || '?'}
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-bold text-slate-800">{result.nickname}</h4>
+                        <p className="text-sm text-slate-500">{result.school_name} • Nível {result.level}</p>
+                      </div>
+                      <button
+                        onClick={() => handleSendFriendRequest(result.user_id)}
+                        className="p-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
+                        data-testid={`add-friend-${result.user_id}`}
+                      >
+                        <UserPlus size={20} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Friends List */}
+            <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
+              <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-4">
+                <h3 className="font-bold text-white" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+                  Os Meus Amigos ({friends.length})
+                </h3>
+              </div>
+
+              {friendsLoading ? (
+                <div className="p-12 text-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-green-500 mx-auto"></div>
+                  <p className="mt-4 text-slate-500">A carregar amigos...</p>
+                </div>
+              ) : friends.length > 0 ? (
+                <div className="divide-y divide-slate-100">
+                  {friends.map(friend => (
+                    <div key={friend.user_id} className="flex items-center gap-4 p-4 hover:bg-slate-50 transition">
+                      <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center text-white font-bold">
+                        {friend.nickname?.[0]?.toUpperCase() || '?'}
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-bold text-slate-800">{friend.nickname}</h4>
+                        <p className="text-sm text-slate-500">{friend.school_name} • {friend.district}</p>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-sm font-semibold text-purple-600">Nível {friend.level}</span>
+                        <p className="text-xs text-slate-500 capitalize">
+                          {friend.settlement_level === 'village' ? 'Aldeia' :
+                           friend.settlement_level === 'town' ? 'Vila' :
+                           friend.settlement_level === 'city' ? 'Cidade' : 'Metrópole'}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-12 text-center">
+                  <Users className="mx-auto text-slate-300 mb-4" size={48} />
+                  <p className="text-slate-500">Ainda não tens amigos.</p>
+                  <p className="text-sm text-slate-400 mt-1">Usa a pesquisa acima para encontrar colegas!</p>
                 </div>
               )}
             </div>

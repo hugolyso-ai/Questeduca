@@ -336,6 +336,8 @@ async def get_game_state(
             "created_at": datetime.now(timezone.utc).isoformat()
         }
         await db.game_states.insert_one(game_state)
+        # Remove MongoDB _id field added by insert_one
+        game_state.pop("_id", None)
     
     return game_state
 
