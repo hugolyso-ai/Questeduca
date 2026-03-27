@@ -6,7 +6,8 @@ import {
   LogOut, Coins, Diamond, Star, Building2, BookOpen, 
   Trophy, Clock, ChevronUp, Play, Check, X, Sparkles,
   Home, School, Library, Store, TreePine, Award, Medal,
-  Crown, Users, MapPin, Search, UserPlus, Settings, Eye, Calendar
+  Crown, Users, MapPin, Search, UserPlus, Settings, Eye, Calendar,
+  Download, Wifi, WifiOff
 } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
@@ -15,6 +16,9 @@ import AccessibilityPanel from '../components/AccessibilityPanel';
 import { AchievementsList } from '../components/AchievementsSystem';
 import WeeklyChallenges from '../components/WeeklyChallenges';
 import MonthlyLeagues from '../components/MonthlyLeagues';
+import InteractiveTutorial from '../components/InteractiveTutorial';
+import { OnlineStatusIndicator, OfflineBanner, OfflineCacheManager } from '../components/OfflineComponents';
+import { useOnlineStatus } from '../hooks/useOffline';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -304,6 +308,11 @@ const StudentDashboard = () => {
 
   // Accessibility state
   const [showAccessibility, setShowAccessibility] = useState(false);
+
+  // Tutorial and Offline state
+  const [showTutorial, setShowTutorial] = useState(true);
+  const [showOfflineManager, setShowOfflineManager] = useState(false);
+  const isOnline = useOnlineStatus();
 
   // Calcular nível total dos edifícios
   const totalBuildingLevel = Object.values(gameState.buildings).reduce((a, b) => a + b, 0);
@@ -597,7 +606,8 @@ const StudentDashboard = () => {
             </div>
 
             {/* Resources */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3" data-testid="resources-bar">
+              <OnlineStatusIndicator />
               <div className="bg-gradient-to-r from-yellow-400 to-amber-500 px-4 py-2 rounded-full flex items-center gap-2 shadow-md">
                 <Coins className="text-yellow-900" size={18} />
                 <span className="font-bold text-yellow-900">{gameState.coins}</span>
@@ -610,6 +620,14 @@ const StudentDashboard = () => {
                 <Star className="text-white" size={18} />
                 <span className="font-bold text-white">{gameState.xp} XP</span>
               </div>
+              <button
+                onClick={() => setShowOfflineManager(true)}
+                className="p-2 hover:bg-slate-100 rounded-full transition"
+                data-testid="offline-manager-btn"
+                title="Modo Offline"
+              >
+                <Download size={20} className="text-slate-600" />
+              </button>
               <button
                 onClick={() => setShowAccessibility(true)}
                 className="p-2 hover:bg-slate-100 rounded-full transition"
@@ -1120,6 +1138,24 @@ const StudentDashboard = () => {
       <AccessibilityPanel
         isOpen={showAccessibility}
         onClose={() => setShowAccessibility(false)}
+      />
+
+      {/* Interactive Tutorial */}
+      {showTutorial && (
+        <InteractiveTutorial
+          userRole="student"
+          onComplete={() => setShowTutorial(false)}
+        />
+      )}
+
+      {/* Offline Banner */}
+      <OfflineBanner />
+
+      {/* Offline Cache Manager */}
+      <OfflineCacheManager
+        isOpen={showOfflineManager}
+        onClose={() => setShowOfflineManager(false)}
+        schoolYear={studentProfile?.school_year}
       />
     </div>
   );

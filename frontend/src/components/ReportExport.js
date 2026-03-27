@@ -1,6 +1,10 @@
-import React, { useState } from 'react';
-import { FileText, Download, Calendar, Award, Trophy, TrendingUp, Clock, Check } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { FileText, Download, Calendar, Award, Trophy, TrendingUp, Clock, Check, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
+import axios from 'axios';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
 
 // Função para gerar PDF de relatório de progresso
 const generateProgressReport = async (studentData, parentName) => {
@@ -35,6 +39,8 @@ const generateProgressReport = async (studentData, parentName) => {
         .grade-good { color: #16a34a; }
         .grade-medium { color: #ca8a04; }
         .grade-low { color: #dc2626; }
+        .history-table { margin-top: 15px; }
+        .history-table th, .history-table td { padding: 8px 12px; font-size: 13px; }
       </style>
     </head>
     <body>
@@ -47,7 +53,7 @@ const generateProgressReport = async (studentData, parentName) => {
         <div class="section-title">👤 Informações do Aluno</div>
         <div class="card">
           <table>
-            <tr><td><strong>Nome:</strong></td><td>${studentData.nickname || 'N/A'}</td></tr>
+            <tr><td><strong>Nome:</strong></td><td>${studentData.nickname || studentData.name || 'N/A'}</td></tr>
             <tr><td><strong>Ano Escolar:</strong></td><td>${studentData.school_year || 'N/A'}º Ano</td></tr>
             <tr><td><strong>Escola:</strong></td><td>${studentData.school_name || 'N/A'}</td></tr>
             <tr><td><strong>Data do Relatório:</strong></td><td>${new Date().toLocaleDateString('pt-PT')}</td></tr>
@@ -111,12 +117,7 @@ const generateProgressReport = async (studentData, parentName) => {
               </tr>
             </thead>
             <tbody>
-              ${(studentData.subjects_performance || [
-                { name: 'Matemática', quizzes: 15, accuracy: 85 },
-                { name: 'Português', quizzes: 12, accuracy: 78 },
-                { name: 'Ciências', quizzes: 8, accuracy: 92 },
-                { name: 'História', quizzes: 6, accuracy: 70 }
-              ]).map(s => `
+              ${(studentData.subjects_performance || []).map(s => `
                 <tr>
                   <td>${s.name}</td>
                   <td>${s.quizzes}</td>
@@ -132,10 +133,37 @@ const generateProgressReport = async (studentData, parentName) => {
       </div>
 
       <div class="section">
+        <div class="section-title">📝 Histórico Recente de Quizzes</div>
+        <div class="card">
+          <table class="history-table">
+            <thead>
+              <tr>
+                <th>Disciplina</th>
+                <th>Data</th>
+                <th>Corretas</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${(studentData.quiz_history || []).slice(0, 10).map(q => `
+                <tr>
+                  <td>${q.subject}</td>
+                  <td>${q.date ? new Date(q.date).toLocaleDateString('pt-PT') : '-'}</td>
+                  <td>${q.correct}</td>
+                  <td>${q.total}</td>
+                </tr>
+              `).join('')}
+              ${(!studentData.quiz_history || studentData.quiz_history.length === 0) ? '<tr><td colspan="4" style="text-align: center; color: #94a3b8;">Sem histórico disponível</td></tr>' : ''}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="section">
         <div class="section-title">🏆 Conquistas Desbloqueadas</div>
         <div class="card">
           <div class="achievements">
-            ${(studentData.achievements || ['Primeiro Quiz', 'Estudante Dedicado', 'Construtor']).map(a => 
+            ${(studentData.achievements || ['Aventureiro']).map(a => 
               `<span class="achievement">🎖️ ${a}</span>`
             ).join('')}
           </div>
@@ -220,6 +248,8 @@ const ReportExportModal = ({ isOpen, onClose, children }) => {
   const [selectedReport, setSelectedReport] = useState('progress');
   const [dateRange, setDateRange] = useState('month');
   const [loading, setLoading] = useState(false);
+  const [reportData, setReportData] = useState(null);
+  const [fetchingData, setFetchingData] = useState(false);
 
   const reportTypes = [
     { id: 'progress', name: 'Relatório de Progresso', icon: TrendingUp, description: 'Visão geral do desempenho' },
@@ -228,24 +258,52 @@ const ReportExportModal = ({ isOpen, onClose, children }) => {
     { id: 'ranking', name: 'Classificação', icon: Trophy, description: 'Posição nas ligas e rankings' }
   ];
 
+  // Fetch real data when modal opens
+  useEffect(() => {
+    const fetchReportData = async () => {
+      if (isOpen && children?.student_id) {
+        setFetchingData(true);
+        try {
+          const response = await axios.get(`${API}/reports/student/${children.student_id}`, {
+            withCredentials: true
+          });
+          setReportData(response.data);
+        } catch (error) {
+          console.error('Error fetching report data:', error);
+          // Fallback to children data if API fails
+          setReportData(children);
+        } finally {
+          setFetchingData(false);
+        }
+      }
+    };
+    fetchReportData();
+  }, [isOpen, children?.student_id]);
+
   const handleExport = async () => {
     setLoading(true);
     
-    // Simular geração do relatório
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // Abrir janela de impressão com relatório
-    const reportHTML = await generateProgressReport(children || {});
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(reportHTML);
-    printWindow.document.close();
-    
-    setTimeout(() => {
-      printWindow.print();
-    }, 500);
-    
-    setLoading(false);
-    toast.success('Relatório gerado com sucesso!');
+    try {
+      // Use fetched data or children data as fallback
+      const dataToUse = reportData || children || {};
+      
+      // Generate and open report
+      const reportHTML = await generateProgressReport(dataToUse);
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(reportHTML);
+      printWindow.document.close();
+      
+      setTimeout(() => {
+        printWindow.print();
+      }, 500);
+      
+      toast.success('Relatório gerado com sucesso!');
+    } catch (error) {
+      console.error('Error generating report:', error);
+      toast.error('Erro ao gerar relatório');
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -350,10 +408,16 @@ const ReportExportModal = ({ isOpen, onClose, children }) => {
             </button>
             <button
               onClick={handleExport}
-              disabled={loading}
+              disabled={loading || fetchingData}
               className="flex-1 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold rounded-xl hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center gap-2"
+              data-testid="generate-pdf-btn"
             >
-              {loading ? (
+              {fetchingData ? (
+                <>
+                  <RefreshCw className="animate-spin" size={18} />
+                  A carregar dados...
+                </>
+              ) : loading ? (
                 <>
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
                   A gerar...

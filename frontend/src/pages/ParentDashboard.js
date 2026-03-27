@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Users, CreditCard, Settings, LogOut, TrendingUp, Award, Plus, X, School, BookOpen, User, Bell, Gift, Check, Gamepad2 } from 'lucide-react';
+import { Users, CreditCard, Settings, LogOut, TrendingUp, Award, Plus, X, School, BookOpen, User, Bell, Gift, Check, Gamepad2, FileText, Download } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
 import MiniGamesHub from '../components/MiniGamesHub';
+import { ReportExportModal, ExportReportButton } from '../components/ReportExport';
+import InteractiveTutorial from '../components/InteractiveTutorial';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -340,6 +342,10 @@ const ParentDashboard = () => {
   const [parentProfile, setParentProfile] = useState({ credit_balance: 0 });
   const [showMiniGames, setShowMiniGames] = useState(false);
   const [selectedChildForGame, setSelectedChildForGame] = useState(null);
+  // P5: Tutorial and Report Export state
+  const [showTutorial, setShowTutorial] = useState(true);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [selectedChildForReport, setSelectedChildForReport] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -660,21 +666,31 @@ const ParentDashboard = () => {
                         <span className="font-semibold text-blue-600">Nível {child.level || 1}</span>
                       </div>
                     </div>
-                    <div className="mt-4 pt-4 border-t border-slate-100 flex gap-2">
-                      <button className="flex-1 py-2 bg-blue-100 text-blue-700 font-semibold rounded-lg hover:bg-blue-200 transition text-sm">
-                        Ver Progresso
-                      </button>
-                      <button 
-                        onClick={() => {
-                          setSelectedChildForGame(child);
-                          setShowMiniGames(true);
-                        }}
-                        className="flex-1 py-2 bg-gradient-to-r from-purple-500 to-blue-600 text-white font-semibold rounded-lg hover:opacity-90 transition text-sm flex items-center justify-center gap-1"
-                        data-testid={`play-with-${child.student_id}`}
-                      >
-                        <Gamepad2 size={16} />
-                        Jogar
-                      </button>
+                    <div className="mt-4 pt-4 border-t border-slate-100 space-y-2">
+                      <div className="flex gap-2">
+                        <button 
+                          onClick={() => {
+                            setSelectedChildForReport(child);
+                            setShowReportModal(true);
+                          }}
+                          className="flex-1 py-2 bg-blue-100 text-blue-700 font-semibold rounded-lg hover:bg-blue-200 transition text-sm flex items-center justify-center gap-1"
+                          data-testid={`export-report-${child.student_id}`}
+                        >
+                          <FileText size={16} />
+                          Relatório PDF
+                        </button>
+                        <button 
+                          onClick={() => {
+                            setSelectedChildForGame(child);
+                            setShowMiniGames(true);
+                          }}
+                          className="flex-1 py-2 bg-gradient-to-r from-purple-500 to-blue-600 text-white font-semibold rounded-lg hover:opacity-90 transition text-sm flex items-center justify-center gap-1"
+                          data-testid={`play-with-${child.student_id}`}
+                        >
+                          <Gamepad2 size={16} />
+                          Jogar
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -1015,6 +1031,25 @@ const ParentDashboard = () => {
             setShowMiniGames(false);
             setSelectedChildForGame(null);
           }}
+        />
+      )}
+
+      {/* Report Export Modal */}
+      <ReportExportModal
+        isOpen={showReportModal}
+        onClose={() => {
+          setShowReportModal(false);
+          setSelectedChildForReport(null);
+        }}
+      >
+        {selectedChildForReport}
+      </ReportExportModal>
+
+      {/* Interactive Tutorial for Parents */}
+      {showTutorial && (
+        <InteractiveTutorial
+          userRole="parent"
+          onComplete={() => setShowTutorial(false)}
         />
       )}
     </div>

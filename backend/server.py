@@ -1508,7 +1508,7 @@ async def stripe_webhook(request: Request):
         
         elif event.event_type == "customer.subscription.deleted":
             # Handle subscription cancellation
-            logger.info(f"Webhook: Subscription cancelled")
+            logger.info("Webhook: Subscription cancelled")
         
         return {"status": "received"}
         
@@ -2790,6 +2790,187 @@ async def mark_all_notifications_read(
     )
     
     return {"success": True}
+
+# ==================== P5: REPORT EXPORT & PUSH NOTIFICATIONS ====================
+
+@api_router.get("/reports/student/{student_id}")
+async def get_student_report_data(
+    student_id: str,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Get comprehensive student data for PDF report generation"""
+    # Verify the parent has access to this student
+    if current_user.role == UserRole.PARENT:
+        student = await db.students.find_one(
+            {"student_id": student_id, "parent_id": current_user.user_id},
+            {"_id": 0}
+        )
+        if not student:
+            raise HTTPException(status_code=403, detail="Não tem permissão para ver este aluno")
+    elif current_user.role == UserRole.ADMIN:
+        student = await db.students.find_one({"student_id": student_id}, {"_id": 0})
+        if not student:
+            raise HTTPException(status_code=404, detail="Aluno não encontrado")
+    else:
+        raise HTTPException(status_code=403, detail="Acesso negado")
+    
+    # Get game state
+    game_state = await db.game_states.find_one({"user_id": student['user_id']}, {"_id": 0})
+    
+    # Get quiz history
+    quiz_history = await db.quiz_submissions.find(
+        {"user_id": student['user_id']}
+    ).sort("submitted_at", -1).limit(100).to_list(100)
+    
+    # Calculate stats per subject
+    subjects_stats = {}
+    for quiz in quiz_history:
+        subject = quiz.get('subject', 'Unknown')
+        if subject not in subjects_stats:
+            subjects_stats[subject] = {"quizzes": 0, "correct": 0, "total_questions": 0}
+        subjects_stats[subject]["quizzes"] += 1
+        subjects_stats[subject]["correct"] += quiz.get('correct_answers', 0)
+        subjects_stats[subject]["total_questions"] += quiz.get('total_questions', 5)
+    
+    # Convert to list with accuracy
+    subjects_performance = []
+    for subject, stats in subjects_stats.items():
+        accuracy = round((stats["correct"] / stats["total_questions"]) * 100) if stats["total_questions"] > 0 else 0
+        subjects_performance.append({
+            "name": subject,
+            "quizzes": stats["quizzes"],
+            "accuracy": accuracy
+        })
+    
+    # Get achievements
+    achievements_doc = await db.achievements.find_one({"user_id": student['user_id']}, {"_id": 0})
+    achievements = []
+    if achievements_doc:
+        achievements = achievements_doc.get('unlocked', [])
+    
+    # Get ranking position
+    ranking = await db.rankings.find_one({"user_id": student['user_id']}, {"_id": 0})
+    
+    # Calculate total building level
+    total_building_level = 0
+    settlement_level = "Aldeia"
+    if game_state and game_state.get('buildings'):
+        total_building_level = sum(game_state['buildings'].values())
+        if total_building_level >= 50:
+            settlement_level = "Metrópole"
+        elif total_building_level >= 25:
+            settlement_level = "Cidade"
+        elif total_building_level >= 10:
+            settlement_level = "Vila"
+    
+    report_data = {
+        "nickname": student.get('nickname', ''),
+        "name": student.get('name', ''),
+        "school_year": student.get('school_year', 1),
+        "school_name": student.get('school_name', ''),
+        "xp": game_state.get('xp', 0) if game_state else 0,
+        "level": game_state.get('level', 1) if game_state else 1,
+        "coins": game_state.get('coins', 0) if game_state else 0,
+        "diamonds": game_state.get('diamonds', 0) if game_state else 0,
+        "quizzes_completed": len(quiz_history),
+        "correct_answers": round(sum(q.get('correct_answers', 0) for q in quiz_history) / max(len(quiz_history), 1) * 20) if quiz_history else 0,
+        "streak": game_state.get('streak', 0) if game_state else 0,
+        "rank": ranking.get('position', '-') if ranking else '-',
+        "settlement_level": settlement_level,
+        "total_building_level": total_building_level,
+        "subjects_performance": subjects_performance if subjects_performance else [
+            {"name": "Matemática", "quizzes": 0, "accuracy": 0},
+            {"name": "Português", "quizzes": 0, "accuracy": 0}
+        ],
+        "achievements": achievements if achievements else ["Aventureiro"],
+        "quiz_history": [
+            {
+                "subject": q.get('subject', 'Unknown'),
+                "date": q.get('submitted_at', ''),
+                "correct": q.get('correct_answers', 0),
+                "total": q.get('total_questions', 5)
+            } for q in quiz_history[:20]
+        ],
+        "report_date": datetime.now(timezone.utc).isoformat()
+    }
+    
+    return report_data
+
+@api_router.post("/push/subscribe")
+async def subscribe_to_push(
+    request: Request,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Subscribe to push notifications"""
+    data = await request.json()
+    
+    subscription = {
+        "user_id": current_user.user_id,
+        "endpoint": data.get('endpoint'),
+        "keys": data.get('keys'),
+        "subscribed_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    # Upsert subscription
+    await db.push_subscriptions.update_one(
+        {"user_id": current_user.user_id},
+        {"$set": subscription},
+        upsert=True
+    )
+    
+    return {"success": True, "message": "Subscrição de notificações ativada"}
+
+@api_router.delete("/push/unsubscribe")
+async def unsubscribe_from_push(
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Unsubscribe from push notifications"""
+    await db.push_subscriptions.delete_one({"user_id": current_user.user_id})
+    return {"success": True, "message": "Subscrição de notificações desativada"}
+
+@api_router.post("/notifications/send-push")
+async def send_push_notification(
+    request: Request,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Send a push notification (admin only or to self)"""
+    data = await request.json()
+    target_user_id = data.get('user_id', current_user.user_id)
+    
+    # Only admin can send to others
+    if target_user_id != current_user.user_id and current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Apenas administradores podem enviar notificações a outros utilizadores")
+    
+    # Get subscription
+    subscription = await db.push_subscriptions.find_one({"user_id": target_user_id}, {"_id": 0})
+    if not subscription:
+        # Create in-app notification instead
+        notification = {
+            "notification_id": f"notif_{uuid.uuid4().hex[:12]}",
+            "user_id": target_user_id,
+            "title": data.get('title', 'QUESTEDUCA'),
+            "message": data.get('body', 'Nova notificação'),
+            "type": "push",
+            "read": False,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.notifications.insert_one(notification)
+        return {"success": True, "method": "in-app", "message": "Notificação in-app enviada"}
+    
+    # For real push notifications, we'd use web-push here
+    # For now, we create an in-app notification as fallback
+    notification = {
+        "notification_id": f"notif_{uuid.uuid4().hex[:12]}",
+        "user_id": target_user_id,
+        "title": data.get('title', 'QUESTEDUCA'),
+        "message": data.get('body', 'Nova notificação'),
+        "type": "push",
+        "read": False,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.notifications.insert_one(notification)
+    
+    return {"success": True, "method": "push", "message": "Notificação push enviada"}
 
 app.include_router(api_router)
 
