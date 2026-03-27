@@ -1,8 +1,85 @@
 @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.cdnfonts.com/css/opendyslexic');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Accessibility Classes */
+.dyslexia-mode {
+  font-family: 'OpenDyslexic', 'Nunito', sans-serif !important;
+  letter-spacing: 0.05em;
+  word-spacing: 0.1em;
+  line-height: 1.8;
+}
+
+.dyslexia-mode * {
+  font-family: 'OpenDyslexic', 'Nunito', sans-serif !important;
+}
+
+/* High Contrast Mode */
+.high-contrast {
+  --background: 0 0% 0%;
+  --foreground: 0 0% 100%;
+  --card: 0 0% 5%;
+  --card-foreground: 0 0% 100%;
+}
+
+.high-contrast body,
+.high-contrast .bg-white {
+  background-color: #000 !important;
+  color: #fff !important;
+}
+
+.high-contrast .text-slate-600,
+.high-contrast .text-slate-500,
+.high-contrast .text-slate-700,
+.high-contrast .text-slate-800,
+.high-contrast .text-slate-900 {
+  color: #fff !important;
+}
+
+.high-contrast .bg-slate-50,
+.high-contrast .bg-slate-100 {
+  background-color: #1a1a1a !important;
+}
+
+.high-contrast .border-slate-200,
+.high-contrast .border-slate-100 {
+  border-color: #fff !important;
+}
+
+/* Colorblind Modes - Protanopia (red-blind) */
+.colorblind-protanopia {
+  filter: url('#protanopia-filter');
+}
+
+/* Colorblind Modes - Deuteranopia (green-blind) */
+.colorblind-deuteranopia {
+  filter: url('#deuteranopia-filter');
+}
+
+/* Colorblind Modes - Tritanopia (blue-blind) */
+.colorblind-tritanopia {
+  filter: url('#tritanopia-filter');
+}
+
+/* Text Size Options */
+.text-size-small {
+  font-size: 0.875rem;
+}
+
+.text-size-medium {
+  font-size: 1rem;
+}
+
+.text-size-large {
+  font-size: 1.125rem;
+}
+
+.text-size-xlarge {
+  font-size: 1.25rem;
+}
 
 body {
     margin: 0;

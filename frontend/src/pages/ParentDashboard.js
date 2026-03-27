@@ -336,20 +336,23 @@ const ParentDashboard = () => {
   const [checkoutLoading, setCheckoutLoading] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [codeRegistering, setCodeRegistering] = useState(false);
+  const [parentProfile, setParentProfile] = useState({ credit_balance: 0 });
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [pricesRes, districtsRes, childrenRes, notificationsRes] = await Promise.all([
+        const [pricesRes, districtsRes, childrenRes, notificationsRes, profileRes] = await Promise.all([
           axios.get(`${API}/subscriptions/prices`),
           axios.get(`${API}/districts`),
           axios.get(`${API}/parents/me/children`, { withCredentials: true }),
-          axios.get(`${API}/parents/me/notifications`, { withCredentials: true }).catch(() => ({ data: [] }))
+          axios.get(`${API}/parents/me/notifications`, { withCredentials: true }).catch(() => ({ data: [] })),
+          axios.get(`${API}/parents/me`, { withCredentials: true }).catch(() => ({ data: { credit_balance: 0 } }))
         ]);
         setSubscriptionPrices(pricesRes.data);
         setDistricts(districtsRes.data);
         setChildren(childrenRes.data || []);
         setNotifications(notificationsRes.data || []);
+        setParentProfile(profileRes.data || { credit_balance: 0 });
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -482,6 +485,7 @@ const ParentDashboard = () => {
               { id: 'overview', label: 'Visão Geral', icon: TrendingUp },
               { id: 'children', label: 'Meus Filhos', icon: Users },
               { id: 'subscription', label: 'Subscrição', icon: CreditCard },
+              { id: 'giftcards', label: 'Giftcards', icon: Gift },
             ].map(tab => (
               <button
                 key={tab.id}
@@ -825,6 +829,134 @@ const ParentDashboard = () => {
                   O código será permanentemente associado à sua conta para todas as subscrições futuras.
                 </p>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Giftcards Tab */}
+        {activeTab === 'giftcards' && (
+          <div>
+            {/* Header */}
+            <div className="bg-white rounded-3xl p-6 shadow-lg mb-6">
+              <h2 className="text-2xl font-bold text-slate-900 mb-2" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+                <Gift className="inline mr-2 text-purple-500" size={28} />
+                Giftcards
+              </h2>
+              <p className="text-slate-600" style={{ fontFamily: 'Nunito, sans-serif' }}>
+                Compre giftcards para oferecer ou adicione crédito à sua conta resgatando um código.
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Buy Giftcard */}
+              <div className="bg-gradient-to-br from-purple-500 to-pink-500 rounded-3xl p-6 text-white shadow-xl">
+                <h3 className="text-xl font-bold mb-4" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+                  Comprar Giftcard
+                </h3>
+                <p className="text-white/80 mb-6 text-sm">
+                  Escolha um valor e receba um código único para partilhar.
+                </p>
+                <div className="grid grid-cols-3 gap-3 mb-4">
+                  {[5, 10, 20].map(amount => (
+                    <button
+                      key={amount}
+                      onClick={async () => {
+                        try {
+                          const response = await axios.post(`${API}/giftcards/purchase`, 
+                            { amount, origin_url: window.location.origin },
+                            { withCredentials: true }
+                          );
+                          if (response.data.url) {
+                            window.location.href = response.data.url;
+                          }
+                        } catch (error) {
+                          toast.error(error.response?.data?.detail || 'Erro ao processar compra');
+                        }
+                      }}
+                      className="bg-white/20 hover:bg-white/30 rounded-xl py-4 font-bold text-lg transition"
+                      data-testid={`buy-giftcard-${amount}`}
+                    >
+                      €{amount}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-white/60 text-center">
+                  Pagamento seguro via Stripe
+                </p>
+              </div>
+
+              {/* Redeem Giftcard */}
+              <div className="bg-white rounded-3xl p-6 shadow-lg">
+                <h3 className="text-xl font-bold text-slate-900 mb-4" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+                  Resgatar Giftcard
+                </h3>
+                <p className="text-slate-600 text-sm mb-4">
+                  Introduza o código do giftcard para adicionar crédito à sua conta.
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="GIFT-XXXXXXXX"
+                    className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent font-mono uppercase"
+                    data-testid="redeem-code-input"
+                    id="redeem-code-input"
+                  />
+                  <button
+                    onClick={async () => {
+                      const code = document.getElementById('redeem-code-input').value;
+                      if (!code) {
+                        toast.error('Introduza um código');
+                        return;
+                      }
+                      try {
+                        const response = await axios.post(`${API}/giftcards/redeem`, 
+                          { code },
+                          { withCredentials: true }
+                        );
+                        toast.success(response.data.message || 'Giftcard resgatado com sucesso!');
+                        document.getElementById('redeem-code-input').value = '';
+                      } catch (error) {
+                        toast.error(error.response?.data?.detail || 'Código inválido ou já utilizado');
+                      }
+                    }}
+                    className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold rounded-xl hover:opacity-90 transition"
+                    data-testid="redeem-btn"
+                  >
+                    Resgatar
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Credit Balance */}
+            <div className="mt-6 bg-gradient-to-r from-amber-400 to-orange-500 rounded-3xl p-6 text-white shadow-xl">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-bold" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+                    Saldo da Conta
+                  </h3>
+                  <p className="text-white/80 text-sm">
+                    Crédito disponível para subscrições
+                  </p>
+                </div>
+                <div className="text-4xl font-bold">
+                  €{parentProfile?.credit_balance?.toFixed(2) || '0.00'}
+                </div>
+              </div>
+            </div>
+
+            {/* My Purchased Giftcards */}
+            <div className="mt-6 bg-white rounded-3xl shadow-lg overflow-hidden">
+              <div className="p-6 border-b border-slate-100">
+                <h3 className="text-xl font-bold text-slate-900" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+                  Giftcards Comprados
+                </h3>
+              </div>
+              <div className="p-6">
+                <p className="text-slate-500 text-center py-8">
+                  Os giftcards que comprar aparecerão aqui com os respetivos códigos.
+                </p>
+              </div>
             </div>
           </div>
         )}

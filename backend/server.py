@@ -199,6 +199,32 @@ async def get_my_student_profile(
     
     return StudentProfile(**student)
 
+@api_router.get("/parents/me")
+async def get_my_parent_profile(
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Get current parent profile"""
+    if current_user.role != UserRole.PARENT:
+        raise HTTPException(status_code=403, detail="Apenas para pais")
+    
+    parent = await db.parents.find_one({"user_id": current_user.user_id}, {"_id": 0})
+    if not parent:
+        # Create default profile
+        parent = {
+            "user_id": current_user.user_id,
+            "children_ids": [],
+            "credit_balance": 0,
+            "subscription_type": "free",
+            "premium_active": False
+        }
+        await db.parents.insert_one(parent)
+    
+    # Ensure credit_balance exists
+    if "credit_balance" not in parent:
+        parent["credit_balance"] = 0
+    
+    return parent
+
 @api_router.get("/parents/me/children")
 async def get_my_children(
     current_user: User = Depends(get_current_user_dep)

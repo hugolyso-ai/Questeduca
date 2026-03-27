@@ -3,6 +3,7 @@ import React from "react";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { Toaster } from 'sonner';
 import { AuthProvider } from "./context/AuthContext";
+import { AccessibilityProvider } from "./context/AccessibilityContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AuthCallback from "./components/AuthCallback";
 
@@ -97,10 +98,12 @@ function AppRouter() {
 function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <Toaster position="top-right" richColors />
-        <AppRouter />
-      </AuthProvider>
+      <AccessibilityProvider>
+        <AuthProvider>
+          <Toaster position="top-right" richColors />
+          <AppRouter />
+        </AuthProvider>
+      </AccessibilityProvider>
     </BrowserRouter>
   );
 }

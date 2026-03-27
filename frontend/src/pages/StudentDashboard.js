@@ -1,14 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useAccessibility } from '../context/AccessibilityContext';
 import { useNavigate } from 'react-router-dom';
 import { 
   LogOut, Coins, Diamond, Star, Building2, BookOpen, 
   Trophy, Clock, ChevronUp, Play, Check, X, Sparkles,
   Home, School, Library, Store, TreePine, Award, Medal,
-  Crown, Users, MapPin, Search, UserPlus, Settings
+  Crown, Users, MapPin, Search, UserPlus, Settings, Eye
 } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
+import { PortugalFriendMap } from '../components/PortugalMap';
+import AccessibilityPanel from '../components/AccessibilityPanel';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -249,6 +252,7 @@ const QuizModal = ({ isOpen, quiz, onClose, onAnswer, currentQuestion, answered,
 // Componente Principal
 const StudentDashboard = () => {
   const { user, logout } = useAuth();
+  const { settings } = useAccessibility();
   const navigate = useNavigate();
   
   // Estado do jogo
@@ -293,6 +297,10 @@ const StudentDashboard = () => {
   const [friendSearch, setFriendSearch] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [friendsLoading, setFriendsLoading] = useState(false);
+  const [showMapView, setShowMapView] = useState(true);
+
+  // Accessibility state
+  const [showAccessibility, setShowAccessibility] = useState(false);
 
   // Calcular nível total dos edifícios
   const totalBuildingLevel = Object.values(gameState.buildings).reduce((a, b) => a + b, 0);
@@ -600,8 +608,16 @@ const StudentDashboard = () => {
                 <span className="font-bold text-white">{gameState.xp} XP</span>
               </div>
               <button
+                onClick={() => setShowAccessibility(true)}
+                className="p-2 hover:bg-slate-100 rounded-full transition"
+                data-testid="accessibility-btn"
+                title="Acessibilidade"
+              >
+                <Eye size={20} className="text-slate-600" />
+              </button>
+              <button
                 onClick={handleLogout}
-                className="p-2 hover:bg-slate-100 rounded-full transition ml-2"
+                className="p-2 hover:bg-slate-100 rounded-full transition"
                 data-testid="student-logout-btn"
               >
                 <LogOut size={20} className="text-slate-600" />
@@ -886,68 +902,122 @@ const StudentDashboard = () => {
         {activeTab === 'friends' && (
           <div>
             <div className="bg-white rounded-3xl p-6 shadow-xl mb-6">
-              <h2 className="text-2xl font-bold text-slate-800 mb-2" style={{ fontFamily: 'Fredoka, sans-serif' }}>
-                <Users className="inline mr-2 text-blue-500" />
-                Amigos
-              </h2>
-              <p className="text-slate-600" style={{ fontFamily: 'Nunito, sans-serif' }}>
-                Conecta-te com outros alunos e compara progressos!
-              </p>
-            </div>
-
-            {/* Search Bar */}
-            <div className="bg-white rounded-2xl p-4 shadow-lg mb-6">
-              <div className="flex gap-3">
-                <div className="flex-1 relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={20} />
-                  <input
-                    type="text"
-                    placeholder="Pesquisar por nome ou escola..."
-                    value={friendSearch}
-                    onChange={(e) => setFriendSearch(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
-                    data-testid="friend-search-input"
-                  />
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-800 mb-2" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+                    <Users className="inline mr-2 text-blue-500" />
+                    Amigos
+                  </h2>
+                  <p className="text-slate-600" style={{ fontFamily: 'Nunito, sans-serif' }}>
+                    Conecta-te com outros alunos e compara progressos!
+                  </p>
                 </div>
-                <button
-                  onClick={handleSearchFriends}
-                  className="px-6 py-3 bg-gradient-to-r from-purple-500 to-blue-600 text-white font-semibold rounded-xl hover:opacity-90 transition"
-                  data-testid="friend-search-btn"
-                >
-                  Pesquisar
-                </button>
+                {/* Toggle between Map and List view */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setShowMapView(true)}
+                    className={`px-4 py-2 rounded-xl font-semibold transition ${
+                      showMapView
+                        ? 'bg-gradient-to-r from-green-500 to-teal-600 text-white'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                    data-testid="toggle-map-view"
+                  >
+                    <MapPin className="inline mr-2" size={18} />
+                    Mapa
+                  </button>
+                  <button
+                    onClick={() => setShowMapView(false)}
+                    className={`px-4 py-2 rounded-xl font-semibold transition ${
+                      !showMapView
+                        ? 'bg-gradient-to-r from-purple-500 to-blue-600 text-white'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                    data-testid="toggle-list-view"
+                  >
+                    <Search className="inline mr-2" size={18} />
+                    Pesquisa
+                  </button>
+                </div>
               </div>
             </div>
 
-            {/* Search Results */}
-            {searchResults.length > 0 && (
-              <div className="bg-white rounded-3xl shadow-xl mb-6 overflow-hidden">
-                <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-4">
-                  <h3 className="font-bold text-white" style={{ fontFamily: 'Fredoka, sans-serif' }}>
-                    Resultados da Pesquisa
-                  </h3>
-                </div>
-                <div className="divide-y divide-slate-100">
-                  {searchResults.map(result => (
-                    <div key={result.user_id} className="flex items-center gap-4 p-4 hover:bg-slate-50 transition">
-                      <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold">
-                        {result.nickname?.[0]?.toUpperCase() || '?'}
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="font-bold text-slate-800">{result.nickname}</h4>
-                        <p className="text-sm text-slate-500">{result.school_name} • Nível {result.level}</p>
-                      </div>
-                      <button
-                        onClick={() => handleSendFriendRequest(result.user_id)}
-                        className="p-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
-                        data-testid={`add-friend-${result.user_id}`}
-                      >
-                        <UserPlus size={20} />
-                      </button>
+            {/* Map View */}
+            {showMapView ? (
+              <PortugalFriendMap
+                onSearch={async ({ district, query }) => {
+                  try {
+                    const response = await axios.get(`${API}/friends/search`, {
+                      params: { query: query || '', district },
+                      withCredentials: true
+                    });
+                    setSearchResults(response.data || []);
+                  } catch (error) {
+                    console.error('Error searching:', error);
+                    toast.error('Erro ao pesquisar');
+                  }
+                }}
+                searchResults={searchResults}
+                onSendRequest={handleSendFriendRequest}
+                loading={friendsLoading}
+              />
+            ) : (
+              <>
+                {/* Search Bar */}
+                <div className="bg-white rounded-2xl p-4 shadow-lg mb-6">
+                  <div className="flex gap-3">
+                    <div className="flex-1 relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={20} />
+                      <input
+                        type="text"
+                        placeholder="Pesquisar por nome ou escola..."
+                        value={friendSearch}
+                        onChange={(e) => setFriendSearch(e.target.value)}
+                        className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                        data-testid="friend-search-input"
+                      />
                     </div>
-                  ))}
+                    <button
+                      onClick={handleSearchFriends}
+                      className="px-6 py-3 bg-gradient-to-r from-purple-500 to-blue-600 text-white font-semibold rounded-xl hover:opacity-90 transition"
+                      data-testid="friend-search-btn"
+                    >
+                      Pesquisar
+                    </button>
+                  </div>
                 </div>
-              </div>
+
+                {/* Search Results */}
+                {searchResults.length > 0 && (
+                  <div className="bg-white rounded-3xl shadow-xl mb-6 overflow-hidden">
+                    <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-4">
+                      <h3 className="font-bold text-white" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+                        Resultados da Pesquisa
+                      </h3>
+                    </div>
+                    <div className="divide-y divide-slate-100">
+                      {searchResults.map(result => (
+                        <div key={result.user_id} className="flex items-center gap-4 p-4 hover:bg-slate-50 transition">
+                          <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold">
+                            {result.nickname?.[0]?.toUpperCase() || '?'}
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="font-bold text-slate-800">{result.nickname}</h4>
+                            <p className="text-sm text-slate-500">{result.school_name} • Nível {result.level}</p>
+                          </div>
+                          <button
+                            onClick={() => handleSendFriendRequest(result.user_id)}
+                            className="p-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
+                            data-testid={`add-friend-${result.user_id}`}
+                          >
+                            <UserPlus size={20} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
             )}
 
             {/* Friends List */}
@@ -1049,6 +1119,12 @@ const StudentDashboard = () => {
         answered={answered}
         selectedAnswer={selectedAnswer}
         isCorrect={isCorrect}
+      />
+
+      {/* Accessibility Panel */}
+      <AccessibilityPanel
+        isOpen={showAccessibility}
+        onClose={() => setShowAccessibility(false)}
       />
     </div>
   );
