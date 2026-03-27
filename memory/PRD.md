@@ -184,8 +184,8 @@ Criar jogo educativo RTS (QUESTEDUCA) para o 1º, 2º e 3º ciclos do ensino bá
 1. ~~**Memory Match completo**~~ ✅ Concluído - Jogo de memória funcional
 2. ~~**Speed Math completo**~~ ✅ Concluído - Desafios matemáticos contra o tempo
 3. ~~**Notificações**~~ ✅ Concluído - Sistema de notificações
-4. **Modo offline** - Cache de perguntas para jogar sem internet
-5. ~~**Relatórios de progresso**~~ ✅ Concluído via Admin Dashboard
+4. ~~**Modo offline**~~ ✅ Concluído - Cache de perguntas com Service Worker e IndexedDB
+5. ~~**Relatórios de progresso**~~ ✅ Concluído via Admin Dashboard e PDF Export
 
 ### ✅ Fase 13: Tarefas P4 + Admin + Ligas Mensais (Concluído - 27/03/2025)
 
@@ -233,25 +233,76 @@ Criar jogo educativo RTS (QUESTEDUCA) para o 1º, 2º e 3º ciclos do ensino bá
 
 ---
 
+### ✅ Fase 14: Tarefas P5 - Funcionalidades Avançadas (Concluído - 27/03/2025)
+
+#### ✅ Tutorial Interativo
+- [x] **Tutorial para Alunos** (8 passos): Bem-vindo, Recursos, Cidade, Aprender, Desafios, Liga, Amigos, Pronto!
+- [x] **Tutorial para Pais** (5 passos): Bem-vindo, Filhos, Subscrição, Mini-jogos, Tudo Pronto!
+- [x] Aparece apenas no primeiro login (localStorage)
+- [x] Destaque visual nos elementos da interface
+- [x] Animação de confetti no passo final
+- [x] Componente: `/app/frontend/src/components/InteractiveTutorial.js`
+
+#### ✅ Modo Offline (Service Worker + IndexedDB)
+- [x] **Service Worker** registado em `index.js`
+- [x] Cache de assets estáticos (HTML, CSS, JS)
+- [x] Cache de quizzes e disciplinas (cache-first strategy)
+- [x] **IndexedDB** para perguntas offline (`questeduca-offline`)
+- [x] **Indicador Online/Offline** na barra superior do StudentDashboard
+- [x] **Gestor de Cache Offline**: Modal com status de conexão, contagem de perguntas, botão descarregar
+- [x] Background sync para respostas pendentes
+- [x] Componentes: `OfflineComponents.js`, `useOffline.js`, `service-worker.js`
+
+#### ✅ Exportação de Relatórios PDF
+- [x] **Botão "Relatório PDF"** no card de cada filho no ParentDashboard
+- [x] **Modal de Export** com:
+  - 4 tipos de relatório (Progresso, Conquistas, Atividade, Classificação)
+  - 4 opções de período (Última Semana, Último Mês, Este Ano, Tudo)
+- [x] **PDF inclui**: Info do aluno, estatísticas gerais, progresso da cidade, desempenho por disciplina, histórico de quizzes, conquistas, recomendações
+- [x] Gera HTML e abre em nova janela para impressão/guardar PDF
+- [x] **API**: `GET /api/reports/student/{student_id}` (dados completos + histórico)
+- [x] Componente: `/app/frontend/src/components/ReportExport.js`
+
+#### ✅ Notificações Push (Básicas + In-App)
+- [x] **APIs**:
+  - `POST /api/push/subscribe` - Subscrever notificações push
+  - `DELETE /api/push/unsubscribe` - Cancelar subscrição
+  - `POST /api/notifications/send-push` - Enviar push (fallback para in-app)
+- [x] Service Worker recebe push events
+- [x] Solicita permissão de notificações no primeiro carregamento
+- [x] Fallback para notificações in-app quando push não disponível
+
+---
+
 ## Arquitetura Técnica
 
 ```
 /app/
 ├── backend/
-│   ├── server.py              # FastAPI routes (game, quiz, associations)
+│   ├── server.py              # FastAPI routes (game, quiz, associations, P5)
 │   ├── models.py              # Pydantic models
 │   ├── auth.py                # Authentication
 │   ├── payment_service.py     # Stripe integration
 │   ├── schools_data.py        # Portuguese schools with hierarchy
 │   └── question_generator.py  # Claude Sonnet 4.5 integration
 ├── frontend/
+│   ├── public/
+│   │   └── service-worker.js  # P5: Offline support
 │   └── src/
+│       ├── components/
+│       │   ├── InteractiveTutorial.js  # P5: Tutorial wizard
+│       │   ├── OfflineComponents.js    # P5: Offline UI
+│       │   └── ReportExport.js         # P5: PDF export
+│       ├── hooks/
+│       │   └── useOffline.js           # P5: Offline hooks
 │       ├── pages/
-│       │   ├── StudentDashboard.js    # RTS city + quizzes
-│       │   ├── ParentDashboard.js     # Children + subscriptions
+│       │   ├── StudentDashboard.js     # RTS city + quizzes + P5
+│       │   ├── ParentDashboard.js      # Children + PDF export + P5
 │       │   ├── AssociationDashboard.js # Code + commissions
-│       │   └── ...
-│       └── context/AuthContext.js
+│       │   └── AdminDashboard.js       # Admin panel
+│       └── context/
+│           ├── AuthContext.js
+│           └── AccessibilityContext.js
 └── memory/PRD.md
 ```
 
@@ -284,10 +335,17 @@ Criar jogo educativo RTS (QUESTEDUCA) para o 1º, 2º e 3º ciclos do ensino bá
 - `GET /api/associations/me/commissions` - Comissões
 - `POST /api/associations/me/payout-request` - Solicitar pagamento
 
+### P5: Relatórios e Push
+- `GET /api/reports/student/{student_id}` - Dados para relatório PDF
+- `POST /api/push/subscribe` - Subscrever push notifications
+- `DELETE /api/push/unsubscribe` - Cancelar subscrição
+- `POST /api/notifications/send-push` - Enviar notificação
+
 ## Credenciais
 - **Stripe**: sk_test_emergent
 - **Emergent LLM Key**: Claude Sonnet 4.5
 - **MongoDB**: localhost:27017
+- **Admin**: info@serv2all.pt / Quest1234* (requer mudança de password)
 
 ## Links
 - Preview: https://edu-empire-1.preview.emergentagent.com
