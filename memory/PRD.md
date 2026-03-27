@@ -183,53 +183,53 @@ Criar jogo educativo RTS (QUESTEDUCA) para o 1º, 2º e 3º ciclos do ensino bá
 ### P3 - Melhorias Futuras
 1. ~~**Memory Match completo**~~ ✅ Concluído - Jogo de memória funcional
 2. ~~**Speed Math completo**~~ ✅ Concluído - Desafios matemáticos contra o tempo
-3. **Notificações push** - Alertas para pais e alunos
+3. ~~**Notificações**~~ ✅ Concluído - Sistema de notificações
 4. **Modo offline** - Cache de perguntas para jogar sem internet
-5. **Relatórios de progresso** - Dashboard analítico para pais
+5. ~~**Relatórios de progresso**~~ ✅ Concluído via Admin Dashboard
 
-### ✅ Fase 12: Tarefas P3 + Desafios Semanais (Concluído - 27/03/2025)
+### ✅ Fase 13: Tarefas P4 + Admin + Ligas Mensais (Concluído - 27/03/2025)
 
-#### ✅ Mapa de Portugal Redesenhado
-- [x] **18 distritos** com SVG paths realistas
-- [x] **Cores corretas** conforme imagem de referência
-- [x] **Açores** em caixa no topo esquerdo (8 ilhas)
-- [x] **Madeira** em caixa no fundo esquerdo (com Porto Santo)
-- [x] **Fundo oceânico** azul com ondas decorativas
-- [x] **Hover effects** e seleção de distritos
-- [x] **Labels** com nomes dos distritos
-- [x] **Integração** com pesquisa de amigos
-
-#### ✅ Memory Match Game
-- [x] **3 níveis de dificuldade**: Easy (6 pares), Medium (8 pares), Hard (12 pares)
-- [x] **Animação de flip** das cartas (CSS 3D)
-- [x] **Timer** com contagem decrescente
-- [x] **Contadores**: Jogadas e Pares encontrados
-- [x] **Sistema de pontuação**: Base + bónus de tempo - penalidade de jogadas
-- [x] **12 emojis** temáticos educativos (🎓📚🎨🔬🌍🎵🧮🏆⭐🚀🌈🎯)
-- [x] **Recompensas em moedas** baseadas na pontuação
-
-#### ✅ Speed Math Game
-- [x] **Operações**: Adição, Subtração, Multiplicação
-- [x] **Timer do jogo**: 60 segundos
-- [x] **Timer por pergunta**: Diminui com streak (10s → 5s)
-- [x] **Sistema de Streak**: Bónus de pontos por respostas consecutivas
-- [x] **Dificuldade adaptativa**: Números maiores com streak alto
-- [x] **4 opções de resposta** por pergunta
-- [x] **Feedback visual**: Verde/vermelho para correto/errado
-- [x] **Estatísticas finais**: Pontos, Streak, Perguntas, Precisão
-
-#### ✅ Desafios Semanais
-- [x] **4 desafios por semana**:
-  - Estudante da Semana (10 quizzes)
-  - Perfecionista (3 quizzes perfeitos)
-  - Caça XP (500 XP)
-  - Dedicação (5 dias seguidos)
-- [x] **Timer de contagem decrescente** até ao fim da semana
-- [x] **Barra de progresso** por desafio
-- [x] **Recompensas**: Moedas, Diamantes, XP
+#### ✅ Painel de Administração
+- [x] **Acesso**: `/admin` ou `/admin/dashboard`
+- [x] **Credenciais**: info@serv2all.pt / Quest1234*
+- [x] **Obrigatório mudar password** no primeiro login
+- [x] **4 Tabs**:
+  - Visão Geral: Total utilizadores, alunos, subscrições ativas, receita total
+  - Utilizadores: Lista paginada com pesquisa e filtro por role, toggle ativo/inativo
+  - Associações: Lista com códigos e comissões
+  - Transações: Lista com estado e valores
 - [x] **APIs**:
-  - `GET /api/challenges/weekly` - Retorna desafios da semana
-  - `POST /api/challenges/claim/{id}` - Resgata recompensa
+  - `GET /api/admin/dashboard` - Estatísticas gerais
+  - `GET /api/admin/users` - Lista paginada de utilizadores
+  - `PUT /api/admin/users/{id}/toggle-active` - Ativar/desativar
+  - `GET /api/admin/associations` - Lista de associações
+  - `GET /api/admin/transactions` - Lista de transações
+  - `POST /api/admin/associations/{id}/approve-payout` - Aprovar pagamento
+
+#### ✅ Sistema de Ligas Mensais
+- [x] **Liga Mensal** no StudentDashboard > Tab "Liga"
+- [x] **Header**: Mês atual, dias restantes
+- [x] **Posição do utilizador**: Rank e XP ganho este mês
+- [x] **Top 3 Pódio**: Com avatares e medalhas (ouro, prata, bronze)
+- [x] **Classificação 4º-10º**: Lista detalhada
+- [x] **Recompensas**:
+  - 🥇 1º: 100 💎 + Badge Campeão
+  - 🥈 2º: 50 💎 + Badge Prata
+  - 🥉 3º: 25 💎 + Badge Bronze
+  - 4º-10º: 10 💎
+- [x] **APIs**:
+  - `GET /api/leagues/current` - Dados da liga atual
+  - `POST /api/leagues/update-xp` - Atualizar XP do utilizador
+
+#### ✅ Sistema de Notificações
+- [x] `GET /api/notifications/my` - Notificações com contagem de não lidas
+- [x] `PUT /api/notifications/{id}/read` - Marcar como lida
+- [x] `POST /api/notifications/mark-all-read` - Marcar todas como lidas
+
+#### ✅ Change Password com Flag
+- [x] `POST /api/auth/change-password` - Alterar password
+- [x] Flag `must_change_password` no modelo User
+- [x] Modal obrigatório no Admin Dashboard quando flag=True
 
 ---
 
