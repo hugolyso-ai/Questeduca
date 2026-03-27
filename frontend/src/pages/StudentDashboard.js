@@ -1,36 +1,454 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Coins, Diamond, Trophy, Users, Map, LogOut, Settings, Gamepad2, MessageSquare } from 'lucide-react';
+import { 
+  LogOut, Coins, Diamond, Star, Building2, BookOpen, 
+  Trophy, Clock, ChevronUp, Play, Check, X, Sparkles,
+  Home, School, Library, Store, TreePine, Award
+} from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+// Configuração dos edifícios da cidade
+const BUILDINGS_CONFIG = {
+  town_hall: {
+    name: "Câmara Municipal",
+    icon: Building2,
+    color: "from-amber-400 to-orange-500",
+    description: "Centro da tua cidade. Melhora para desbloquear mais edifícios!",
+    baseCost: 0,
+    upgradeCost: [0, 100, 250, 500, 1000],
+    benefits: ["Nível base", "+5% moedas", "+10% moedas", "+15% moedas", "+20% moedas"]
+  },
+  school: {
+    name: "Escola",
+    icon: School,
+    color: "from-blue-400 to-blue-600",
+    description: "Onde aprendes! Melhora para ganhar mais XP.",
+    baseCost: 50,
+    upgradeCost: [50, 150, 300, 600, 1200],
+    benefits: ["XP base", "+10% XP", "+20% XP", "+30% XP", "+50% XP"]
+  },
+  library: {
+    name: "Biblioteca",
+    icon: Library,
+    color: "from-purple-400 to-purple-600",
+    description: "Conhecimento é poder! Desbloqueia dicas nos quizzes.",
+    baseCost: 100,
+    upgradeCost: [100, 200, 400, 800, 1500],
+    benefits: ["Sem dicas", "1 dica/quiz", "2 dicas/quiz", "3 dicas/quiz", "Dicas ilimitadas"]
+  },
+  market: {
+    name: "Mercado",
+    icon: Store,
+    color: "from-green-400 to-emerald-600",
+    description: "Troca e comércio! Descontos em upgrades.",
+    baseCost: 150,
+    upgradeCost: [150, 300, 500, 900, 1800],
+    benefits: ["Preço normal", "-5% custo", "-10% custo", "-15% custo", "-20% custo"]
+  },
+  house: {
+    name: "Casa",
+    icon: Home,
+    color: "from-rose-400 to-pink-600",
+    description: "O teu lar! Mais conforto = mais energia para quizzes.",
+    baseCost: 75,
+    upgradeCost: [75, 175, 350, 700, 1400],
+    benefits: ["3 quizzes/dia", "5 quizzes/dia", "7 quizzes/dia", "10 quizzes/dia", "Ilimitado"]
+  },
+  garden: {
+    name: "Jardim",
+    icon: TreePine,
+    color: "from-lime-400 to-green-600",
+    description: "Natureza e beleza! Ganha diamantes bónus.",
+    baseCost: 200,
+    upgradeCost: [200, 400, 700, 1200, 2000],
+    benefits: ["Sem bónus", "+1 💎/dia", "+2 💎/dia", "+3 💎/dia", "+5 💎/dia"]
+  }
+};
+
+// Níveis da cidade
+const SETTLEMENT_LEVELS = {
+  village: { name: "Aldeia", minLevel: 0, color: "text-amber-600" },
+  town: { name: "Vila", minLevel: 10, color: "text-blue-600" },
+  city: { name: "Cidade", minLevel: 25, color: "text-purple-600" },
+  metropolis: { name: "Metrópole", minLevel: 50, color: "text-yellow-500" }
+};
+
+// Componente de Edifício
+const BuildingCard = ({ buildingId, config, level, coins, onUpgrade, disabled }) => {
+  const Icon = config.icon;
+  const canAfford = coins >= config.upgradeCost[level];
+  const isMaxLevel = level >= 5;
+  
+  return (
+    <div className={`bg-white rounded-2xl p-4 shadow-lg border-2 ${level > 0 ? 'border-slate-200' : 'border-dashed border-slate-300'} transition-all hover:shadow-xl`}>
+      <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${config.color} flex items-center justify-center mb-3 mx-auto ${level === 0 ? 'opacity-50' : ''}`}>
+        <Icon className="text-white" size={28} />
+      </div>
+      
+      <h4 className="font-bold text-slate-800 text-center mb-1" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+        {config.name}
+      </h4>
+      
+      <div className="flex items-center justify-center gap-1 mb-2">
+        {[1, 2, 3, 4, 5].map(i => (
+          <Star 
+            key={i} 
+            size={14} 
+            className={i <= level ? 'text-yellow-400 fill-yellow-400' : 'text-slate-300'}
+          />
+        ))}
+      </div>
+      
+      <p className="text-xs text-slate-500 text-center mb-3" style={{ fontFamily: 'Nunito, sans-serif' }}>
+        {config.benefits[level]}
+      </p>
+      
+      {!isMaxLevel ? (
+        <button
+          onClick={() => onUpgrade(buildingId)}
+          disabled={disabled || !canAfford}
+          className={`w-full py-2 rounded-lg font-semibold text-sm flex items-center justify-center gap-1 transition ${
+            canAfford && !disabled
+              ? 'bg-gradient-to-r from-yellow-400 to-amber-500 text-white hover:opacity-90'
+              : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+          }`}
+          data-testid={`upgrade-${buildingId}-btn`}
+        >
+          <ChevronUp size={16} />
+          {level === 0 ? 'Construir' : 'Melhorar'} ({config.upgradeCost[level]} 💰)
+        </button>
+      ) : (
+        <div className="w-full py-2 bg-gradient-to-r from-green-400 to-emerald-500 text-white rounded-lg font-semibold text-sm text-center">
+          <Check size={16} className="inline mr-1" /> Máximo
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Componente de Quiz
+const QuizModal = ({ isOpen, quiz, onClose, onAnswer, currentQuestion, answered, selectedAnswer, isCorrect }) => {
+  if (!isOpen || !quiz) return null;
+  
+  const question = quiz.questions[currentQuestion];
+  if (!question) return null;
+  
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl overflow-hidden">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-4 text-white">
+          <div className="flex justify-between items-center">
+            <div>
+              <span className="text-sm opacity-80">Pergunta {currentQuestion + 1} de {quiz.questions.length}</span>
+              <h3 className="font-bold text-lg" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+                {quiz.subject}
+              </h3>
+            </div>
+            <div className="flex gap-3">
+              <div className="bg-white/20 px-3 py-1 rounded-full text-sm flex items-center gap-1">
+                <Coins size={14} /> {question.coins_reward}
+              </div>
+              <div className="bg-white/20 px-3 py-1 rounded-full text-sm flex items-center gap-1">
+                <Star size={14} /> {question.xp_reward} XP
+              </div>
+            </div>
+          </div>
+          {/* Progress bar */}
+          <div className="mt-3 bg-white/20 rounded-full h-2">
+            <div 
+              className="bg-white rounded-full h-2 transition-all"
+              style={{ width: `${((currentQuestion + 1) / quiz.questions.length) * 100}%` }}
+            />
+          </div>
+        </div>
+        
+        {/* Question */}
+        <div className="p-6">
+          <p className="text-xl font-semibold text-slate-800 mb-6" style={{ fontFamily: 'Nunito, sans-serif' }}>
+            {question.question_text}
+          </p>
+          
+          {/* Options */}
+          <div className="grid gap-3">
+            {question.options.map((option, index) => {
+              let optionClass = "border-2 border-slate-200 hover:border-blue-400 hover:bg-blue-50";
+              
+              if (answered) {
+                if (index === question.correct_answer) {
+                  optionClass = "border-2 border-green-500 bg-green-50";
+                } else if (index === selectedAnswer && !isCorrect) {
+                  optionClass = "border-2 border-red-500 bg-red-50";
+                } else {
+                  optionClass = "border-2 border-slate-200 opacity-50";
+                }
+              }
+              
+              return (
+                <button
+                  key={index}
+                  onClick={() => !answered && onAnswer(index)}
+                  disabled={answered}
+                  className={`p-4 rounded-xl text-left transition-all ${optionClass}`}
+                  data-testid={`option-${index}`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
+                      answered && index === question.correct_answer
+                        ? 'bg-green-500 text-white'
+                        : answered && index === selectedAnswer && !isCorrect
+                        ? 'bg-red-500 text-white'
+                        : 'bg-slate-100 text-slate-600'
+                    }`}>
+                      {String.fromCharCode(65 + index)}
+                    </span>
+                    <span className="font-medium text-slate-700">{option}</span>
+                    {answered && index === question.correct_answer && (
+                      <Check className="ml-auto text-green-500" size={20} />
+                    )}
+                    {answered && index === selectedAnswer && !isCorrect && (
+                      <X className="ml-auto text-red-500" size={20} />
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+          
+          {/* Explanation (shown after answering) */}
+          {answered && question.explanation && (
+            <div className={`mt-4 p-4 rounded-xl ${isCorrect ? 'bg-green-50 border border-green-200' : 'bg-blue-50 border border-blue-200'}`}>
+              <p className="text-sm font-medium text-slate-700">
+                <Sparkles className="inline mr-1" size={14} />
+                {question.explanation}
+              </p>
+            </div>
+          )}
+        </div>
+        
+        {/* Footer */}
+        <div className="p-4 border-t border-slate-100 flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-6 py-2 bg-slate-200 text-slate-700 rounded-full font-semibold hover:bg-slate-300 transition"
+          >
+            {answered ? 'Próxima' : 'Fechar'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Componente Principal
 const StudentDashboard = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [gameState, setGameState] = useState(null);
+  
+  // Estado do jogo
+  const [gameState, setGameState] = useState({
+    coins: 100,
+    diamonds: 5,
+    xp: 0,
+    level: 1,
+    buildings: {
+      town_hall: 1,
+      school: 0,
+      library: 0,
+      market: 0,
+      house: 0,
+      garden: 0
+    },
+    quizzes_today: 0,
+    last_quiz_date: null
+  });
+  
+  const [studentProfile, setStudentProfile] = useState(null);
+  const [subjects, setSubjects] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('city');
+  
+  // Quiz state
+  const [quizLoading, setQuizLoading] = useState(false);
+  const [currentQuiz, setCurrentQuiz] = useState(null);
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [answered, setAnswered] = useState(false);
+  const [selectedAnswer, setSelectedAnswer] = useState(null);
+  const [isCorrect, setIsCorrect] = useState(false);
+  const [quizResults, setQuizResults] = useState({ correct: 0, coins: 0, xp: 0 });
 
+  // Calcular nível total dos edifícios
+  const totalBuildingLevel = Object.values(gameState.buildings).reduce((a, b) => a + b, 0);
+  
+  // Determinar nível da cidade
+  const getSettlementLevel = () => {
+    if (totalBuildingLevel >= 50) return SETTLEMENT_LEVELS.metropolis;
+    if (totalBuildingLevel >= 25) return SETTLEMENT_LEVELS.city;
+    if (totalBuildingLevel >= 10) return SETTLEMENT_LEVELS.town;
+    return SETTLEMENT_LEVELS.village;
+  };
+  
+  const settlement = getSettlementLevel();
+
+  // Carregar dados do jogador
   useEffect(() => {
-    const fetchGameState = async () => {
+    const fetchData = async () => {
       try {
-        const response = await axios.get(`${API}/game/state`, {
-          withCredentials: true
-        });
-        setGameState(response.data);
+        const [profileRes, gameRes] = await Promise.all([
+          axios.get(`${API}/students/me`, { withCredentials: true }),
+          axios.get(`${API}/game/state`, { withCredentials: true }).catch(() => ({ data: null }))
+        ]);
+        
+        setStudentProfile(profileRes.data);
+        
+        // Obter disciplinas para o ano escolar
+        const year = profileRes.data.school_year;
+        const subjectsRes = await axios.get(`${API}/subjects/${year}`);
+        setSubjects(subjectsRes.data || []);
+        
+        if (gameRes.data) {
+          setGameState(prev => ({
+            ...prev,
+            coins: gameRes.data.coins || 100,
+            diamonds: gameRes.data.diamonds || 5,
+            xp: gameRes.data.xp || 0,
+            level: gameRes.data.level || 1,
+            buildings: gameRes.data.buildings || prev.buildings
+          }));
+        }
       } catch (error) {
-        console.error('Error fetching game state:', error);
-        toast.error('Erro ao carregar estado do jogo');
+        console.error('Error fetching data:', error);
       } finally {
         setLoading(false);
       }
     };
-
-    fetchGameState();
+    fetchData();
   }, []);
+
+  // Função para upgrade de edifício
+  const handleUpgrade = useCallback(async (buildingId) => {
+    const config = BUILDINGS_CONFIG[buildingId];
+    const currentLevel = gameState.buildings[buildingId];
+    const cost = config.upgradeCost[currentLevel];
+    
+    if (gameState.coins < cost || currentLevel >= 5) return;
+    
+    // Aplicar desconto do mercado
+    const marketLevel = gameState.buildings.market;
+    const discount = marketLevel * 0.05;
+    const finalCost = Math.floor(cost * (1 - discount));
+    
+    setGameState(prev => ({
+      ...prev,
+      coins: prev.coins - finalCost,
+      buildings: {
+        ...prev.buildings,
+        [buildingId]: currentLevel + 1
+      }
+    }));
+    
+    // Salvar no backend
+    try {
+      await axios.post(`${API}/game/upgrade`, {
+        building_id: buildingId,
+        cost: finalCost
+      }, { withCredentials: true });
+      
+      toast.success(
+        <div>
+          <p className="font-bold">{config.name} melhorado!</p>
+          <p className="text-sm">Nível {currentLevel + 1}</p>
+        </div>
+      );
+    } catch (error) {
+      console.error('Error upgrading:', error);
+    }
+  }, [gameState]);
+
+  // Função para iniciar quiz
+  const startQuiz = async (subject) => {
+    setQuizLoading(true);
+    try {
+      const response = await axios.get(`${API}/quiz/generate`, {
+        params: {
+          school_year: studentProfile?.school_year || '1',
+          subject: subject,
+          count: 5
+        },
+        withCredentials: true
+      });
+      
+      setCurrentQuiz(response.data);
+      setCurrentQuestion(0);
+      setAnswered(false);
+      setSelectedAnswer(null);
+      setQuizResults({ correct: 0, coins: 0, xp: 0 });
+      
+    } catch (error) {
+      console.error('Error starting quiz:', error);
+      toast.error('Erro ao carregar quiz. Tenta novamente!');
+    } finally {
+      setQuizLoading(false);
+    }
+  };
+
+  // Função para responder pergunta
+  const handleAnswer = (answerIndex) => {
+    const question = currentQuiz.questions[currentQuestion];
+    const correct = answerIndex === question.correct_answer;
+    
+    setSelectedAnswer(answerIndex);
+    setIsCorrect(correct);
+    setAnswered(true);
+    
+    if (correct) {
+      // Aplicar bónus da escola (XP) e câmara (moedas)
+      const schoolBonus = 1 + (gameState.buildings.school * 0.1);
+      const townHallBonus = 1 + (gameState.buildings.town_hall * 0.05);
+      
+      const coinsEarned = Math.floor(question.coins_reward * townHallBonus);
+      const xpEarned = Math.floor(question.xp_reward * schoolBonus);
+      
+      setQuizResults(prev => ({
+        correct: prev.correct + 1,
+        coins: prev.coins + coinsEarned,
+        xp: prev.xp + xpEarned
+      }));
+      
+      setGameState(prev => ({
+        ...prev,
+        coins: prev.coins + coinsEarned,
+        xp: prev.xp + xpEarned
+      }));
+    }
+  };
+
+  // Função para próxima pergunta ou fechar quiz
+  const handleNextQuestion = () => {
+    if (currentQuestion < currentQuiz.questions.length - 1) {
+      setCurrentQuestion(prev => prev + 1);
+      setAnswered(false);
+      setSelectedAnswer(null);
+    } else {
+      // Quiz terminado
+      toast.success(
+        <div>
+          <p className="font-bold">Quiz Completo!</p>
+          <p className="text-sm">
+            {quizResults.correct}/{currentQuiz.questions.length} corretas
+          </p>
+          <p className="text-sm">+{quizResults.coins} 💰 +{quizResults.xp} XP</p>
+        </div>,
+        { duration: 5000 }
+      );
+      setCurrentQuiz(null);
+    }
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -39,189 +457,265 @@ const StudentDashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-green-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 to-purple-100">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-green-500 mx-auto"></div>
-          <p className="mt-4 text-lg font-medium text-slate-700">A carregar...</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-500 mx-auto"></div>
+          <p className="mt-4 text-lg font-medium text-slate-700">A carregar o teu mundo...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div 
-      className="min-h-screen bg-cover bg-center"
-      style={{
-        backgroundImage: `url('https://static.prod-images.emergentagent.com/jobs/1c04fa23-329a-417f-8b99-b41bfcdab50b/images/a511f6a84aa96847cf9839b7f9051d3f17b66366e11e7dd56f51afaea128730d.png')`,
-        backgroundColor: '#f0f9ff'
-      }}
-    >
-      {/* Top Navigation Bar */}
-      <nav className="bg-white/90 backdrop-blur-xl border-b-4 border-green-200 shadow-lg sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 py-4">
+    <div className="min-h-screen bg-gradient-to-br from-sky-100 via-blue-50 to-purple-100">
+      {/* Top Bar */}
+      <nav className="bg-white/80 backdrop-blur-md border-b border-white/50 sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex justify-between items-center">
-            <div className="flex items-center gap-8">
-              <h1 className="text-2xl font-bold text-slate-900" style={{ fontFamily: 'Fredoka, sans-serif' }}>
-                🏰 QUESTEDUCA
-              </h1>
-              
-              {/* Resources */}
-              <div className="flex items-center gap-6">
-                <div data-testid="coins-display" className="flex items-center gap-2 bg-yellow-100 px-4 py-2 rounded-full border-2 border-yellow-300">
-                  <Coins className="text-yellow-600" size={20} strokeWidth={2.5} />
-                  <span className="font-bold text-yellow-800" style={{ fontFamily: 'Nunito, sans-serif' }}>
-                    {gameState?.coins || 0}
-                  </span>
-                </div>
-                
-                <div data-testid="diamonds-display" className="flex items-center gap-2 bg-blue-100 px-4 py-2 rounded-full border-2 border-blue-300">
-                  <Diamond className="text-blue-600" size={20} strokeWidth={2.5} />
-                  <span className="font-bold text-blue-800" style={{ fontFamily: 'Nunito, sans-serif' }}>
-                    {gameState?.diamonds || 0}
-                  </span>
-                </div>
-                
-                <div data-testid="level-display" className="flex items-center gap-2 bg-purple-100 px-4 py-2 rounded-full border-2 border-purple-300">
-                  <Trophy className="text-purple-600" size={20} strokeWidth={2.5} />
-                  <span className="font-bold text-purple-800" style={{ fontFamily: 'Nunito, sans-serif' }}>
-                    Nível {gameState?.level || 1}
-                  </span>
+            {/* Player Info */}
+            <div className="flex items-center gap-4">
+              <div className="bg-gradient-to-br from-purple-500 to-blue-600 rounded-full w-12 h-12 flex items-center justify-center text-white text-xl font-bold shadow-lg">
+                {studentProfile?.nickname?.[0]?.toUpperCase() || 'A'}
+              </div>
+              <div>
+                <h2 className="font-bold text-slate-800" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+                  {studentProfile?.nickname || 'Aventureiro'}
+                </h2>
+                <div className="flex items-center gap-1 text-sm">
+                  <span className={`font-semibold ${settlement.color}`}>{settlement.name}</span>
+                  <span className="text-slate-400">•</span>
+                  <span className="text-slate-600">Nível {gameState.level}</span>
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-4">
-              {gameState?.is_premium && (
-                <span className="px-4 py-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white font-bold rounded-full text-sm">
-                  ⭐ PREMIUM
-                </span>
-              )}
+            {/* Resources */}
+            <div className="flex items-center gap-3">
+              <div className="bg-gradient-to-r from-yellow-400 to-amber-500 px-4 py-2 rounded-full flex items-center gap-2 shadow-md">
+                <Coins className="text-yellow-900" size={18} />
+                <span className="font-bold text-yellow-900">{gameState.coins}</span>
+              </div>
+              <div className="bg-gradient-to-r from-cyan-400 to-blue-500 px-4 py-2 rounded-full flex items-center gap-2 shadow-md">
+                <Diamond className="text-white" size={18} />
+                <span className="font-bold text-white">{gameState.diamonds}</span>
+              </div>
+              <div className="bg-gradient-to-r from-purple-400 to-pink-500 px-4 py-2 rounded-full flex items-center gap-2 shadow-md">
+                <Star className="text-white" size={18} />
+                <span className="font-bold text-white">{gameState.xp} XP</span>
+              </div>
               <button
-                data-testid="logout-btn"
                 onClick={handleLogout}
-                className="flex items-center gap-2 px-4 py-2 rounded-full hover:bg-slate-100 transition"
+                className="p-2 hover:bg-slate-100 rounded-full transition ml-2"
+                data-testid="student-logout-btn"
               >
                 <LogOut size={20} className="text-slate-600" />
-                <span className="text-slate-700 font-medium" style={{ fontFamily: 'Nunito, sans-serif' }}>
-                  Sair
-                </span>
               </button>
             </div>
           </div>
         </div>
       </nav>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
-          {/* Left Sidebar */}
-          <div className="space-y-4">
-            <div className="bg-white rounded-3xl p-6 shadow-xl border-b-4 border-slate-200">
-              <h3 className="text-xl font-bold text-slate-900 mb-4" style={{ fontFamily: 'Fredoka, sans-serif' }}>
-                A Minha Aldeia
-              </h3>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-slate-600" style={{ fontFamily: 'Nunito, sans-serif' }}>Nível:</span>
-                  <span className="font-bold text-slate-900">{gameState?.settlement_level || 'Aldeia'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-600" style={{ fontFamily: 'Nunito, sans-serif' }}>Construções:</span>
-                  <span className="font-bold text-slate-900">{gameState?.buildings?.length || 0}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Quick Actions */}
-            <div className="space-y-3">
+      {/* Tab Navigation */}
+      <div className="bg-white/60 backdrop-blur-sm border-b border-white/50">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex gap-1">
+            {[
+              { id: 'city', label: 'Minha Cidade', icon: Building2 },
+              { id: 'quiz', label: 'Aprender', icon: BookOpen },
+              { id: 'achievements', label: 'Conquistas', icon: Trophy },
+            ].map(tab => (
               <button
-                data-testid="quizzes-btn"
-                onClick={() => navigate('/student/quizzes')}
-                className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white rounded-2xl p-4 font-bold shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all flex items-center gap-3"
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 px-6 py-4 font-semibold transition border-b-3 ${
+                  activeTab === tab.id 
+                    ? 'text-purple-600 border-purple-500 bg-white/50' 
+                    : 'text-slate-500 border-transparent hover:text-slate-700'
+                }`}
                 style={{ fontFamily: 'Nunito, sans-serif' }}
+                data-testid={`tab-${tab.id}`}
               >
-                <Gamepad2 size={24} />
-                Fazer Quizzes
+                <tab.icon size={18} />
+                {tab.label}
               </button>
-              
-              <button
-                data-testid="friends-btn"
-                onClick={() => navigate('/student/friends')}
-                className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-2xl p-4 font-bold shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all flex items-center gap-3"
-                style={{ fontFamily: 'Nunito, sans-serif' }}
-              >
-                <Users size={24} />
-                Procurar Amigos
-              </button>
-              
-              <button
-                data-testid="mini-games-btn"
-                onClick={() => navigate('/student/mini-games')}
-                className="w-full bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-2xl p-4 font-bold shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all flex items-center gap-3"
-                style={{ fontFamily: 'Nunito, sans-serif' }}
-              >
-                <Trophy size={24} />
-                Mini-Jogos
-              </button>
-            </div>
-          </div>
-
-          {/* Center - Game Canvas */}
-          <div className="lg:col-span-2">
-            <div 
-              data-testid="game-canvas"
-              className="bg-white rounded-3xl shadow-2xl border-b-4 border-green-300 overflow-hidden"
-              style={{ minHeight: '600px' }}
-            >
-              <div className="bg-gradient-to-r from-green-500 to-blue-500 p-4 text-white">
-                <h2 className="text-2xl font-bold" style={{ fontFamily: 'Fredoka, sans-serif' }}>
-                  🏰 A Tua Aldeia
-                </h2>
-              </div>
-              
-              <div className="relative w-full h-[550px] bg-gradient-to-br from-green-100 to-blue-100">
-                {/* Game Canvas Area */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center p-8">
-                    <img
-                      src="https://static.prod-images.emergentagent.com/jobs/1c04fa23-329a-417f-8b99-b41bfcdab50b/images/e7147ab3cacc2a4855073e805a2e1474d108e5955baccdf1629637b660e95571.png"
-                      alt="Vila"
-                      className="w-full max-w-2xl mx-auto rounded-2xl shadow-xl mb-4"
-                    />
-                    <p className="text-lg text-slate-600 font-medium" style={{ fontFamily: 'Nunito, sans-serif' }}>
-                      Responde a quizzes para ganhar moedas e construir a tua aldeia!
-                    </p>
-                    <button
-                      onClick={() => navigate('/student/quizzes')}
-                      className="mt-6 px-8 py-4 bg-green-500 text-white font-bold rounded-full shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all"
-                      style={{ fontFamily: 'Nunito, sans-serif' }}
-                    >
-                      Começar Quizzes 🎯
-                    </button>
-                  </div>
-                </div>
-
-                {/* Building Grid (simplified) */}
-                {gameState?.buildings && gameState.buildings.length > 0 && (
-                  <div className="absolute bottom-4 left-4 bg-white/90 rounded-2xl p-4 shadow-lg">
-                    <p className="text-sm font-bold text-slate-700 mb-2" style={{ fontFamily: 'Nunito, sans-serif' }}>
-                      Construções Ativas:
-                    </p>
-                    <div className="space-y-1">
-                      {gameState.buildings.slice(0, 3).map((building, idx) => (
-                        <div key={idx} className="text-xs text-slate-600" style={{ fontFamily: 'Nunito, sans-serif' }}>
-                          🏠 {building.type}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </div>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        
+        {/* City Tab */}
+        {activeTab === 'city' && (
+          <div>
+            {/* Settlement Header */}
+            <div className="bg-white rounded-3xl p-6 shadow-xl mb-6 border-b-4 border-purple-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className={`text-3xl font-bold ${settlement.color}`} style={{ fontFamily: 'Fredoka, sans-serif' }}>
+                    {settlement.name} de {studentProfile?.nickname || 'Aventureiro'}
+                  </h2>
+                  <p className="text-slate-600 mt-1" style={{ fontFamily: 'Nunito, sans-serif' }}>
+                    Nível total dos edifícios: {totalBuildingLevel}/30
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-slate-500">Próximo nível:</p>
+                  <p className="font-bold text-purple-600">
+                    {totalBuildingLevel < 10 ? 'Vila (10)' : 
+                     totalBuildingLevel < 25 ? 'Cidade (25)' : 
+                     totalBuildingLevel < 50 ? 'Metrópole (50)' : 'Máximo!'}
+                  </p>
+                </div>
+              </div>
+              {/* Progress bar */}
+              <div className="mt-4 bg-slate-200 rounded-full h-3">
+                <div 
+                  className="bg-gradient-to-r from-purple-500 to-blue-500 rounded-full h-3 transition-all"
+                  style={{ width: `${Math.min((totalBuildingLevel / 50) * 100, 100)}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Buildings Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              {Object.entries(BUILDINGS_CONFIG).map(([id, config]) => (
+                <BuildingCard
+                  key={id}
+                  buildingId={id}
+                  config={config}
+                  level={gameState.buildings[id]}
+                  coins={gameState.coins}
+                  onUpgrade={handleUpgrade}
+                  disabled={false}
+                />
+              ))}
+            </div>
+
+            {/* Tips */}
+            <div className="mt-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl p-6 text-white">
+              <h3 className="font-bold text-lg mb-2" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+                <Sparkles className="inline mr-2" size={20} />
+                Dica do Dia
+              </h3>
+              <p style={{ fontFamily: 'Nunito, sans-serif' }}>
+                Responde a quizzes para ganhar moedas e melhorar os teus edifícios! 
+                Quanto mais alto o nível da Escola, mais XP ganhas em cada resposta certa.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Quiz Tab */}
+        {activeTab === 'quiz' && (
+          <div>
+            <div className="bg-white rounded-3xl p-6 shadow-xl mb-6">
+              <h2 className="text-2xl font-bold text-slate-800 mb-2" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+                <BookOpen className="inline mr-2 text-blue-500" />
+                Aprender e Ganhar
+              </h2>
+              <p className="text-slate-600" style={{ fontFamily: 'Nunito, sans-serif' }}>
+                Escolhe uma disciplina e responde a perguntas para ganhar moedas!
+              </p>
+            </div>
+
+            {/* Subjects Grid */}
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {subjects.map((subject, index) => (
+                <div 
+                  key={subject}
+                  className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all border-l-4"
+                  style={{ borderColor: ['#3B82F6', '#10B981', '#8B5CF6', '#F59E0B', '#EF4444', '#EC4899', '#06B6D4'][index % 7] }}
+                >
+                  <h3 className="font-bold text-lg text-slate-800 mb-2" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+                    {subject}
+                  </h3>
+                  <p className="text-sm text-slate-500 mb-4">
+                    5 perguntas • +50 moedas possíveis
+                  </p>
+                  <button
+                    onClick={() => startQuiz(subject)}
+                    disabled={quizLoading}
+                    className="w-full py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold rounded-xl hover:opacity-90 transition flex items-center justify-center gap-2"
+                    data-testid={`start-quiz-${subject.toLowerCase().replace(/\s/g, '-')}`}
+                  >
+                    {quizLoading ? (
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
+                    ) : (
+                      <>
+                        <Play size={18} />
+                        Começar Quiz
+                      </>
+                    )}
+                  </button>
+                </div>
+              ))}
+              
+              {subjects.length === 0 && (
+                <div className="col-span-full text-center py-12">
+                  <BookOpen className="mx-auto text-slate-300 mb-4" size={48} />
+                  <p className="text-slate-500">A carregar disciplinas...</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Achievements Tab */}
+        {activeTab === 'achievements' && (
+          <div className="bg-white rounded-3xl p-8 shadow-xl">
+            <h2 className="text-2xl font-bold text-slate-800 mb-6" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+              <Trophy className="inline mr-2 text-yellow-500" />
+              Conquistas
+            </h2>
+            
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[
+                { name: "Primeiro Quiz", desc: "Completa o teu primeiro quiz", unlocked: gameState.xp > 0 },
+                { name: "Construtor", desc: "Constrói o teu primeiro edifício", unlocked: Object.values(gameState.buildings).filter(l => l > 0).length > 1 },
+                { name: "Estudante Dedicado", desc: "Ganha 500 XP", unlocked: gameState.xp >= 500 },
+                { name: "Rico", desc: "Junta 1000 moedas", unlocked: gameState.coins >= 1000 },
+                { name: "Arquiteto", desc: "Melhora um edifício ao nível 3", unlocked: Object.values(gameState.buildings).some(l => l >= 3) },
+                { name: "Mestre", desc: "Atinge o nível de Cidade", unlocked: totalBuildingLevel >= 25 },
+              ].map((achievement, i) => (
+                <div 
+                  key={i}
+                  className={`p-4 rounded-xl border-2 ${
+                    achievement.unlocked 
+                      ? 'border-yellow-400 bg-yellow-50' 
+                      : 'border-slate-200 bg-slate-50 opacity-60'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                      achievement.unlocked ? 'bg-yellow-400' : 'bg-slate-300'
+                    }`}>
+                      <Award className={achievement.unlocked ? 'text-yellow-900' : 'text-slate-500'} size={24} />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-slate-800">{achievement.name}</h4>
+                      <p className="text-sm text-slate-500">{achievement.desc}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Quiz Modal */}
+      <QuizModal
+        isOpen={!!currentQuiz}
+        quiz={currentQuiz}
+        onClose={handleNextQuestion}
+        onAnswer={handleAnswer}
+        currentQuestion={currentQuestion}
+        answered={answered}
+        selectedAnswer={selectedAnswer}
+        isCorrect={isCorrect}
+      />
     </div>
   );
 };

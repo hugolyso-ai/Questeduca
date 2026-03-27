@@ -296,7 +296,179 @@ async def get_questions(
 
 @api_router.get("/subjects/{school_year}")
 async def get_subjects(school_year: SchoolYear):
-    return {"subjects": SUBJECTS_BY_YEAR.get(school_year, [])}
+    subjects = SUBJECTS_BY_YEAR.get(school_year, [])
+    return subjects
+
+# ==================== GAME STATE ROUTES ====================
+
+@api_router.get("/game/state")
+async def get_game_state(
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Get the current game state for the student"""
+    if current_user.role != UserRole.STUDENT:
+        raise HTTPException(status_code=403, detail="Apenas para alunos")
+    
+    # Try to get existing game state
+    game_state = await db.game_states.find_one(
+        {"user_id": current_user.user_id},
+        {"_id": 0}
+    )
+    
+    if not game_state:
+        # Create initial game state
+        game_state = {
+            "user_id": current_user.user_id,
+            "coins": 100,
+            "diamonds": 5,
+            "xp": 0,
+            "level": 1,
+            "buildings": {
+                "town_hall": 1,
+                "school": 0,
+                "library": 0,
+                "market": 0,
+                "house": 0,
+                "garden": 0
+            },
+            "quizzes_today": 0,
+            "last_quiz_date": None,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.game_states.insert_one(game_state)
+    
+    return game_state
+
+@api_router.post("/game/upgrade")
+async def upgrade_building(
+    building_id: str,
+    cost: int,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Upgrade a building in the player's city"""
+    if current_user.role != UserRole.STUDENT:
+        raise HTTPException(status_code=403, detail="Apenas para alunos")
+    
+    # Get current game state
+    game_state = await db.game_states.find_one(
+        {"user_id": current_user.user_id},
+        {"_id": 0}
+    )
+    
+    if not game_state:
+        raise HTTPException(status_code=404, detail="Estado do jogo não encontrado")
+    
+    if game_state["coins"] < cost:
+        raise HTTPException(status_code=400, detail="Moedas insuficientes")
+    
+    current_level = game_state["buildings"].get(building_id, 0)
+    if current_level >= 5:
+        raise HTTPException(status_code=400, detail="Nível máximo atingido")
+    
+    # Update game state
+    await db.game_states.update_one(
+        {"user_id": current_user.user_id},
+        {
+            "$inc": {"coins": -cost},
+            "$set": {f"buildings.{building_id}": current_level + 1}
+        }
+    )
+    
+    return {"success": True, "new_level": current_level + 1}
+
+@api_router.post("/game/add-resources")
+async def add_resources(
+    coins: int = 0,
+    diamonds: int = 0,
+    xp: int = 0,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Add resources to player (used after quiz completion)"""
+    if current_user.role != UserRole.STUDENT:
+        raise HTTPException(status_code=403, detail="Apenas para alunos")
+    
+    update_data = {}
+    if coins > 0:
+        update_data["coins"] = coins
+    if diamonds > 0:
+        update_data["diamonds"] = diamonds
+    if xp > 0:
+        update_data["xp"] = xp
+    
+    if update_data:
+        await db.game_states.update_one(
+            {"user_id": current_user.user_id},
+            {"$inc": update_data}
+        )
+    
+    return {"success": True}
+
+# ==================== QUIZ ROUTES ====================
+
+@api_router.get("/quiz/generate")
+async def generate_quiz(
+    school_year: str,
+    subject: str,
+    count: int = 5,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Generate a quiz with questions from the LLM"""
+    if current_user.role != UserRole.STUDENT:
+        raise HTTPException(status_code=403, detail="Apenas para alunos")
+    
+    # Limit count
+    count = min(count, 10)
+    
+    # Generate questions using Claude
+    questions = await question_gen.generate_questions(
+        school_year=school_year,
+        subject=subject,
+        count=count,
+        difficulty=1  # Start with easy questions
+    )
+    
+    if not questions:
+        raise HTTPException(status_code=500, detail="Erro ao gerar perguntas")
+    
+    # Calculate potential rewards
+    total_coins = sum(q.get('coins_reward', 10) for q in questions)
+    total_xp = sum(q.get('xp_reward', 5) for q in questions)
+    
+    return {
+        "quiz_id": f"quiz_{uuid.uuid4().hex[:12]}",
+        "school_year": school_year,
+        "subject": subject,
+        "total_questions": len(questions),
+        "max_coins": total_coins,
+        "max_xp": total_xp,
+        "questions": questions,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+
+@api_router.post("/quiz/submit")
+async def submit_quiz_answer(
+    quiz_id: str,
+    question_id: str,
+    answer_index: int,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Submit an answer to a quiz question"""
+    if current_user.role != UserRole.STUDENT:
+        raise HTTPException(status_code=403, detail="Apenas para alunos")
+    
+    # This is handled client-side for now, but we can log answers for analytics
+    answer_record = {
+        "answer_id": f"ans_{uuid.uuid4().hex[:12]}",
+        "user_id": current_user.user_id,
+        "quiz_id": quiz_id,
+        "question_id": question_id,
+        "answer_index": answer_index,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.quiz_answers.insert_one(answer_record)
+    
+    return {"success": True}
 
 # ==================== SUBSCRIPTION ROUTES ====================
 
@@ -754,6 +926,49 @@ async def get_my_association(
     
     return association
 
+@api_router.post("/associations/me/payout-request")
+async def request_payout(
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Request a payout for accumulated commissions"""
+    if current_user.role != UserRole.ASSOCIATION:
+        raise HTTPException(status_code=403, detail="Apenas associações")
+    
+    association = await db.associations.find_one({"user_id": current_user.user_id}, {"_id": 0})
+    
+    if not association:
+        raise HTTPException(status_code=404, detail="Associação não encontrada")
+    
+    pending = association.get('pending_payout', 0)
+    
+    if pending < 10:
+        raise HTTPException(status_code=400, detail="Valor mínimo para levantamento: €10")
+    
+    # Create payout request
+    payout_request = {
+        "payout_id": f"payout_{uuid.uuid4().hex[:12]}",
+        "association_id": association['association_id'],
+        "amount": pending,
+        "iban": association.get('iban'),
+        "status": "pending",
+        "requested_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.payout_requests.insert_one(payout_request)
+    
+    # Reset pending payout (in a real scenario, this would happen after actual transfer)
+    await db.associations.update_one(
+        {"association_id": association['association_id']},
+        {"$set": {"pending_payout": 0}}
+    )
+    
+    return {
+        "success": True,
+        "payout_id": payout_request["payout_id"],
+        "amount": pending,
+        "message": "Pedido de pagamento registado. Será processado em 5-7 dias úteis."
+    }
+
 # ==================== ASSOCIATION CODE ROUTES ====================
 
 @api_router.post("/parents/me/association-code")
@@ -918,33 +1133,8 @@ async def get_association_by_school(school_id: str):
     
     return {"exists": False}
 
-# ==================== GAME ROUTES ====================
-
-@api_router.get("/game/state")
-async def get_game_state(
-    current_user: User = Depends(get_current_user_dep)
-):
-    if current_user.role != UserRole.STUDENT:
-        raise HTTPException(status_code=403, detail="Apenas alunos")
-    
-    student = await db.students.find_one({"user_id": current_user.user_id}, {"_id": 0})
-    
-    if not student:
-        raise HTTPException(status_code=404, detail="Perfil não encontrado")
-    
-    buildings = await db.buildings.find(
-        {"user_id": current_user.user_id},
-        {"_id": 0}
-    ).to_list(100)
-    
-    return {
-        "settlement_level": student['settlement_level'],
-        "coins": student['coins'],
-        "diamonds": student['diamonds'],
-        "level": student['level'],
-        "is_premium": student['is_premium'],
-        "buildings": buildings
-    }
+# ==================== GAME ROUTES (Legacy - Buildings Collection) ====================
+# Note: The main /game/state endpoint is defined earlier using game_states collection
 
 @api_router.post("/game/buildings")
 async def create_building(
