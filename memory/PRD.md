@@ -181,11 +181,55 @@ Criar jogo educativo RTS (QUESTEDUCA) para o 1º, 2º e 3º ciclos do ensino bá
 ## Backlog Futuro
 
 ### P3 - Melhorias Futuras
-1. **Memory Match completo** - Jogo de memória funcional
-2. **Speed Math completo** - Desafios matemáticos contra o tempo
+1. ~~**Memory Match completo**~~ ✅ Concluído - Jogo de memória funcional
+2. ~~**Speed Math completo**~~ ✅ Concluído - Desafios matemáticos contra o tempo
 3. **Notificações push** - Alertas para pais e alunos
 4. **Modo offline** - Cache de perguntas para jogar sem internet
 5. **Relatórios de progresso** - Dashboard analítico para pais
+
+### ✅ Fase 12: Tarefas P3 + Desafios Semanais (Concluído - 27/03/2025)
+
+#### ✅ Mapa de Portugal Redesenhado
+- [x] **18 distritos** com SVG paths realistas
+- [x] **Cores corretas** conforme imagem de referência
+- [x] **Açores** em caixa no topo esquerdo (8 ilhas)
+- [x] **Madeira** em caixa no fundo esquerdo (com Porto Santo)
+- [x] **Fundo oceânico** azul com ondas decorativas
+- [x] **Hover effects** e seleção de distritos
+- [x] **Labels** com nomes dos distritos
+- [x] **Integração** com pesquisa de amigos
+
+#### ✅ Memory Match Game
+- [x] **3 níveis de dificuldade**: Easy (6 pares), Medium (8 pares), Hard (12 pares)
+- [x] **Animação de flip** das cartas (CSS 3D)
+- [x] **Timer** com contagem decrescente
+- [x] **Contadores**: Jogadas e Pares encontrados
+- [x] **Sistema de pontuação**: Base + bónus de tempo - penalidade de jogadas
+- [x] **12 emojis** temáticos educativos (🎓📚🎨🔬🌍🎵🧮🏆⭐🚀🌈🎯)
+- [x] **Recompensas em moedas** baseadas na pontuação
+
+#### ✅ Speed Math Game
+- [x] **Operações**: Adição, Subtração, Multiplicação
+- [x] **Timer do jogo**: 60 segundos
+- [x] **Timer por pergunta**: Diminui com streak (10s → 5s)
+- [x] **Sistema de Streak**: Bónus de pontos por respostas consecutivas
+- [x] **Dificuldade adaptativa**: Números maiores com streak alto
+- [x] **4 opções de resposta** por pergunta
+- [x] **Feedback visual**: Verde/vermelho para correto/errado
+- [x] **Estatísticas finais**: Pontos, Streak, Perguntas, Precisão
+
+#### ✅ Desafios Semanais
+- [x] **4 desafios por semana**:
+  - Estudante da Semana (10 quizzes)
+  - Perfecionista (3 quizzes perfeitos)
+  - Caça XP (500 XP)
+  - Dedicação (5 dias seguidos)
+- [x] **Timer de contagem decrescente** até ao fim da semana
+- [x] **Barra de progresso** por desafio
+- [x] **Recompensas**: Moedas, Diamantes, XP
+- [x] **APIs**:
+  - `GET /api/challenges/weekly` - Retorna desafios da semana
+  - `POST /api/challenges/claim/{id}` - Resgata recompensa
 
 ---
 
