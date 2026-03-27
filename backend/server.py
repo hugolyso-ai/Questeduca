@@ -99,6 +99,33 @@ async def login(data: LoginRequest, response: Response):
     
     return TokenResponse(session_token=session_token, user=user)
 
+@api_router.post("/auth/change-password")
+async def change_password(
+    old_password: str,
+    new_password: str,
+    response: Response,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Change password for current user"""
+    user_doc = await db.users.find_one({"user_id": current_user.user_id}, {"_id": 0})
+    
+    if not await verify_password(old_password, user_doc['password']):
+        raise HTTPException(status_code=400, detail="Password atual incorreto")
+    
+    new_hashed = await hash_password(new_password)
+    
+    await db.users.update_one(
+        {"user_id": current_user.user_id},
+        {
+            "$set": {
+                "password": new_hashed,
+                "must_change_password": False
+            }
+        }
+    )
+    
+    return {"message": "Password alterado com sucesso"}
+
 @api_router.post("/auth/google/session")
 async def google_session(session_id: str, response: Response):
     result = await process_google_session(db, session_id)
@@ -2357,6 +2384,412 @@ async def claim_challenge_reward(
             "xp": challenge["reward_xp"]
         }
     }
+
+# ==================== ADMIN ROUTES ====================
+
+@api_router.get("/admin/dashboard")
+async def get_admin_dashboard(
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Get admin dashboard stats"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Apenas admins")
+    
+    # Get counts
+    total_users = await db.users.count_documents({})
+    total_parents = await db.users.count_documents({"role": "parent"})
+    total_students = await db.users.count_documents({"role": "student"})
+    total_associations = await db.users.count_documents({"role": "association"})
+    
+    # Active subscriptions
+    active_subs = await db.subscriptions.count_documents({"status": "active"})
+    
+    # Total revenue from transactions
+    revenue_pipeline = [
+        {"$match": {"status": "completed"}},
+        {"$group": {"_id": None, "total": {"$sum": "$amount"}}}
+    ]
+    revenue_result = await db.payment_transactions.aggregate(revenue_pipeline).to_list(1)
+    total_revenue = revenue_result[0]["total"] if revenue_result else 0
+    
+    # Commission stats
+    commission_pipeline = [
+        {"$group": {"_id": None, "total": {"$sum": "$total_commissions"}, "pending": {"$sum": "$pending_payout"}}}
+    ]
+    commission_result = await db.associations.aggregate(commission_pipeline).to_list(1)
+    total_commissions = commission_result[0]["total"] if commission_result else 0
+    pending_payouts = commission_result[0]["pending"] if commission_result else 0
+    
+    # Questions count
+    total_questions = await db.questions.count_documents({})
+    
+    # Recent registrations (last 7 days)
+    week_ago = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
+    recent_users = await db.users.count_documents({"created_at": {"$gte": week_ago}})
+    
+    return {
+        "users": {
+            "total": total_users,
+            "parents": total_parents,
+            "students": total_students,
+            "associations": total_associations,
+            "recent_7_days": recent_users
+        },
+        "subscriptions": {
+            "active": active_subs
+        },
+        "revenue": {
+            "total": total_revenue,
+            "commissions_paid": total_commissions,
+            "pending_payouts": pending_payouts
+        },
+        "content": {
+            "questions": total_questions
+        }
+    }
+
+@api_router.get("/admin/users")
+async def get_all_users(
+    page: int = 1,
+    limit: int = 20,
+    role: Optional[str] = None,
+    search: Optional[str] = None,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Get paginated list of all users"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Apenas admins")
+    
+    query = {}
+    if role:
+        query["role"] = role
+    if search:
+        query["$or"] = [
+            {"email": {"$regex": search, "$options": "i"}},
+            {"name": {"$regex": search, "$options": "i"}}
+        ]
+    
+    skip = (page - 1) * limit
+    
+    users = await db.users.find(query, {"_id": 0, "password": 0}).skip(skip).limit(limit).to_list(limit)
+    total = await db.users.count_documents(query)
+    
+    return {
+        "users": users,
+        "pagination": {
+            "page": page,
+            "limit": limit,
+            "total": total,
+            "pages": (total + limit - 1) // limit
+        }
+    }
+
+@api_router.put("/admin/users/{user_id}/toggle-active")
+async def toggle_user_active(
+    user_id: str,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Toggle user active status"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Apenas admins")
+    
+    user = await db.users.find_one({"user_id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="Utilizador não encontrado")
+    
+    new_status = not user.get("is_active", True)
+    await db.users.update_one(
+        {"user_id": user_id},
+        {"$set": {"is_active": new_status}}
+    )
+    
+    return {"success": True, "is_active": new_status}
+
+@api_router.get("/admin/subscriptions")
+async def get_all_subscriptions(
+    page: int = 1,
+    limit: int = 20,
+    status: Optional[str] = None,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Get paginated list of subscriptions"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Apenas admins")
+    
+    query = {}
+    if status:
+        query["status"] = status
+    
+    skip = (page - 1) * limit
+    
+    subscriptions = await db.subscriptions.find(query, {"_id": 0}).skip(skip).limit(limit).to_list(limit)
+    total = await db.subscriptions.count_documents(query)
+    
+    return {
+        "subscriptions": subscriptions,
+        "pagination": {
+            "page": page,
+            "limit": limit,
+            "total": total,
+            "pages": (total + limit - 1) // limit
+        }
+    }
+
+@api_router.get("/admin/associations")
+async def get_all_associations(
+    page: int = 1,
+    limit: int = 20,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Get paginated list of associations"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Apenas admins")
+    
+    skip = (page - 1) * limit
+    
+    associations = await db.associations.find({}, {"_id": 0}).skip(skip).limit(limit).to_list(limit)
+    total = await db.associations.count_documents({})
+    
+    return {
+        "associations": associations,
+        "pagination": {
+            "page": page,
+            "limit": limit,
+            "total": total,
+            "pages": (total + limit - 1) // limit
+        }
+    }
+
+@api_router.post("/admin/associations/{association_id}/approve-payout")
+async def approve_payout(
+    association_id: str,
+    amount: float,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Approve payout for association"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Apenas admins")
+    
+    association = await db.associations.find_one({"association_id": association_id})
+    if not association:
+        raise HTTPException(status_code=404, detail="Associação não encontrada")
+    
+    if amount > association.get("pending_payout", 0):
+        raise HTTPException(status_code=400, detail="Montante excede o saldo pendente")
+    
+    # Create payout record
+    payout = {
+        "payout_id": f"payout_{uuid.uuid4().hex[:12]}",
+        "association_id": association_id,
+        "amount": amount,
+        "status": "approved",
+        "approved_by": current_user.user_id,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.payouts.insert_one(payout)
+    
+    # Update association pending balance
+    await db.associations.update_one(
+        {"association_id": association_id},
+        {"$inc": {"pending_payout": -amount}}
+    )
+    
+    return {"success": True, "payout_id": payout["payout_id"]}
+
+@api_router.get("/admin/transactions")
+async def get_all_transactions(
+    page: int = 1,
+    limit: int = 20,
+    status: Optional[str] = None,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Get paginated list of transactions"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Apenas admins")
+    
+    query = {}
+    if status:
+        query["status"] = status
+    
+    skip = (page - 1) * limit
+    
+    transactions = await db.payment_transactions.find(query, {"_id": 0}).skip(skip).limit(limit).sort("created_at", -1).to_list(limit)
+    total = await db.payment_transactions.count_documents(query)
+    
+    return {
+        "transactions": transactions,
+        "pagination": {
+            "page": page,
+            "limit": limit,
+            "total": total,
+            "pages": (total + limit - 1) // limit
+        }
+    }
+
+# ==================== LEAGUES ROUTES ====================
+
+@api_router.get("/leagues/current")
+async def get_current_league(
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Get current month's league standings"""
+    if current_user.role != UserRole.STUDENT:
+        raise HTTPException(status_code=403, detail="Apenas alunos")
+    
+    now = datetime.now(timezone.utc)
+    league_id = f"{now.year}-{now.month:02d}"
+    
+    # Get or create user's league entry
+    user_entry = await db.league_entries.find_one({
+        "user_id": current_user.user_id,
+        "league_id": league_id
+    })
+    
+    if not user_entry:
+        # Get user's game state for initial XP
+        game_state = await db.game_states.find_one({"user_id": current_user.user_id}, {"_id": 0})
+        
+        user_entry = {
+            "user_id": current_user.user_id,
+            "league_id": league_id,
+            "xp_start": game_state.get("xp", 0) if game_state else 0,
+            "xp_earned": 0,
+            "rank": 0,
+            "joined_at": now.isoformat()
+        }
+        await db.league_entries.insert_one(user_entry)
+    
+    # Get student profile for nickname
+    student = await db.students.find_one({"user_id": current_user.user_id}, {"_id": 0})
+    
+    # Get top 10 in this league
+    top_entries = await db.league_entries.aggregate([
+        {"$match": {"league_id": league_id}},
+        {"$sort": {"xp_earned": -1}},
+        {"$limit": 10},
+        {"$lookup": {
+            "from": "students",
+            "localField": "user_id",
+            "foreignField": "user_id",
+            "as": "student_info"
+        }},
+        {"$unwind": {"path": "$student_info", "preserveNullAndEmptyArrays": True}},
+        {"$project": {
+            "_id": 0,
+            "user_id": 1,
+            "xp_earned": 1,
+            "nickname": "$student_info.nickname",
+            "school_name": "$student_info.school_name"
+        }}
+    ]).to_list(10)
+    
+    # Add ranks
+    for i, entry in enumerate(top_entries):
+        entry["rank"] = i + 1
+    
+    # Get user's current rank
+    user_rank_result = await db.league_entries.aggregate([
+        {"$match": {"league_id": league_id}},
+        {"$sort": {"xp_earned": -1}},
+        {"$group": {"_id": None, "entries": {"$push": "$user_id"}}},
+        {"$project": {"rank": {"$indexOfArray": ["$entries", current_user.user_id]}}}
+    ]).to_list(1)
+    
+    user_rank = (user_rank_result[0]["rank"] + 1) if user_rank_result and user_rank_result[0]["rank"] >= 0 else 0
+    
+    # Calculate days left in month
+    import calendar
+    _, last_day = calendar.monthrange(now.year, now.month)
+    days_left = last_day - now.day
+    
+    return {
+        "league_id": league_id,
+        "month_name": now.strftime("%B %Y"),
+        "days_left": days_left,
+        "user_stats": {
+            "rank": user_rank,
+            "xp_earned": user_entry.get("xp_earned", 0),
+            "nickname": student.get("nickname") if student else "Jogador"
+        },
+        "top_10": top_entries,
+        "rewards": {
+            "1st": {"diamonds": 100, "badge": "league_champion"},
+            "2nd": {"diamonds": 50, "badge": "league_silver"},
+            "3rd": {"diamonds": 25, "badge": "league_bronze"},
+            "4th-10th": {"diamonds": 10, "badge": None}
+        }
+    }
+
+@api_router.post("/leagues/update-xp")
+async def update_league_xp(
+    xp_gained: int,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Update user's XP in current league"""
+    if current_user.role != UserRole.STUDENT:
+        raise HTTPException(status_code=403, detail="Apenas alunos")
+    
+    now = datetime.now(timezone.utc)
+    league_id = f"{now.year}-{now.month:02d}"
+    
+    await db.league_entries.update_one(
+        {"user_id": current_user.user_id, "league_id": league_id},
+        {"$inc": {"xp_earned": xp_gained}},
+        upsert=True
+    )
+    
+    return {"success": True}
+
+# ==================== NOTIFICATIONS ROUTES ====================
+
+@api_router.get("/notifications/my")
+async def get_my_notifications(
+    limit: int = 20,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Get current user's notifications"""
+    notifications = await db.notifications.find(
+        {"user_id": current_user.user_id},
+        {"_id": 0}
+    ).sort("created_at", -1).limit(limit).to_list(limit)
+    
+    unread_count = await db.notifications.count_documents({
+        "user_id": current_user.user_id,
+        "read": False
+    })
+    
+    return {
+        "notifications": notifications,
+        "unread_count": unread_count
+    }
+
+@api_router.put("/notifications/{notification_id}/read")
+async def mark_notification_read(
+    notification_id: str,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Mark notification as read"""
+    result = await db.notifications.update_one(
+        {"notification_id": notification_id, "user_id": current_user.user_id},
+        {"$set": {"read": True}}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Notificação não encontrada")
+    
+    return {"success": True}
+
+@api_router.post("/notifications/mark-all-read")
+async def mark_all_notifications_read(
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Mark all notifications as read"""
+    await db.notifications.update_many(
+        {"user_id": current_user.user_id, "read": False},
+        {"$set": {"read": True}}
+    )
+    
+    return {"success": True}
 
 app.include_router(api_router)
 

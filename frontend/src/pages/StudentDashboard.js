@@ -14,6 +14,7 @@ import { PortugalFriendMap } from '../components/PortugalMap';
 import AccessibilityPanel from '../components/AccessibilityPanel';
 import { AchievementsList } from '../components/AchievementsSystem';
 import WeeklyChallenges from '../components/WeeklyChallenges';
+import MonthlyLeagues from '../components/MonthlyLeagues';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -637,6 +638,7 @@ const StudentDashboard = () => {
               { id: 'city', label: 'Minha Cidade', icon: Building2 },
               { id: 'quiz', label: 'Aprender', icon: BookOpen },
               { id: 'challenges', label: 'Desafios', icon: Calendar },
+              { id: 'league', label: 'Liga', icon: Crown },
               { id: 'rankings', label: 'Rankings', icon: Trophy },
               { id: 'friends', label: 'Amigos', icon: Users },
               { id: 'achievements', label: 'Conquistas', icon: Award },
@@ -1072,6 +1074,11 @@ const StudentDashboard = () => {
         {/* Challenges Tab */}
         {activeTab === 'challenges' && (
           <WeeklyChallenges />
+        )}
+
+        {/* League Tab */}
+        {activeTab === 'league' && (
+          <MonthlyLeagues />
         )}
 
         {/* Achievements Tab */}

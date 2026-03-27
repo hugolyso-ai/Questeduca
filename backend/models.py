@@ -54,6 +54,8 @@ class UserBase(BaseModel):
 class User(UserBase):
     user_id: str
     created_at: datetime
+    must_change_password: bool = False
+    is_active: bool = True
 
 class UserSession(BaseModel):
     user_id: str

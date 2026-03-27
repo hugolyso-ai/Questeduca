@@ -28,6 +28,8 @@ const LoginPage = () => {
         navigate('/parent/dashboard');
       } else if (result.user.role === 'association') {
         navigate('/association/dashboard');
+      } else if (result.user.role === 'admin') {
+        navigate('/admin');
       }
     } catch (err) {
       setError(err.response?.data?.detail || 'Erro ao fazer login');

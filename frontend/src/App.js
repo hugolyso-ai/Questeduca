@@ -14,6 +14,7 @@ import RegisterPage from "./pages/RegisterPage";
 import StudentDashboard from "./pages/StudentDashboard";
 import ParentDashboard from "./pages/ParentDashboard";
 import AssociationDashboard from "./pages/AssociationDashboard";
+import AdminDashboard from "./pages/AdminDashboard";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancel from "./pages/PaymentCancel";
 
@@ -85,6 +86,24 @@ function AppRouter() {
         element={
           <ProtectedRoute allowedRoles={['association']}>
             <AssociationDashboard />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Admin Routes */}
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <AdminDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/dashboard"
+        element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <AdminDashboard />
           </ProtectedRoute>
         }
       />
