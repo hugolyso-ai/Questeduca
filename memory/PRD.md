@@ -27,97 +27,97 @@ Criar jogo educativo RTS (QUESTEDUCA) para o 1º, 2º e 3º ciclos do ensino bá
 - [x] Modelos de dados (Users, Students, Parents, Associations, etc.)
 - [x] Rotas básicas de API
 
-### ✅ Fase 2: Dados Reais de Escolas Portuguesas (Concluído - 25/03/2025)
+### ✅ Fase 2: Dados Reais de Escolas Portuguesas (Concluído)
 - [x] **243 escolas reais** importadas dos ficheiros Excel oficiais
 - [x] Cobertura de todos os 20 distritos portugueses
-- [x] Filtro de escolas por distrito e ciclo/ano escolar
-- [x] Mapeamento de anos escolares para ciclos (1º-4º → 1º Ciclo, 5º-6º → 2º Ciclo, 7º-9º → 3º Ciclo)
+- [x] Filtros hierárquicos: Distrito → Concelho → Localidade → Escola
+- [x] Mapeamento de anos escolares para ciclos
 
-### ✅ Fase 3: Registo de Alunos pelos Pais (Concluído - 25/03/2025)
+### ✅ Fase 3: Registo de Alunos pelos Pais (Concluído)
 - [x] Modal de "Adicionar Filho" no ParentDashboard
 - [x] Seleção de ano escolar com filtro automático de escolas por ciclo
 - [x] Geração de password temporária para login do aluno
 - [x] Vinculação automática pai-filho na base de dados
-- [x] Listagem de filhos no dashboard
 
-### ✅ Fase 4: Integração Stripe para Pagamentos (Concluído - 25/03/2025)
+### ✅ Fase 4: Integração Stripe para Pagamentos (Concluído)
 - [x] PaymentService com emergentintegrations/stripe
 - [x] Checkout sessions para 4 planos de subscrição
 - [x] Páginas de sucesso e cancelamento de pagamento
-- [x] Coleção `payment_transactions` para tracking
 - [x] Suporte para códigos de associação (comissões 10%)
-- [x] Polling de status de pagamento no frontend
 
-### ✅ Fase 5: Sistema de Associações de Pais (Concluído - 25/03/2025)
-- [x] **Filtros hierárquicos**: Distrito → Concelho → Localidade → Escola
-- [x] APIs: `/municipalities`, `/localities`, `/schools` com filtros
-- [x] Registo de associações com seleção de escola via filtros
+### ✅ Fase 5: Sistema de Associações de Pais (Concluído)
+- [x] Registo de associações com filtros hierárquicos
 - [x] Geração automática de código único (ASSOC-XXXXXX)
-- [x] **Regra dos 10 dias**: 
-  - Código registado até 10 dias após subscrição = comissão retroativa
-  - Código registado após 10 dias = apenas pagamentos futuros
-  - Código permanentemente vinculado ao pai para todas as subscrições
-- [x] Sistema de notificações:
-  - Notificação automática quando associação da escola do filho se regista
-  - Sino de notificações no ParentDashboard
-  - Marcação de notificações como lidas
+- [x] Regra dos 10 dias para comissão retroativa
+- [x] Sistema de notificações para pais
+- [x] Código permanentemente vinculado ao pai
 
-### ✅ UI/UX (Parcialmente Concluído)
-- [x] Landing page com estética "Vibrant Play"
-- [x] Login e Registo (com formulário de associação)
-- [x] ParentDashboard com abas (Visão Geral, Meus Filhos, Subscrição)
-- [x] Componentes Shadcn/UI
+### ✅ Fase 6: Mecânicas RTS - StudentDashboard (Concluído - 25/03/2025)
+- [x] **6 Edifícios** com 5 níveis cada:
+  - Câmara Municipal: +5-20% moedas
+  - Escola: +10-50% XP
+  - Biblioteca: 0-ilimitadas dicas nos quizzes
+  - Mercado: 0-20% desconto em upgrades
+  - Casa: 3-ilimitado quizzes/dia
+  - Jardim: 0-5 diamantes/dia
+- [x] **Recursos**: Moedas, Diamantes, XP
+- [x] **Evolução da Cidade**: Aldeia → Vila → Cidade → Metrópole
+- [x] **Conquistas**: 6 conquistas desbloqueáveis
+- [x] Interface de cidade com upgrades
+
+### ✅ Fase 7: Geração de Perguntas via LLM (Concluído - 25/03/2025)
+- [x] Integração com **Claude Sonnet 4.5** via Emergent LLM Key
+- [x] **Disciplinas por ciclo**:
+  - 1º Ciclo (1º-4º): Português, Matemática, Estudo do Meio
+  - 2º Ciclo (5º-6º): + Ciências, História e Geografia de Portugal, Inglês
+  - 3º Ciclo (7º-9º): + Físico-Química, Geografia
+- [x] Perguntas de escolha múltipla (4 opções)
+- [x] 3 níveis de dificuldade com recompensas diferentes
+- [x] Explicações educativas após cada resposta
+- [x] Sistema de fallback para erros do LLM
+
+### ✅ Fase 8: Dashboard Associações (Concluído - 25/03/2025)
+- [x] Visualização do código único com botão copiar
+- [x] **Estatísticas**:
+  - Total de comissões acumuladas
+  - Valor disponível para levantamento
+  - Número de subscrições referidas
+- [x] Tabela de histórico de comissões
+- [x] Botão de solicitação de payout (mínimo €10)
+- [x] Informações dos responsáveis da associação
 
 ---
 
 ## Backlog (Por Ordem de Prioridade)
 
-### P0 - Crítico
-1. **Mecânicas RTS no StudentDashboard**
-   - Cidade com edifícios (prefeitura, escola, biblioteca, etc.)
-   - Sistema de recursos (moedas, diamantes)
-   - Temporizadores de construção
-   - Upgrades baseados em respostas corretas
-
-2. **Geração de Perguntas via LLM**
-   - Integrar com Emergent LLM Key (GPT-5.2 ou similar)
-   - Perguntas por disciplina e ano escolar
-   - Sistema de dificuldade progressiva
-
 ### P1 - Importante
-3. **Dashboard Associações de Pais**
-   - Visualização do código gerado
-   - Tracking de comissões recebidas
-   - Listagem de subscrições referidas
-   - Solicitação de pagamentos (payout)
-
-4. **Sistema de Giftcards**
+1. **Sistema de Giftcards**
    - Geração de códigos de giftcard
    - Resgate de giftcards
-   - Tracking para comissões de associações
+   - Tracking para comissões
 
-5. **Mapa Interativo de Portugal**
+2. **Mapa Interativo de Portugal**
    - Pesquisa de amigos por escola/distrito
    - Sistema de pedidos de amizade
    - Aprovação parental
 
-6. **Opções de Acessibilidade**
+3. **Opções de Acessibilidade**
    - Fonte para dislexia (OpenDyslexic)
    - Modo daltónico
    - Alto contraste
 
 ### P2 - Futuro
-7. **Mini-jogos Pais vs Filhos**
+4. **Mini-jogos Pais vs Filhos**
    - Batalhas cooperativas
    - Desafios de conhecimento
 
-8. **Webhooks Stripe**
+5. **Webhooks Stripe**
    - Processamento automático de eventos
    - Renovações automáticas
 
-9. **Sistema de Notificações**
-   - Notificações push
-   - Emails transacionais
+6. **Sistema de Rankings**
+   - Ranking por escola
+   - Ranking por distrito
 
 ---
 
@@ -126,51 +126,46 @@ Criar jogo educativo RTS (QUESTEDUCA) para o 1º, 2º e 3º ciclos do ensino bá
 ```
 /app/
 ├── backend/
-│   ├── server.py          # FastAPI routes
-│   ├── models.py          # Pydantic models
-│   ├── auth.py            # Authentication
-│   ├── payment_service.py # Stripe integration
-│   ├── schools_data.py    # Portuguese schools with hierarchy
-│   └── question_generator.py
+│   ├── server.py              # FastAPI routes (game, quiz, associations)
+│   ├── models.py              # Pydantic models
+│   ├── auth.py                # Authentication
+│   ├── payment_service.py     # Stripe integration
+│   ├── schools_data.py        # Portuguese schools with hierarchy
+│   └── question_generator.py  # Claude Sonnet 4.5 integration
 ├── frontend/
 │   └── src/
 │       ├── pages/
-│       │   ├── LandingPage.js
-│       │   ├── LoginPage.js
-│       │   ├── RegisterPage.js (com formulário de associação)
-│       │   ├── StudentDashboard.js
-│       │   ├── ParentDashboard.js (com notificações)
-│       │   ├── AssociationDashboard.js
-│       │   ├── PaymentSuccess.js
-│       │   └── PaymentCancel.js
+│       │   ├── StudentDashboard.js    # RTS city + quizzes
+│       │   ├── ParentDashboard.js     # Children + subscriptions
+│       │   ├── AssociationDashboard.js # Code + commissions
+│       │   └── ...
 │       └── context/AuthContext.js
 └── memory/PRD.md
 ```
 
 ## APIs Principais
 
-### Escolas e Localização
-- `GET /api/districts` - Lista 20 distritos
-- `GET /api/municipalities?district=X` - Lista concelhos
-- `GET /api/localities?district=X&municipality=Y` - Lista localidades
-- `GET /api/schools?district=X&municipality=Y&locality=Z&cycle=1` - Escolas filtradas
+### Jogo (Game)
+- `GET /api/game/state` - Estado do jogo (recursos, edifícios)
+- `POST /api/game/upgrade` - Upgrade de edifício
+- `POST /api/game/add-resources` - Adicionar recursos
+
+### Quiz
+- `GET /api/subjects/{year}` - Disciplinas por ano
+- `GET /api/quiz/generate` - Gerar quiz com Claude
+- `POST /api/quiz/submit` - Submeter resposta
 
 ### Associações
-- `POST /api/associations` - Regista nova associação
+- `POST /api/associations` - Registar associação
 - `GET /api/associations/me` - Perfil da associação
-- `GET /api/associations/me/commissions` - Comissões da associação
-- `GET /api/associations/by-school/{school_id}` - Verifica se escola tem associação
+- `GET /api/associations/me/commissions` - Comissões
+- `POST /api/associations/me/payout-request` - Solicitar pagamento
 
-### Códigos e Notificações
-- `POST /api/parents/me/association-code?code=X` - Regista código
-- `GET /api/parents/me/notifications` - Lista notificações
-- `PUT /api/parents/me/notifications/{id}/read` - Marca como lida
-
-## Credenciais de Teste
-- **Stripe**: sk_test_emergent (modo teste)
-- **Emergent LLM Key**: Configurada em backend/.env
+## Credenciais
+- **Stripe**: sk_test_emergent
+- **Emergent LLM Key**: Claude Sonnet 4.5
 - **MongoDB**: localhost:27017
 
-## Links Úteis
-- Preview URL: https://edu-empire-1.preview.emergentagent.com
+## Links
+- Preview: https://edu-empire-1.preview.emergentagent.com
 - Test Reports: /app/test_reports/
