@@ -274,6 +274,52 @@ Criar jogo educativo RTS (QUESTEDUCA) para o 1º, 2º e 3º ciclos do ensino bá
 
 ---
 
+### ✅ Fase 15: P6 - Modo Escuro e Calendário Escolar (Concluído - 28/03/2025)
+
+#### ✅ Modo Escuro
+- [x] **Toggle no Painel de Acessibilidade** (ícone de lua/sol)
+- [x] Aplica classes CSS `dark-mode` ao HTML e body
+- [x] **Cores do tema escuro**:
+  - Background: #0f172a
+  - Cards: #1e293b
+  - Texto: #f1f5f9
+  - Texto secundário: #94a3b8
+  - Bordas: #334155
+- [x] Persistência via localStorage (`accessibility_settings`)
+- [x] Gradientes de botões mantêm-se visíveis
+- [x] Compatível com outros modos de acessibilidade
+
+#### ✅ Calendário Escolar
+- [x] **Acessível em ambos os dashboards** (StudentDashboard e ParentDashboard)
+- [x] **Feriados portugueses auto-atualizados** por ano letivo:
+  - 25 de Abril - Dia da Liberdade
+  - 1 de Maio - Dia do Trabalhador
+  - 10 de Junho - Dia de Portugal
+  - 5 de Outubro - Implantação da República
+  - 1 de Novembro - Todos os Santos
+  - 1 de Dezembro - Restauração da Independência
+  - 8 de Dezembro - Imaculada Conceição
+  - 25 de Dezembro - Natal
+  - 1 de Janeiro - Ano Novo
+  - Carnaval e Páscoa (datas variáveis)
+- [x] **Eventos QUESTEDUCA**:
+  - Novos Desafios Semanais (segundas-feiras)
+  - Início da Nova Liga (1º dia do mês)
+  - Fim da Liga Mensal (último dia do mês)
+- [x] **Funcionalidades**:
+  - Navegação entre meses
+  - Clique num dia mostra eventos
+  - Lista de próximos eventos
+  - Estatísticas de desafios e posição na liga
+  - Legenda com cores (feriado, férias, escola, desafios, liga)
+- [x] Componente: `/app/frontend/src/components/SchoolCalendar.js`
+
+#### ✅ Documentação para Utilizadores
+- [x] Manual completo em `/app/docs/MANUAL_UTILIZADOR.md`
+- [x] Secções: Primeiros Passos, Para Alunos, Para Pais, Modo Escuro, Calendário, Acessibilidade, Modo Offline, FAQ
+
+---
+
 ## Arquitetura Técnica
 
 ```
