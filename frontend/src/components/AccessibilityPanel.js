@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAccessibility } from '../context/AccessibilityContext';
-import { Eye, Type, Palette, RotateCcw, Check } from 'lucide-react';
+import { Eye, Type, Palette, RotateCcw, Check, Moon, Sun } from 'lucide-react';
 
 const AccessibilityPanel = ({ isOpen, onClose }) => {
   const { settings, updateSetting, resetSettings } = useAccessibility();
@@ -23,7 +23,7 @@ const AccessibilityPanel = ({ isOpen, onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div className={`rounded-3xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl ${settings.darkMode ? 'bg-slate-800' : 'bg-white'}`}>
         {/* Header */}
         <div className="sticky top-0 bg-gradient-to-r from-purple-500 to-blue-600 p-6 text-white rounded-t-3xl">
           <div className="flex justify-between items-center">
@@ -47,18 +47,54 @@ const AccessibilityPanel = ({ isOpen, onClose }) => {
         </div>
 
         <div className="p-6 space-y-6">
-          {/* Dyslexia Font */}
-          <div className="bg-slate-50 rounded-2xl p-5">
+          {/* Dark Mode - NEW */}
+          <div className={`rounded-2xl p-5 ${settings.darkMode ? 'bg-slate-700' : 'bg-slate-50'}`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="bg-purple-100 p-3 rounded-xl">
-                  <Type className="text-purple-600" size={24} />
+                <div className={`p-3 rounded-xl ${settings.darkMode ? 'bg-indigo-600' : 'bg-indigo-100'}`}>
+                  {settings.darkMode ? (
+                    <Moon className="text-white" size={24} />
+                  ) : (
+                    <Sun className="text-indigo-600" size={24} />
+                  )}
                 </div>
                 <div>
-                  <h3 className="font-bold text-slate-800" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+                  <h3 className={`font-bold ${settings.darkMode ? 'text-white' : 'text-slate-800'}`} style={{ fontFamily: 'Fredoka, sans-serif' }}>
+                    Modo Escuro
+                  </h3>
+                  <p className={`text-sm ${settings.darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                    Reduz o brilho para estudar à noite
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => updateSetting('darkMode', !settings.darkMode)}
+                className={`relative w-14 h-8 rounded-full transition-colors ${
+                  settings.darkMode ? 'bg-indigo-500' : 'bg-slate-300'
+                }`}
+                data-testid="toggle-dark-mode"
+              >
+                <span 
+                  className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow transition-transform ${
+                    settings.darkMode ? 'translate-x-7' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
+
+          {/* Dyslexia Font */}
+          <div className={`rounded-2xl p-5 ${settings.darkMode ? 'bg-slate-700' : 'bg-slate-50'}`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className={`p-3 rounded-xl ${settings.darkMode ? 'bg-purple-600' : 'bg-purple-100'}`}>
+                  <Type className={settings.darkMode ? 'text-white' : 'text-purple-600'} size={24} />
+                </div>
+                <div>
+                  <h3 className={`font-bold ${settings.darkMode ? 'text-white' : 'text-slate-800'}`} style={{ fontFamily: 'Fredoka, sans-serif' }}>
                     Fonte para Dislexia
                   </h3>
-                  <p className="text-sm text-slate-500">
+                  <p className={`text-sm ${settings.darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
                     Usa a fonte OpenDyslexic
                   </p>
                 </div>
@@ -87,17 +123,17 @@ const AccessibilityPanel = ({ isOpen, onClose }) => {
           </div>
 
           {/* High Contrast */}
-          <div className="bg-slate-50 rounded-2xl p-5">
+          <div className={`rounded-2xl p-5 ${settings.darkMode ? 'bg-slate-700' : 'bg-slate-50'}`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="bg-slate-800 p-3 rounded-xl">
                   <Eye className="text-white" size={24} />
                 </div>
                 <div>
-                  <h3 className="font-bold text-slate-800" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+                  <h3 className={`font-bold ${settings.darkMode ? 'text-white' : 'text-slate-800'}`} style={{ fontFamily: 'Fredoka, sans-serif' }}>
                     Alto Contraste
                   </h3>
-                  <p className="text-sm text-slate-500">
+                  <p className={`text-sm ${settings.darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
                     Aumenta o contraste das cores
                   </p>
                 </div>
@@ -119,16 +155,16 @@ const AccessibilityPanel = ({ isOpen, onClose }) => {
           </div>
 
           {/* Colorblind Mode */}
-          <div className="bg-slate-50 rounded-2xl p-5">
+          <div className={`rounded-2xl p-5 ${settings.darkMode ? 'bg-slate-700' : 'bg-slate-50'}`}>
             <div className="flex items-center gap-3 mb-4">
               <div className="bg-gradient-to-br from-red-400 via-green-400 to-blue-400 p-3 rounded-xl">
                 <Palette className="text-white" size={24} />
               </div>
               <div>
-                <h3 className="font-bold text-slate-800" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+                <h3 className={`font-bold ${settings.darkMode ? 'text-white' : 'text-slate-800'}`} style={{ fontFamily: 'Fredoka, sans-serif' }}>
                   Modo Daltónico
                 </h3>
-                <p className="text-sm text-slate-500">
+                <p className={`text-sm ${settings.darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
                   Ajusta as cores para diferentes tipos
                 </p>
               </div>
@@ -141,7 +177,9 @@ const AccessibilityPanel = ({ isOpen, onClose }) => {
                   className={`p-3 rounded-xl text-left transition ${
                     settings.colorblindMode === option.value
                       ? 'bg-blue-500 text-white'
-                      : 'bg-white text-slate-700 hover:bg-slate-100'
+                      : settings.darkMode 
+                        ? 'bg-slate-600 text-slate-200 hover:bg-slate-500'
+                        : 'bg-white text-slate-700 hover:bg-slate-100'
                   }`}
                   data-testid={`colorblind-${option.value}`}
                 >
@@ -152,7 +190,7 @@ const AccessibilityPanel = ({ isOpen, onClose }) => {
                     )}
                   </div>
                   <span className={`text-xs ${
-                    settings.colorblindMode === option.value ? 'text-white/80' : 'text-slate-400'
+                    settings.colorblindMode === option.value ? 'text-white/80' : settings.darkMode ? 'text-slate-400' : 'text-slate-400'
                   }`}>
                     {option.description}
                   </span>
@@ -162,16 +200,16 @@ const AccessibilityPanel = ({ isOpen, onClose }) => {
           </div>
 
           {/* Text Size */}
-          <div className="bg-slate-50 rounded-2xl p-5">
+          <div className={`rounded-2xl p-5 ${settings.darkMode ? 'bg-slate-700' : 'bg-slate-50'}`}>
             <div className="flex items-center gap-3 mb-4">
-              <div className="bg-blue-100 p-3 rounded-xl">
-                <Type className="text-blue-600" size={24} />
+              <div className={`p-3 rounded-xl ${settings.darkMode ? 'bg-blue-600' : 'bg-blue-100'}`}>
+                <Type className={settings.darkMode ? 'text-white' : 'text-blue-600'} size={24} />
               </div>
               <div>
-                <h3 className="font-bold text-slate-800" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+                <h3 className={`font-bold ${settings.darkMode ? 'text-white' : 'text-slate-800'}`} style={{ fontFamily: 'Fredoka, sans-serif' }}>
                   Tamanho do Texto
                 </h3>
-                <p className="text-sm text-slate-500">
+                <p className={`text-sm ${settings.darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
                   Ajusta o tamanho das letras
                 </p>
               </div>
@@ -184,7 +222,9 @@ const AccessibilityPanel = ({ isOpen, onClose }) => {
                   className={`flex-1 p-3 rounded-xl text-center transition ${
                     settings.textSize === option.value
                       ? 'bg-blue-500 text-white'
-                      : 'bg-white text-slate-700 hover:bg-slate-100'
+                      : settings.darkMode 
+                        ? 'bg-slate-600 text-slate-200 hover:bg-slate-500'
+                        : 'bg-white text-slate-700 hover:bg-slate-100'
                   }`}
                   data-testid={`text-size-${option.value}`}
                 >
@@ -207,7 +247,11 @@ const AccessibilityPanel = ({ isOpen, onClose }) => {
           {/* Reset Button */}
           <button
             onClick={resetSettings}
-            className="w-full py-4 bg-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-300 transition flex items-center justify-center gap-2"
+            className={`w-full py-4 font-semibold rounded-xl transition flex items-center justify-center gap-2 ${
+              settings.darkMode 
+                ? 'bg-slate-600 text-slate-200 hover:bg-slate-500' 
+                : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+            }`}
             data-testid="reset-accessibility"
           >
             <RotateCcw size={18} />

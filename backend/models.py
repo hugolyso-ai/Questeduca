@@ -79,7 +79,7 @@ class StudentProfile(BaseModel):
     user_id: str
     student_id: str
     nickname: str
-    parent_id: str
+    parent_id: Optional[str] = None
     school_year: SchoolYear
     school_id: Optional[str] = None
     school_name: str

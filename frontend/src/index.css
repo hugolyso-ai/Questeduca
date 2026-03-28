@@ -81,6 +81,84 @@
   font-size: 1.25rem;
 }
 
+/* Dark Mode */
+.dark-mode {
+  --dm-bg: #0f172a;
+  --dm-card: #1e293b;
+  --dm-text: #f1f5f9;
+  --dm-text-muted: #94a3b8;
+  --dm-border: #334155;
+}
+
+.dark-mode body,
+.dark-mode .bg-white,
+.dark-mode .bg-slate-50 {
+  background-color: var(--dm-bg) !important;
+  color: var(--dm-text) !important;
+}
+
+.dark-mode .bg-gradient-to-b.from-sky-400.to-blue-500 {
+  background: linear-gradient(to bottom, #1e3a5f, #0f172a) !important;
+}
+
+.dark-mode .bg-slate-100,
+.dark-mode .bg-slate-200 {
+  background-color: var(--dm-card) !important;
+}
+
+.dark-mode .text-slate-600,
+.dark-mode .text-slate-700,
+.dark-mode .text-slate-800,
+.dark-mode .text-slate-900 {
+  color: var(--dm-text) !important;
+}
+
+.dark-mode .text-slate-500,
+.dark-mode .text-slate-400 {
+  color: var(--dm-text-muted) !important;
+}
+
+.dark-mode .border-slate-100,
+.dark-mode .border-slate-200,
+.dark-mode .border-slate-300 {
+  border-color: var(--dm-border) !important;
+}
+
+.dark-mode .shadow-lg,
+.dark-mode .shadow-xl,
+.dark-mode .shadow-2xl {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important;
+}
+
+.dark-mode input,
+.dark-mode select,
+.dark-mode textarea {
+  background-color: var(--dm-card) !important;
+  color: var(--dm-text) !important;
+  border-color: var(--dm-border) !important;
+}
+
+.dark-mode input::placeholder,
+.dark-mode textarea::placeholder {
+  color: var(--dm-text-muted) !important;
+}
+
+/* Dark mode cards */
+.dark-mode .rounded-2xl.bg-white,
+.dark-mode .rounded-3xl.bg-white,
+.dark-mode .rounded-xl.bg-white {
+  background-color: var(--dm-card) !important;
+}
+
+/* Keep gradient buttons visible in dark mode */
+.dark-mode .bg-gradient-to-r.from-purple-500,
+.dark-mode .bg-gradient-to-r.from-blue-500,
+.dark-mode .bg-gradient-to-r.from-green-500,
+.dark-mode .bg-gradient-to-r.from-yellow-400,
+.dark-mode .bg-gradient-to-r.from-cyan-400 {
+  /* Keep original gradients */
+}
+
 body {
     margin: 0;
     font-family: 'Nunito', -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",

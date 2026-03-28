@@ -19,6 +19,7 @@ import MonthlyLeagues from '../components/MonthlyLeagues';
 import InteractiveTutorial from '../components/InteractiveTutorial';
 import { OnlineStatusIndicator, OfflineBanner, OfflineCacheManager } from '../components/OfflineComponents';
 import { useOnlineStatus } from '../hooks/useOffline';
+import SchoolCalendar from '../components/SchoolCalendar';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -312,6 +313,7 @@ const StudentDashboard = () => {
   // Tutorial and Offline state
   const [showTutorial, setShowTutorial] = useState(true);
   const [showOfflineManager, setShowOfflineManager] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
   const isOnline = useOnlineStatus();
 
   // Calcular nível total dos edifícios
@@ -620,6 +622,14 @@ const StudentDashboard = () => {
                 <Star className="text-white" size={18} />
                 <span className="font-bold text-white">{gameState.xp} XP</span>
               </div>
+              <button
+                onClick={() => setShowCalendar(true)}
+                className="p-2 hover:bg-slate-100 rounded-full transition"
+                data-testid="calendar-btn"
+                title="Calendário Escolar"
+              >
+                <Calendar size={20} className="text-slate-600" />
+              </button>
               <button
                 onClick={() => setShowOfflineManager(true)}
                 className="p-2 hover:bg-slate-100 rounded-full transition"
@@ -1156,6 +1166,13 @@ const StudentDashboard = () => {
         isOpen={showOfflineManager}
         onClose={() => setShowOfflineManager(false)}
         schoolYear={studentProfile?.school_year}
+      />
+
+      {/* School Calendar */}
+      <SchoolCalendar
+        isOpen={showCalendar}
+        onClose={() => setShowCalendar(false)}
+        userRole="student"
       />
     </div>
   );

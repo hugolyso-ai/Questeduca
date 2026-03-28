@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Users, CreditCard, Settings, LogOut, TrendingUp, Award, Plus, X, School, BookOpen, User, Bell, Gift, Check, Gamepad2, FileText, Download } from 'lucide-react';
+import { Users, CreditCard, Settings, LogOut, TrendingUp, Award, Plus, X, School, BookOpen, User, Bell, Gift, Check, Gamepad2, FileText, Download, Calendar } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
 import MiniGamesHub from '../components/MiniGamesHub';
 import { ReportExportModal, ExportReportButton } from '../components/ReportExport';
 import InteractiveTutorial from '../components/InteractiveTutorial';
+import SchoolCalendar from '../components/SchoolCalendar';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -346,6 +347,7 @@ const ParentDashboard = () => {
   const [showTutorial, setShowTutorial] = useState(true);
   const [showReportModal, setShowReportModal] = useState(false);
   const [selectedChildForReport, setSelectedChildForReport] = useState(null);
+  const [showCalendar, setShowCalendar] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -467,6 +469,14 @@ const ParentDashboard = () => {
               Dashboard Pais
             </h1>
             <div className="flex items-center gap-4">
+              <button
+                onClick={() => setShowCalendar(true)}
+                className="p-2 hover:bg-slate-100 rounded-full transition"
+                data-testid="parent-calendar-btn"
+                title="Calendário Escolar"
+              >
+                <Calendar size={20} className="text-slate-600" />
+              </button>
               <NotificationBell 
                 notifications={notifications} 
                 onMarkRead={handleMarkNotificationRead} 
@@ -1052,6 +1062,13 @@ const ParentDashboard = () => {
           onComplete={() => setShowTutorial(false)}
         />
       )}
+
+      {/* School Calendar */}
+      <SchoolCalendar
+        isOpen={showCalendar}
+        onClose={() => setShowCalendar(false)}
+        userRole="parent"
+      />
     </div>
   );
 };

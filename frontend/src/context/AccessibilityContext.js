@@ -7,7 +7,8 @@ export const AccessibilityProvider = ({ children }) => {
     dyslexiaFont: false,
     colorblindMode: 'none', // none, protanopia, deuteranopia, tritanopia
     highContrast: false,
-    textSize: 'medium' // small, medium, large, xlarge
+    textSize: 'medium', // small, medium, large, xlarge
+    darkMode: false // NEW: Dark mode
   });
 
   // Load settings from localStorage on mount
@@ -50,6 +51,15 @@ export const AccessibilityProvider = ({ children }) => {
     html.classList.remove('text-size-small', 'text-size-medium', 'text-size-large', 'text-size-xlarge');
     html.classList.add(`text-size-${settings.textSize}`);
 
+    // Dark mode
+    if (settings.darkMode) {
+      html.classList.add('dark-mode');
+      document.body.classList.add('dark-mode');
+    } else {
+      html.classList.remove('dark-mode');
+      document.body.classList.remove('dark-mode');
+    }
+
     // Save to localStorage
     localStorage.setItem('accessibility_settings', JSON.stringify(settings));
   }, [settings]);
@@ -63,7 +73,8 @@ export const AccessibilityProvider = ({ children }) => {
       dyslexiaFont: false,
       colorblindMode: 'none',
       highContrast: false,
-      textSize: 'medium'
+      textSize: 'medium',
+      darkMode: false
     });
   };
 
