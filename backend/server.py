@@ -224,6 +224,16 @@ async def get_my_student_profile(
     if not student:
         raise HTTPException(status_code=404, detail="Perfil não encontrado")
     
+    # Handle optional fields that might be None from MongoDB
+    if student.get('parent_id') is None:
+        student['parent_id'] = None  # Keep as None for Optional field
+    if student.get('municipality') is None:
+        student['municipality'] = None
+    if student.get('locality') is None:
+        student['locality'] = None
+    if student.get('school_id') is None:
+        student['school_id'] = None
+    
     return StudentProfile(**student)
 
 @api_router.get("/parents/me")

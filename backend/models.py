@@ -76,6 +76,8 @@ class ParentProfile(BaseModel):
 
 # Student Models
 class StudentProfile(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
     user_id: str
     student_id: str
     nickname: str
