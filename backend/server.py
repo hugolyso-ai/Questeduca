@@ -869,7 +869,9 @@ async def get_giftcard_status(
     # If still pending, check with Stripe
     if giftcard["status"] == "pending":
         try:
-            origin_url = os.environ.get('FRONTEND_URL', 'https://edu-empire-1.preview.emergentagent.com')
+            origin_url = os.environ.get('FRONTEND_URL')
+            if not origin_url:
+                raise HTTPException(status_code=500, detail="FRONTEND_URL not configured")
             status = await payment_service.get_checkout_status(session_id, origin_url)
             
             if status.payment_status == "paid":
