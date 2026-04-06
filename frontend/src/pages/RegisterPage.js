@@ -564,6 +564,17 @@ const RegisterPage = () => {
               Entrar
             </Link>
           </p>
+
+          <p className="text-center mt-4 text-sm text-slate-500" style={{ fontFamily: 'Nunito, sans-serif' }}>
+            Ao registar-se, concorda com os nossos{' '}
+            <Link to="/terms" className="text-green-600 hover:underline">
+              Termos de Serviço
+            </Link>{' '}
+            e{' '}
+            <Link to="/privacy" className="text-green-600 hover:underline">
+              Política de Privacidade
+            </Link>
+          </p>
         </div>
       </div>
     </div>
