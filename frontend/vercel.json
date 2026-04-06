@@ -1,0 +1,11 @@
+{
+  "buildCommand": "CI=false DISABLE_ESLINT_PLUGIN=true yarn build",
+  "outputDirectory": "build",
+  "framework": "create-react-app",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "env": {
+    "DISABLE_ESLINT_PLUGIN": "true"
+  }
+}

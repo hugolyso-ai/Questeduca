@@ -100,6 +100,7 @@ const SpeedMathGame = ({ onGameEnd, difficulty = 'medium' }) => {
   // Iniciar jogo
   useEffect(() => {
     nextProblem();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Timer do jogo

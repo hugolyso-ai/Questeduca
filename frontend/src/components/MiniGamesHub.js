@@ -111,6 +111,7 @@ const QuizDuelGame = ({ opponent, onEnd, questions }) => {
       // Tempo esgotado - simular resposta do oponente
       handleTimeUp();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeLeft, answered]);
 
   const handleTimeUp = () => {

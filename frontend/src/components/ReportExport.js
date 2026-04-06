@@ -278,6 +278,7 @@ const ReportExportModal = ({ isOpen, onClose, children }) => {
       }
     };
     fetchReportData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, children?.student_id]);
 
   const handleExport = async () => {

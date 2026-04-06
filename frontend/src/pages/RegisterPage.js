@@ -105,6 +105,7 @@ const RegisterPage = () => {
       }
     };
     fetchLocalities();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [associationData.municipality]);
 
   // Fetch schools when locality changes
@@ -128,6 +129,7 @@ const RegisterPage = () => {
       }
     };
     fetchSchools();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [associationData.locality]);
 
   const handleSchoolSelect = (schoolId) => {

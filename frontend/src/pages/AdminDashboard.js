@@ -314,6 +314,7 @@ const AdminDashboard = () => {
     if (activeTab === 'users') fetchUsers();
     if (activeTab === 'associations') fetchAssociations();
     if (activeTab === 'transactions') fetchTransactions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
   // Toggle user active status
