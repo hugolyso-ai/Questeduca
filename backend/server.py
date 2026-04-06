@@ -1082,33 +1082,54 @@ async def get_my_friends(
         else:
             friend_ids.append(req["from_user_id"])
     
-    # Get friend profiles
+    # Get friend profiles using aggregation pipeline (optimized)
+    if not friend_ids:
+        return []
+    
+    pipeline = [
+        {"$match": {"user_id": {"$in": friend_ids}}},
+        {"$lookup": {
+            "from": "game_states",
+            "localField": "user_id",
+            "foreignField": "user_id",
+            "as": "game_state"
+        }},
+        {"$unwind": {"path": "$game_state", "preserveNullAndEmptyArrays": True}},
+        {"$project": {
+            "_id": 0,
+            "user_id": 1,
+            "nickname": 1,
+            "school_name": 1,
+            "district": 1,
+            "level": {"$ifNull": ["$game_state.level", 1]},
+            "buildings": {"$ifNull": ["$game_state.buildings", {}]}
+        }}
+    ]
+    
+    friends_data = await db.students.aggregate(pipeline).to_list(len(friend_ids))
+    
     friends = []
-    for friend_id in friend_ids:
-        student = await db.students.find_one({"user_id": friend_id}, {"_id": 0})
-        if student:
-            game_state = await db.game_states.find_one({"user_id": friend_id}, {"_id": 0})
-            
-            buildings = game_state.get("buildings", {}) if game_state else {}
-            total_level = sum(buildings.values()) if isinstance(buildings, dict) else 0
-            
-            if total_level >= 50:
-                settlement = "metropolis"
-            elif total_level >= 25:
-                settlement = "city"
-            elif total_level >= 10:
-                settlement = "town"
-            else:
-                settlement = "village"
-            
-            friends.append({
-                "user_id": friend_id,
-                "nickname": student.get("nickname", "Anónimo"),
-                "school_name": student.get("school_name", ""),
-                "district": student.get("district", ""),
-                "level": game_state.get("level", 1) if game_state else 1,
-                "settlement_level": settlement
-            })
+    for f in friends_data:
+        buildings = f.get("buildings", {})
+        total_level = sum(buildings.values()) if isinstance(buildings, dict) else 0
+        
+        if total_level >= 50:
+            settlement = "metropolis"
+        elif total_level >= 25:
+            settlement = "city"
+        elif total_level >= 10:
+            settlement = "town"
+        else:
+            settlement = "village"
+        
+        friends.append({
+            "user_id": f.get("user_id"),
+            "nickname": f.get("nickname", "Anónimo"),
+            "school_name": f.get("school_name", ""),
+            "district": f.get("district", ""),
+            "level": f.get("level", 1),
+            "settlement_level": settlement
+        })
     
     return friends
 
@@ -1132,19 +1153,28 @@ async def search_potential_friends(
     if query:
         filters["nickname"] = {"$regex": query, "$options": "i"}
     
-    students = await db.students.find(filters, {"_id": 0}).limit(20).to_list(20)
+    # Optimized query using aggregation pipeline
+    pipeline = [
+        {"$match": filters},
+        {"$lookup": {
+            "from": "game_states",
+            "localField": "user_id",
+            "foreignField": "user_id",
+            "as": "game_state"
+        }},
+        {"$unwind": {"path": "$game_state", "preserveNullAndEmptyArrays": True}},
+        {"$project": {
+            "_id": 0,
+            "user_id": 1,
+            "nickname": 1,
+            "school_name": 1,
+            "district": 1,
+            "level": {"$ifNull": ["$game_state.level", 1]}
+        }},
+        {"$limit": 20}
+    ]
     
-    results = []
-    for student in students:
-        game_state = await db.game_states.find_one({"user_id": student["user_id"]}, {"_id": 0})
-        
-        results.append({
-            "user_id": student["user_id"],
-            "nickname": student.get("nickname", "Anónimo"),
-            "school_name": student.get("school_name", ""),
-            "district": student.get("district", ""),
-            "level": game_state.get("level", 1) if game_state else 1
-        })
+    results = await db.students.aggregate(pipeline).to_list(20)
     
     return results
 
