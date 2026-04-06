@@ -187,6 +187,35 @@ Criar jogo educativo RTS (QUESTEDUCA) para o 1º, 2º e 3º ciclos do ensino bá
 4. ~~**Modo offline**~~ ✅ Concluído - Cache de perguntas com Service Worker e IndexedDB
 5. ~~**Relatórios de progresso**~~ ✅ Concluído via Admin Dashboard e PDF Export
 
+### ✅ Fase 14: Painel Admin Avançado (Concluído - 06/04/2025)
+
+#### ✅ Gestão de Giftcards
+- [x] **Emissão Manual**: Criar giftcards sem pagamento (€5, €10, €20, €50)
+- [x] **Quantidade em lote**: Até 100 giftcards de uma vez
+- [x] **Notas**: Campo para identificar motivo (ex: prémio, cortesia)
+- [x] **Estatísticas**: Total, ativos, resgatados, valor ativo em circulação
+- [x] **Desativação**: Possibilidade de desativar giftcards ativos
+
+#### ✅ Gestão de Utilizadores Avançada
+- [x] **Edição completa**: Nome, email, role, estado
+- [x] **Eliminação**: Soft delete (desativação permanente)
+- [x] **Validações**: Não permite editar/eliminar admins
+
+#### ✅ Gestão de Subscrições
+- [x] **Criação manual**: Atribuir subscrição a utilizador (cortesia/prémio)
+- [x] **Edição**: Alterar estado e data de expiração
+- [x] **Filtros**: Por estado (ativo, cancelado, expirado)
+
+#### ✅ Gestão de Associações
+- [x] **Edição**: Nome, escola, IBAN, estado de aprovação
+- [x] **Eliminação**: Com verificação de pagamentos pendentes
+
+#### ✅ Gestão de Escolas
+- [x] **Listagem**: Com pesquisa e filtro por distrito
+- [x] **Criação**: Adicionar novas escolas à base de dados
+- [x] **Edição**: Nome, distrito, concelho, localidade, ciclo
+- [x] **Eliminação**: Com verificação de alunos associados
+
 ### ✅ Fase 13: Tarefas P4 + Admin + Ligas Mensais (Concluído - 27/03/2025)
 
 #### ✅ Painel de Administração
@@ -386,6 +415,21 @@ Criar jogo educativo RTS (QUESTEDUCA) para o 1º, 2º e 3º ciclos do ensino bá
 - `POST /api/push/subscribe` - Subscrever push notifications
 - `DELETE /api/push/unsubscribe` - Cancelar subscrição
 - `POST /api/notifications/send-push` - Enviar notificação
+
+### Admin Dashboard (06/04/2025)
+- `POST /api/admin/giftcards/issue` - Emitir giftcards manualmente
+- `GET /api/admin/giftcards` - Listar todos os giftcards com estatísticas
+- `PUT /api/admin/giftcards/{id}/deactivate` - Desativar giftcard
+- `PUT /api/admin/users/{id}` - Editar utilizador
+- `DELETE /api/admin/users/{id}` - Eliminar utilizador (soft delete)
+- `PUT /api/admin/subscriptions/{id}` - Editar subscrição
+- `POST /api/admin/subscriptions/create` - Criar subscrição manual
+- `PUT /api/admin/associations/{id}` - Editar associação
+- `DELETE /api/admin/associations/{id}` - Eliminar associação
+- `GET /api/admin/schools` - Listar escolas com filtros
+- `POST /api/admin/schools` - Criar escola
+- `PUT /api/admin/schools/{id}` - Editar escola
+- `DELETE /api/admin/schools/{id}` - Eliminar escola
 
 ## Credenciais
 - **Stripe**: sk_test_emergent

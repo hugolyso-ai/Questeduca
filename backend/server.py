@@ -2668,6 +2668,472 @@ async def get_all_transactions(
         }
     }
 
+# ==================== ADMIN GIFTCARDS MANAGEMENT ====================
+
+@api_router.post("/admin/giftcards/issue")
+async def admin_issue_giftcard(
+    amount: float,
+    quantity: int = 1,
+    notes: Optional[str] = None,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Admin: Issue giftcards manually (without payment)"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Apenas admins")
+    
+    if amount not in [5.0, 10.0, 20.0, 50.0]:
+        raise HTTPException(status_code=400, detail="Valor inválido. Valores aceites: 5, 10, 20, 50€")
+    
+    if quantity < 1 or quantity > 100:
+        raise HTTPException(status_code=400, detail="Quantidade deve ser entre 1 e 100")
+    
+    giftcards = []
+    for _ in range(quantity):
+        giftcard_id = f"gift_{uuid.uuid4().hex[:12]}"
+        code = f"GIFT-{uuid.uuid4().hex[:8].upper()}"
+        
+        giftcard = {
+            "giftcard_id": giftcard_id,
+            "code": code,
+            "amount": amount,
+            "currency": "eur",
+            "created_by": current_user.user_id,
+            "issued_by_admin": True,
+            "redeemed_by": None,
+            "redeemed_at": None,
+            "status": "active",
+            "notes": notes,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "expires_at": (datetime.now(timezone.utc) + timedelta(days=365)).isoformat()
+        }
+        
+        await db.giftcards.insert_one(giftcard)
+        giftcards.append({"giftcard_id": giftcard_id, "code": code, "amount": amount})
+    
+    return {
+        "success": True,
+        "message": f"{quantity} giftcard(s) de €{amount} emitido(s) com sucesso",
+        "giftcards": giftcards
+    }
+
+@api_router.get("/admin/giftcards")
+async def admin_get_giftcards(
+    page: int = 1,
+    limit: int = 20,
+    status: Optional[str] = None,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Admin: Get all giftcards"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Apenas admins")
+    
+    query = {}
+    if status:
+        query["status"] = status
+    
+    skip = (page - 1) * limit
+    
+    giftcards = await db.giftcards.find(query, {"_id": 0}).skip(skip).limit(limit).sort("created_at", -1).to_list(limit)
+    total = await db.giftcards.count_documents(query)
+    
+    # Get stats
+    stats = {
+        "total": await db.giftcards.count_documents({}),
+        "active": await db.giftcards.count_documents({"status": "active"}),
+        "redeemed": await db.giftcards.count_documents({"status": "redeemed"}),
+        "pending": await db.giftcards.count_documents({"status": "pending"})
+    }
+    
+    # Calculate total value
+    value_pipeline = [
+        {"$match": {"status": "active"}},
+        {"$group": {"_id": None, "total": {"$sum": "$amount"}}}
+    ]
+    value_result = await db.giftcards.aggregate(value_pipeline).to_list(1)
+    stats["active_value"] = value_result[0]["total"] if value_result else 0
+    
+    return {
+        "giftcards": giftcards,
+        "stats": stats,
+        "pagination": {
+            "page": page,
+            "limit": limit,
+            "total": total,
+            "pages": (total + limit - 1) // limit
+        }
+    }
+
+@api_router.put("/admin/giftcards/{giftcard_id}/deactivate")
+async def admin_deactivate_giftcard(
+    giftcard_id: str,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Admin: Deactivate a giftcard"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Apenas admins")
+    
+    result = await db.giftcards.update_one(
+        {"giftcard_id": giftcard_id, "status": "active"},
+        {"$set": {"status": "deactivated", "deactivated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Giftcard não encontrado ou já não está ativo")
+    
+    return {"success": True, "message": "Giftcard desativado"}
+
+# ==================== ADMIN USERS MANAGEMENT ====================
+
+@api_router.put("/admin/users/{user_id}")
+async def admin_update_user(
+    user_id: str,
+    name: Optional[str] = None,
+    email: Optional[str] = None,
+    role: Optional[str] = None,
+    is_active: Optional[bool] = None,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Admin: Update user details"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Apenas admins")
+    
+    user = await db.users.find_one({"user_id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="Utilizador não encontrado")
+    
+    # Build update dict
+    update_data = {}
+    if name is not None:
+        update_data["name"] = name
+    if email is not None:
+        # Check if email is already in use
+        existing = await db.users.find_one({"email": email, "user_id": {"$ne": user_id}})
+        if existing:
+            raise HTTPException(status_code=400, detail="Email já em uso")
+        update_data["email"] = email
+    if role is not None and role in ["parent", "student", "association"]:
+        update_data["role"] = role
+    if is_active is not None:
+        update_data["is_active"] = is_active
+    
+    if update_data:
+        update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+        await db.users.update_one({"user_id": user_id}, {"$set": update_data})
+    
+    return {"success": True, "message": "Utilizador atualizado"}
+
+@api_router.delete("/admin/users/{user_id}")
+async def admin_delete_user(
+    user_id: str,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Admin: Delete a user (soft delete - deactivates)"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Apenas admins")
+    
+    user = await db.users.find_one({"user_id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="Utilizador não encontrado")
+    
+    if user.get("role") == "admin":
+        raise HTTPException(status_code=400, detail="Não pode eliminar administradores")
+    
+    # Soft delete
+    await db.users.update_one(
+        {"user_id": user_id},
+        {"$set": {"is_active": False, "deleted_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    return {"success": True, "message": "Utilizador eliminado"}
+
+# ==================== ADMIN SUBSCRIPTIONS MANAGEMENT ====================
+
+@api_router.put("/admin/subscriptions/{subscription_id}")
+async def admin_update_subscription(
+    subscription_id: str,
+    status: Optional[str] = None,
+    end_date: Optional[str] = None,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Admin: Update subscription details"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Apenas admins")
+    
+    subscription = await db.subscriptions.find_one({"subscription_id": subscription_id})
+    if not subscription:
+        raise HTTPException(status_code=404, detail="Subscrição não encontrada")
+    
+    update_data = {}
+    if status is not None and status in ["active", "cancelled", "expired"]:
+        update_data["status"] = status
+    if end_date is not None:
+        update_data["end_date"] = end_date
+    
+    if update_data:
+        update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+        update_data["updated_by"] = current_user.user_id
+        await db.subscriptions.update_one({"subscription_id": subscription_id}, {"$set": update_data})
+        
+        # Also update parent premium status if changing status
+        if status:
+            await db.parents.update_one(
+                {"user_id": subscription["user_id"]},
+                {"$set": {
+                    "premium_active": status == "active",
+                    "subscription_expiry": update_data.get("end_date", subscription.get("end_date"))
+                }}
+            )
+    
+    return {"success": True, "message": "Subscrição atualizada"}
+
+@api_router.post("/admin/subscriptions/create")
+async def admin_create_subscription(
+    user_id: str,
+    subscription_type: str,
+    duration_days: int = 30,
+    notes: Optional[str] = None,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Admin: Create a subscription manually (free grant)"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Apenas admins")
+    
+    # Verify user exists and is a parent
+    user = await db.users.find_one({"user_id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="Utilizador não encontrado")
+    if user.get("role") != "parent":
+        raise HTTPException(status_code=400, detail="Subscrições apenas para pais")
+    
+    valid_types = ["individual_monthly", "individual_annual", "family_monthly", "family_annual"]
+    if subscription_type not in valid_types:
+        raise HTTPException(status_code=400, detail=f"Tipo inválido. Tipos aceites: {valid_types}")
+    
+    subscription_id = f"sub_{uuid.uuid4().hex[:12]}"
+    
+    subscription = {
+        "subscription_id": subscription_id,
+        "user_id": user_id,
+        "type": subscription_type,
+        "start_date": datetime.now(timezone.utc).isoformat(),
+        "end_date": (datetime.now(timezone.utc) + timedelta(days=duration_days)).isoformat(),
+        "status": "active",
+        "granted_by_admin": True,
+        "granted_by": current_user.user_id,
+        "notes": notes,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.subscriptions.insert_one(subscription)
+    
+    # Update parent premium status
+    await db.parents.update_one(
+        {"user_id": user_id},
+        {
+            "$set": {
+                "subscription_type": subscription_type,
+                "subscription_expiry": subscription["end_date"],
+                "premium_active": True
+            }
+        },
+        upsert=True
+    )
+    
+    return {
+        "success": True,
+        "message": f"Subscrição {subscription_type} criada para {user.get('email')}",
+        "subscription_id": subscription_id
+    }
+
+# ==================== ADMIN ASSOCIATIONS MANAGEMENT ====================
+
+@api_router.put("/admin/associations/{association_id}")
+async def admin_update_association(
+    association_id: str,
+    association_name: Optional[str] = None,
+    school_name: Optional[str] = None,
+    iban: Optional[str] = None,
+    approved: Optional[bool] = None,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Admin: Update association details"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Apenas admins")
+    
+    association = await db.associations.find_one({"association_id": association_id})
+    if not association:
+        raise HTTPException(status_code=404, detail="Associação não encontrada")
+    
+    update_data = {}
+    if association_name is not None:
+        update_data["association_name"] = association_name
+    if school_name is not None:
+        update_data["school_name"] = school_name
+    if iban is not None:
+        update_data["iban"] = iban
+    if approved is not None:
+        update_data["approved"] = approved
+    
+    if update_data:
+        update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+        await db.associations.update_one({"association_id": association_id}, {"$set": update_data})
+    
+    return {"success": True, "message": "Associação atualizada"}
+
+@api_router.delete("/admin/associations/{association_id}")
+async def admin_delete_association(
+    association_id: str,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Admin: Delete an association"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Apenas admins")
+    
+    association = await db.associations.find_one({"association_id": association_id})
+    if not association:
+        raise HTTPException(status_code=404, detail="Associação não encontrada")
+    
+    # Check for pending payouts
+    if association.get("pending_payout", 0) > 0:
+        raise HTTPException(status_code=400, detail="Associação tem pagamentos pendentes")
+    
+    # Delete the association
+    await db.associations.delete_one({"association_id": association_id})
+    
+    # Also deactivate the user account if exists
+    if association.get("user_id"):
+        await db.users.update_one(
+            {"user_id": association["user_id"]},
+            {"$set": {"is_active": False}}
+        )
+    
+    return {"success": True, "message": "Associação eliminada"}
+
+# ==================== ADMIN SCHOOLS MANAGEMENT ====================
+
+@api_router.get("/admin/schools")
+async def admin_get_schools(
+    page: int = 1,
+    limit: int = 50,
+    district: Optional[str] = None,
+    search: Optional[str] = None,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Admin: Get all schools from database"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Apenas admins")
+    
+    query = {}
+    if district:
+        query["district"] = district
+    if search:
+        query["name"] = {"$regex": search, "$options": "i"}
+    
+    skip = (page - 1) * limit
+    
+    schools = await db.schools.find(query, {"_id": 0}).skip(skip).limit(limit).sort("name", 1).to_list(limit)
+    total = await db.schools.count_documents(query)
+    
+    # Get unique districts for filter
+    districts = await db.schools.distinct("district")
+    
+    return {
+        "schools": schools,
+        "districts": sorted(districts) if districts else [],
+        "pagination": {
+            "page": page,
+            "limit": limit,
+            "total": total,
+            "pages": (total + limit - 1) // limit
+        }
+    }
+
+@api_router.post("/admin/schools")
+async def admin_create_school(
+    name: str,
+    district: str,
+    municipality: str,
+    locality: Optional[str] = None,
+    cycle: Optional[str] = None,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Admin: Create a new school"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Apenas admins")
+    
+    school_id = f"school_{uuid.uuid4().hex[:12]}"
+    
+    school = {
+        "school_id": school_id,
+        "name": name,
+        "district": district,
+        "municipality": municipality,
+        "locality": locality,
+        "cycle": cycle,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_by": current_user.user_id
+    }
+    
+    await db.schools.insert_one(school)
+    
+    return {"success": True, "school_id": school_id, "message": "Escola criada"}
+
+@api_router.put("/admin/schools/{school_id}")
+async def admin_update_school(
+    school_id: str,
+    name: Optional[str] = None,
+    district: Optional[str] = None,
+    municipality: Optional[str] = None,
+    locality: Optional[str] = None,
+    cycle: Optional[str] = None,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Admin: Update school details"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Apenas admins")
+    
+    school = await db.schools.find_one({"school_id": school_id})
+    if not school:
+        raise HTTPException(status_code=404, detail="Escola não encontrada")
+    
+    update_data = {}
+    if name is not None:
+        update_data["name"] = name
+    if district is not None:
+        update_data["district"] = district
+    if municipality is not None:
+        update_data["municipality"] = municipality
+    if locality is not None:
+        update_data["locality"] = locality
+    if cycle is not None:
+        update_data["cycle"] = cycle
+    
+    if update_data:
+        update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+        await db.schools.update_one({"school_id": school_id}, {"$set": update_data})
+    
+    return {"success": True, "message": "Escola atualizada"}
+
+@api_router.delete("/admin/schools/{school_id}")
+async def admin_delete_school(
+    school_id: str,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Admin: Delete a school"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Apenas admins")
+    
+    # Check if school has students
+    students_count = await db.students.count_documents({"school_id": school_id})
+    if students_count > 0:
+        raise HTTPException(status_code=400, detail=f"Escola tem {students_count} aluno(s) registados")
+    
+    result = await db.schools.delete_one({"school_id": school_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Escola não encontrada")
+    
+    return {"success": True, "message": "Escola eliminada"}
+
 # ==================== LEAGUES ROUTES ====================
 
 @api_router.get("/leagues/current")
