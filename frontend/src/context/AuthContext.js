@@ -28,6 +28,7 @@ export const AuthProvider = ({ children }) => {
 
   // Wrapper to also persist to sessionStorage
   const setUser = useCallback((userData) => {
+    console.log('AuthContext: setUser called with:', userData?.email || 'null');
     setUserState(userData);
     if (userData) {
       sessionStorage.setItem('questeduca_user', JSON.stringify(userData));
@@ -37,28 +38,50 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const checkAuth = useCallback(async () => {
-    // CRITICAL: If returning from OAuth callback, skip the /me check.
+    console.log('AuthContext: checkAuth called');
+    console.log('  - Current pathname:', window.location.pathname);
+    console.log('  - Current hash:', window.location.hash);
+    console.log('  - Current search:', window.location.search);
+    
+    // CRITICAL: If on OAuth callback page, skip the /me check.
     // AuthCallback will exchange the session_id and establish the session first.
-    if (window.location.hash?.includes('session_id=')) {
+    if (window.location.pathname === '/auth/callback') {
+      console.log('AuthContext: On callback page, skipping checkAuth');
       setLoading(false);
       return;
     }
 
+    // If we already have a user from sessionStorage, validate with backend
+    const storedUser = sessionStorage.getItem('questeduca_user');
+    
     try {
       const response = await axios.get(`${API}/auth/me`, {
         withCredentials: true
       });
+      console.log('AuthContext: /auth/me succeeded:', response.data.email);
       setUser(response.data);
     } catch (error) {
-      setUser(null);
+      console.log('AuthContext: /auth/me failed:', error.response?.status);
+      // Only clear user if we don't have a stored user OR if backend explicitly rejects
+      if (!storedUser || error.response?.status === 401) {
+        setUser(null);
+      }
     } finally {
       setLoading(false);
     }
   }, [setUser]);
 
   useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
+    // If we already have user from sessionStorage, mark as not loading immediately
+    if (user) {
+      console.log('AuthContext: Already have user from sessionStorage:', user.email);
+      setLoading(false);
+      // Still validate with backend in background
+      checkAuth();
+    } else {
+      checkAuth();
+    }
+  }, []);  // eslint-disable-line react-hooks/exhaustive-deps
 
   const login = async (email, password) => {
     const response = await axios.post(
