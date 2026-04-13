@@ -23,13 +23,16 @@ import TermsOfService from "./pages/TermsOfService";
 function AppRouter() {
   const location = useLocation();
   
-  // Check for session_id in URL (hash or query params) - OAuth callback
-  const hasSessionId = location.hash?.includes('session_id=') || 
-                       location.search?.includes('session_id=') ||
-                       location.pathname === '/auth/callback';
+  // Debug logging
+  console.log('AppRouter: pathname =', location.pathname);
+  console.log('AppRouter: hash =', location.hash);
+  console.log('AppRouter: search =', location.search);
   
-  if (hasSessionId && location.pathname !== '/auth/callback') {
-    // Redirect to callback to process
+  // If we're on /auth/callback OR have session_id anywhere, render AuthCallback
+  if (location.pathname === '/auth/callback' || 
+      location.hash?.includes('session_id=') || 
+      location.search?.includes('session_id=')) {
+    console.log('AppRouter: Rendering AuthCallback');
     return <AuthCallback />;
   }
 
