@@ -77,6 +77,10 @@ async def login(data: LoginRequest, response: Response):
     if not user_doc:
         raise HTTPException(status_code=401, detail="Credenciais inválidas")
     
+    # Check if user has a password (Google users don't)
+    if 'password' not in user_doc or not user_doc['password']:
+        raise HTTPException(status_code=401, detail="Esta conta foi criada com Google. Use o botão 'Entrar com Google'.")
+    
     if not await verify_password(data.password, user_doc['password']):
         raise HTTPException(status_code=401, detail="Credenciais inválidas")
     
