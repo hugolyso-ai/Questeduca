@@ -383,28 +383,88 @@ async def get_game_state(
     )
     
     if not game_state:
-        # Create initial game state
+        # Create initial game state with expanded RTS features
         game_state = {
             "user_id": current_user.user_id,
             "coins": 100,
             "diamonds": 5,
             "xp": 0,
             "level": 1,
-            "buildings": {
-                "town_hall": 1,
-                "school": 0,
-                "library": 0,
-                "market": 0,
-                "house": 0,
-                "garden": 0
+            # Resources for building
+            "resources": {
+                "wood": 50,
+                "stone": 30,
+                "iron": 10,
+                "food": 100
             },
+            # Buildings with positions on isometric grid
+            "buildings": {
+                "town_hall": {"level": 1, "x": 5, "y": 5, "producing": False},
+                "house": {"level": 0, "x": 3, "y": 5, "producing": False},
+                "school": {"level": 0, "x": 7, "y": 5, "producing": False},
+                "library": {"level": 0, "x": 5, "y": 3, "producing": False},
+                "market": {"level": 0, "x": 5, "y": 7, "producing": False},
+                "farm": {"level": 0, "x": 3, "y": 3, "producing": False},
+                "lumber_mill": {"level": 0, "x": 7, "y": 3, "producing": False},
+                "quarry": {"level": 0, "x": 3, "y": 7, "producing": False},
+                "mine": {"level": 0, "x": 7, "y": 7, "producing": False},
+                "barracks": {"level": 0, "x": 9, "y": 5, "producing": False},
+                "wall": {"level": 0, "x": 1, "y": 5, "producing": False},
+                "garden": {"level": 0, "x": 5, "y": 9, "producing": False}
+            },
+            # City stats
+            "population": 10,
+            "max_population": 20,
+            "defense_power": 5,
+            "attack_power": 0,
+            # Production timers (ISO timestamps when production completes)
+            "production_timers": {},
             "quizzes_today": 0,
             "last_quiz_date": None,
+            "last_resource_collection": datetime.now(timezone.utc).isoformat(),
             "created_at": datetime.now(timezone.utc).isoformat()
         }
         await db.game_states.insert_one(game_state)
         # Remove MongoDB _id field added by insert_one
         game_state.pop("_id", None)
+    else:
+        # Migrate old game states to new format
+        if "resources" not in game_state:
+            game_state["resources"] = {"wood": 50, "stone": 30, "iron": 10, "food": 100}
+        if "population" not in game_state:
+            game_state["population"] = 10
+            game_state["max_population"] = 20
+            game_state["defense_power"] = 5
+            game_state["attack_power"] = 0
+        # Convert old buildings format to new format
+        if isinstance(game_state.get("buildings", {}).get("town_hall"), int):
+            old_buildings = game_state["buildings"]
+            game_state["buildings"] = {
+                "town_hall": {"level": old_buildings.get("town_hall", 1), "x": 5, "y": 5, "producing": False},
+                "house": {"level": old_buildings.get("house", 0), "x": 3, "y": 5, "producing": False},
+                "school": {"level": old_buildings.get("school", 0), "x": 7, "y": 5, "producing": False},
+                "library": {"level": old_buildings.get("library", 0), "x": 5, "y": 3, "producing": False},
+                "market": {"level": old_buildings.get("market", 0), "x": 5, "y": 7, "producing": False},
+                "farm": {"level": 0, "x": 3, "y": 3, "producing": False},
+                "lumber_mill": {"level": 0, "x": 7, "y": 3, "producing": False},
+                "quarry": {"level": 0, "x": 3, "y": 7, "producing": False},
+                "mine": {"level": 0, "x": 7, "y": 7, "producing": False},
+                "barracks": {"level": 0, "x": 9, "y": 5, "producing": False},
+                "wall": {"level": 0, "x": 1, "y": 5, "producing": False},
+                "garden": {"level": old_buildings.get("garden", 0), "x": 5, "y": 9, "producing": False}
+            }
+            # Update in DB
+            await db.game_states.update_one(
+                {"user_id": current_user.user_id},
+                {"$set": {
+                    "resources": game_state["resources"],
+                    "buildings": game_state["buildings"],
+                    "population": 10,
+                    "max_population": 20,
+                    "defense_power": 5,
+                    "attack_power": 0
+                }}
+            )
     
     return game_state
 
@@ -418,6 +478,22 @@ async def upgrade_building(
     if current_user.role != UserRole.STUDENT:
         raise HTTPException(status_code=403, detail="Apenas para alunos")
     
+    # Building costs configuration
+    BUILDING_COSTS = {
+        "town_hall": {"coins": 100, "wood": 50, "stone": 50, "iron": 20},
+        "house": {"coins": 30, "wood": 20, "stone": 10, "iron": 0},
+        "school": {"coins": 80, "wood": 30, "stone": 30, "iron": 10},
+        "library": {"coins": 60, "wood": 40, "stone": 20, "iron": 5},
+        "market": {"coins": 50, "wood": 25, "stone": 25, "iron": 5},
+        "farm": {"coins": 20, "wood": 15, "stone": 5, "iron": 0},
+        "lumber_mill": {"coins": 25, "wood": 10, "stone": 10, "iron": 5},
+        "quarry": {"coins": 30, "wood": 10, "stone": 5, "iron": 10},
+        "mine": {"coins": 40, "wood": 15, "stone": 15, "iron": 5},
+        "barracks": {"coins": 100, "wood": 40, "stone": 50, "iron": 30},
+        "wall": {"coins": 50, "wood": 20, "stone": 60, "iron": 15},
+        "garden": {"coins": 15, "wood": 10, "stone": 5, "iron": 0}
+    }
+    
     # Get current game state
     game_state = await db.game_states.find_one(
         {"user_id": current_user.user_id},
@@ -427,23 +503,78 @@ async def upgrade_building(
     if not game_state:
         raise HTTPException(status_code=404, detail="Estado do jogo não encontrado")
     
-    if game_state["coins"] < cost:
-        raise HTTPException(status_code=400, detail="Moedas insuficientes")
+    # Get building info
+    building = game_state.get("buildings", {}).get(building_id)
+    if not building:
+        raise HTTPException(status_code=404, detail="Edifício não encontrado")
     
-    current_level = game_state["buildings"].get(building_id, 0)
+    current_level = building.get("level", 0) if isinstance(building, dict) else building
     if current_level >= 5:
         raise HTTPException(status_code=400, detail="Nível máximo atingido")
     
+    # Calculate costs (multiply by level + 1)
+    base_costs = BUILDING_COSTS.get(building_id, {"coins": 50, "wood": 20, "stone": 20, "iron": 10})
+    level_multiplier = current_level + 1
+    required_coins = base_costs["coins"] * level_multiplier
+    required_wood = base_costs.get("wood", 0) * level_multiplier
+    required_stone = base_costs.get("stone", 0) * level_multiplier
+    required_iron = base_costs.get("iron", 0) * level_multiplier
+    
+    # Check resources
+    resources = game_state.get("resources", {"wood": 0, "stone": 0, "iron": 0, "food": 0})
+    
+    # Use provided cost or calculated cost
+    actual_coin_cost = cost if cost > 0 else required_coins
+    
+    if game_state.get("coins", 0) < actual_coin_cost:
+        raise HTTPException(status_code=400, detail=f"Moedas insuficientes. Precisas de {actual_coin_cost}")
+    if resources.get("wood", 0) < required_wood:
+        raise HTTPException(status_code=400, detail=f"Madeira insuficiente. Precisas de {required_wood}")
+    if resources.get("stone", 0) < required_stone:
+        raise HTTPException(status_code=400, detail=f"Pedra insuficiente. Precisas de {required_stone}")
+    if resources.get("iron", 0) < required_iron:
+        raise HTTPException(status_code=400, detail=f"Ferro insuficiente. Precisas de {required_iron}")
+    
     # Update game state
+    new_level = current_level + 1
+    
+    # Calculate stat bonuses
+    stat_updates = {}
+    if building_id == "house":
+        stat_updates["max_population"] = game_state.get("max_population", 20) + 10
+    elif building_id == "barracks":
+        stat_updates["attack_power"] = game_state.get("attack_power", 0) + 5
+    elif building_id == "wall":
+        stat_updates["defense_power"] = game_state.get("defense_power", 5) + 10
+    
+    update_query = {
+        "$inc": {
+            "coins": -actual_coin_cost,
+            "resources.wood": -required_wood,
+            "resources.stone": -required_stone,
+            "resources.iron": -required_iron
+        },
+        "$set": {
+            f"buildings.{building_id}.level": new_level,
+            **{k: v for k, v in stat_updates.items()}
+        }
+    }
+    
     await db.game_states.update_one(
         {"user_id": current_user.user_id},
-        {
-            "$inc": {"coins": -cost},
-            "$set": {f"buildings.{building_id}": current_level + 1}
-        }
+        update_query
     )
     
-    return {"success": True, "new_level": current_level + 1}
+    return {
+        "success": True, 
+        "new_level": new_level,
+        "costs_paid": {
+            "coins": actual_coin_cost,
+            "wood": required_wood,
+            "stone": required_stone,
+            "iron": required_iron
+        }
+    }
 
 @api_router.post("/game/add-resources")
 async def add_resources(
@@ -471,6 +602,243 @@ async def add_resources(
         )
     
     return {"success": True}
+
+@api_router.post("/game/start-production")
+async def start_production(
+    building_id: str,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Start resource production in a building"""
+    if current_user.role != UserRole.STUDENT:
+        raise HTTPException(status_code=403, detail="Apenas para alunos")
+    
+    # Production buildings and their outputs
+    PRODUCTION_CONFIG = {
+        "farm": {"resource": "food", "amount": 20, "time_minutes": 30},
+        "lumber_mill": {"resource": "wood", "amount": 15, "time_minutes": 45},
+        "quarry": {"resource": "stone", "amount": 10, "time_minutes": 60},
+        "mine": {"resource": "iron", "amount": 5, "time_minutes": 90},
+        "market": {"resource": "coins", "amount": 25, "time_minutes": 60}
+    }
+    
+    if building_id not in PRODUCTION_CONFIG:
+        raise HTTPException(status_code=400, detail="Este edifício não produz recursos")
+    
+    game_state = await db.game_states.find_one(
+        {"user_id": current_user.user_id},
+        {"_id": 0}
+    )
+    
+    if not game_state:
+        raise HTTPException(status_code=404, detail="Estado do jogo não encontrado")
+    
+    building = game_state.get("buildings", {}).get(building_id)
+    if not building or (isinstance(building, dict) and building.get("level", 0) == 0):
+        raise HTTPException(status_code=400, detail="Edifício não construído")
+    
+    # Check if already producing
+    if isinstance(building, dict) and building.get("producing"):
+        raise HTTPException(status_code=400, detail="Este edifício já está a produzir")
+    
+    # Start production
+    config = PRODUCTION_CONFIG[building_id]
+    building_level = building.get("level", 1) if isinstance(building, dict) else 1
+    completion_time = datetime.now(timezone.utc) + timedelta(minutes=config["time_minutes"] / building_level)
+    
+    await db.game_states.update_one(
+        {"user_id": current_user.user_id},
+        {
+            "$set": {
+                f"buildings.{building_id}.producing": True,
+                f"production_timers.{building_id}": completion_time.isoformat()
+            }
+        }
+    )
+    
+    return {
+        "success": True,
+        "building_id": building_id,
+        "resource": config["resource"],
+        "amount": config["amount"] * building_level,
+        "completion_time": completion_time.isoformat()
+    }
+
+@api_router.post("/game/collect-production")
+async def collect_production(
+    building_id: str,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Collect produced resources from a building"""
+    if current_user.role != UserRole.STUDENT:
+        raise HTTPException(status_code=403, detail="Apenas para alunos")
+    
+    PRODUCTION_CONFIG = {
+        "farm": {"resource": "food", "amount": 20},
+        "lumber_mill": {"resource": "wood", "amount": 15},
+        "quarry": {"resource": "stone", "amount": 10},
+        "mine": {"resource": "iron", "amount": 5},
+        "market": {"resource": "coins", "amount": 25}
+    }
+    
+    if building_id not in PRODUCTION_CONFIG:
+        raise HTTPException(status_code=400, detail="Este edifício não produz recursos")
+    
+    game_state = await db.game_states.find_one(
+        {"user_id": current_user.user_id},
+        {"_id": 0}
+    )
+    
+    if not game_state:
+        raise HTTPException(status_code=404, detail="Estado do jogo não encontrado")
+    
+    # Check production timer
+    production_timers = game_state.get("production_timers", {})
+    timer = production_timers.get(building_id)
+    
+    if not timer:
+        raise HTTPException(status_code=400, detail="Nenhuma produção em curso")
+    
+    completion_time = datetime.fromisoformat(timer.replace('Z', '+00:00'))
+    if datetime.now(timezone.utc) < completion_time:
+        remaining = (completion_time - datetime.now(timezone.utc)).total_seconds()
+        raise HTTPException(status_code=400, detail=f"Produção ainda não terminou. Faltam {int(remaining/60)} minutos")
+    
+    # Calculate production amount based on building level
+    building = game_state.get("buildings", {}).get(building_id, {})
+    building_level = building.get("level", 1) if isinstance(building, dict) else 1
+    config = PRODUCTION_CONFIG[building_id]
+    amount = config["amount"] * building_level
+    
+    # Update game state
+    if config["resource"] == "coins":
+        update_query = {"$inc": {"coins": amount}}
+    else:
+        update_query = {"$inc": {f"resources.{config['resource']}": amount}}
+    
+    update_query["$set"] = {
+        f"buildings.{building_id}.producing": False
+    }
+    update_query["$unset"] = {f"production_timers.{building_id}": ""}
+    
+    await db.game_states.update_one(
+        {"user_id": current_user.user_id},
+        update_query
+    )
+    
+    return {
+        "success": True,
+        "resource": config["resource"],
+        "amount": amount
+    }
+
+@api_router.get("/game/building-info")
+async def get_building_info():
+    """Get information about all buildings and their costs"""
+    buildings = {
+        "town_hall": {
+            "name": "Câmara Municipal",
+            "description": "Centro da cidade. Desbloqueia novos edifícios.",
+            "icon": "🏛️",
+            "max_level": 5,
+            "base_cost": {"coins": 100, "wood": 50, "stone": 50, "iron": 20},
+            "produces": None
+        },
+        "house": {
+            "name": "Casa",
+            "description": "Aumenta a população máxima (+10 por nível).",
+            "icon": "🏠",
+            "max_level": 5,
+            "base_cost": {"coins": 30, "wood": 20, "stone": 10, "iron": 0},
+            "produces": None,
+            "bonus": "population"
+        },
+        "school": {
+            "name": "Escola",
+            "description": "Melhora o XP ganho nos quizzes (+10% por nível).",
+            "icon": "🏫",
+            "max_level": 5,
+            "base_cost": {"coins": 80, "wood": 30, "stone": 30, "iron": 10},
+            "produces": None,
+            "bonus": "xp_boost"
+        },
+        "library": {
+            "name": "Biblioteca",
+            "description": "Aumenta as moedas ganhas (+5 por nível).",
+            "icon": "📚",
+            "max_level": 5,
+            "base_cost": {"coins": 60, "wood": 40, "stone": 20, "iron": 5},
+            "produces": None,
+            "bonus": "coin_boost"
+        },
+        "market": {
+            "name": "Mercado",
+            "description": "Produz moedas ao longo do tempo.",
+            "icon": "🏪",
+            "max_level": 5,
+            "base_cost": {"coins": 50, "wood": 25, "stone": 25, "iron": 5},
+            "produces": {"resource": "coins", "amount": 25, "time_minutes": 60}
+        },
+        "farm": {
+            "name": "Quinta",
+            "description": "Produz comida para a população.",
+            "icon": "🌾",
+            "max_level": 5,
+            "base_cost": {"coins": 20, "wood": 15, "stone": 5, "iron": 0},
+            "produces": {"resource": "food", "amount": 20, "time_minutes": 30}
+        },
+        "lumber_mill": {
+            "name": "Serração",
+            "description": "Produz madeira para construções.",
+            "icon": "🪵",
+            "max_level": 5,
+            "base_cost": {"coins": 25, "wood": 10, "stone": 10, "iron": 5},
+            "produces": {"resource": "wood", "amount": 15, "time_minutes": 45}
+        },
+        "quarry": {
+            "name": "Pedreira",
+            "description": "Produz pedra para construções.",
+            "icon": "🪨",
+            "max_level": 5,
+            "base_cost": {"coins": 30, "wood": 10, "stone": 5, "iron": 10},
+            "produces": {"resource": "stone", "amount": 10, "time_minutes": 60}
+        },
+        "mine": {
+            "name": "Mina",
+            "description": "Produz ferro para construções avançadas.",
+            "icon": "⛏️",
+            "max_level": 5,
+            "base_cost": {"coins": 40, "wood": 15, "stone": 15, "iron": 5},
+            "produces": {"resource": "iron", "amount": 5, "time_minutes": 90}
+        },
+        "barracks": {
+            "name": "Quartel",
+            "description": "Aumenta o poder de ataque (+5 por nível).",
+            "icon": "⚔️",
+            "max_level": 5,
+            "base_cost": {"coins": 100, "wood": 40, "stone": 50, "iron": 30},
+            "produces": None,
+            "bonus": "attack"
+        },
+        "wall": {
+            "name": "Muralha",
+            "description": "Aumenta a defesa da cidade (+10 por nível).",
+            "icon": "🏰",
+            "max_level": 5,
+            "base_cost": {"coins": 50, "wood": 20, "stone": 60, "iron": 15},
+            "produces": None,
+            "bonus": "defense"
+        },
+        "garden": {
+            "name": "Jardim",
+            "description": "Aumenta a felicidade e produz bónus aleatórios.",
+            "icon": "🌳",
+            "max_level": 5,
+            "base_cost": {"coins": 15, "wood": 10, "stone": 5, "iron": 0},
+            "produces": None
+        }
+    }
+    
+    return buildings
 
 # ==================== QUIZ ROUTES ====================
 

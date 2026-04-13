@@ -20,6 +20,7 @@ import InteractiveTutorial from '../components/InteractiveTutorial';
 import { OnlineStatusIndicator, OfflineBanner, OfflineCacheManager } from '../components/OfflineComponents';
 import { useOnlineStatus } from '../hooks/useOffline';
 import SchoolCalendar from '../components/SchoolCalendar';
+import IsometricCity from '../components/IsometricCity';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -269,14 +270,31 @@ const StudentDashboard = () => {
     diamonds: 5,
     xp: 0,
     level: 1,
-    buildings: {
-      town_hall: 1,
-      school: 0,
-      library: 0,
-      market: 0,
-      house: 0,
-      garden: 0
+    resources: {
+      wood: 50,
+      stone: 30,
+      iron: 10,
+      food: 100
     },
+    buildings: {
+      town_hall: { level: 1, x: 5, y: 5, producing: false },
+      house: { level: 0, x: 3, y: 5, producing: false },
+      school: { level: 0, x: 7, y: 5, producing: false },
+      library: { level: 0, x: 5, y: 3, producing: false },
+      market: { level: 0, x: 5, y: 7, producing: false },
+      farm: { level: 0, x: 3, y: 3, producing: false },
+      lumber_mill: { level: 0, x: 7, y: 3, producing: false },
+      quarry: { level: 0, x: 3, y: 7, producing: false },
+      mine: { level: 0, x: 7, y: 7, producing: false },
+      barracks: { level: 0, x: 9, y: 5, producing: false },
+      wall: { level: 0, x: 1, y: 5, producing: false },
+      garden: { level: 0, x: 5, y: 9, producing: false }
+    },
+    population: 10,
+    max_population: 20,
+    defense_power: 5,
+    attack_power: 0,
+    production_timers: {},
     quizzes_today: 0,
     last_quiz_date: null
   });
@@ -316,8 +334,17 @@ const StudentDashboard = () => {
   const [showCalendar, setShowCalendar] = useState(false);
   const isOnline = useOnlineStatus();
 
-  // Calcular nível total dos edifícios
-  const totalBuildingLevel = Object.values(gameState.buildings).reduce((a, b) => a + b, 0);
+  // Calcular nível total dos edifícios (suporta ambos os formatos)
+  const totalBuildingLevel = Object.values(gameState.buildings || {}).reduce((a, b) => {
+    const level = typeof b === 'object' ? b.level : b;
+    return a + (level || 0);
+  }, 0);
+  
+  // Helper para obter nível de um edifício
+  const getBuildingLevel = (buildingId) => {
+    const building = gameState.buildings?.[buildingId];
+    return typeof building === 'object' ? building.level : building || 0;
+  };
   
   // Determinar nível da cidade
   const getSettlementLevel = () => {
@@ -328,6 +355,18 @@ const StudentDashboard = () => {
   };
   
   const settlement = getSettlementLevel();
+
+  // Função para carregar estado do jogo do backend
+  const fetchGameState = useCallback(async () => {
+    try {
+      const gameRes = await axios.get(`${API}/game/state`, { withCredentials: true });
+      if (gameRes.data) {
+        setGameState(gameRes.data);
+      }
+    } catch (error) {
+      console.error('Error fetching game state:', error);
+    }
+  }, []);
 
   // Carregar dados do jogador
   useEffect(() => {
@@ -346,14 +385,7 @@ const StudentDashboard = () => {
         setSubjects(subjectsRes.data || []);
         
         if (gameRes.data) {
-          setGameState(prev => ({
-            ...prev,
-            coins: gameRes.data.coins || 100,
-            diamonds: gameRes.data.diamonds || 5,
-            xp: gameRes.data.xp || 0,
-            level: gameRes.data.level || 1,
-            buildings: gameRes.data.buildings || prev.buildings
-          }));
+          setGameState(gameRes.data);
         }
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -364,34 +396,27 @@ const StudentDashboard = () => {
     fetchData();
   }, []);
 
-  // Função para upgrade de edifício
+  // Função para upgrade de edifício (legacy - agora usa IsometricCity)
   const handleUpgrade = useCallback(async (buildingId) => {
     const config = BUILDINGS_CONFIG[buildingId];
-    const currentLevel = gameState.buildings[buildingId];
-    const cost = config.upgradeCost[currentLevel];
+    if (!config) return;
+    
+    const currentLevel = getBuildingLevel(buildingId);
+    const cost = config.upgradeCost?.[currentLevel] || 50;
     
     if (gameState.coins < cost || currentLevel >= 5) return;
     
     // Aplicar desconto do mercado
-    const marketLevel = gameState.buildings.market;
+    const marketLevel = getBuildingLevel('market');
     const discount = marketLevel * 0.05;
     const finalCost = Math.floor(cost * (1 - discount));
     
-    setGameState(prev => ({
-      ...prev,
-      coins: prev.coins - finalCost,
-      buildings: {
-        ...prev.buildings,
-        [buildingId]: currentLevel + 1
-      }
-    }));
-    
     // Salvar no backend
     try {
-      await axios.post(`${API}/game/upgrade`, {
-        building_id: buildingId,
-        cost: finalCost
-      }, { withCredentials: true });
+      await axios.post(`${API}/game/upgrade-building`, null, {
+        params: { building_id: buildingId, cost: finalCost },
+        withCredentials: true
+      });
       
       toast.success(
         <div>
@@ -399,10 +424,14 @@ const StudentDashboard = () => {
           <p className="text-sm">Nível {currentLevel + 1}</p>
         </div>
       );
+      
+      // Refresh game state
+      fetchGameState();
     } catch (error) {
       console.error('Error upgrading:', error);
+      toast.error(error.response?.data?.detail || 'Erro ao melhorar edifício');
     }
-  }, [gameState]);
+  }, [gameState, fetchGameState]);
 
   // Função para iniciar quiz
   const startQuiz = async (subject) => {
@@ -696,63 +725,7 @@ const StudentDashboard = () => {
         
         {/* City Tab */}
         {activeTab === 'city' && (
-          <div>
-            {/* Settlement Header */}
-            <div className="bg-white rounded-3xl p-6 shadow-xl mb-6 border-b-4 border-purple-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className={`text-3xl font-bold ${settlement.color}`} style={{ fontFamily: 'Fredoka, sans-serif' }}>
-                    {settlement.name} de {studentProfile?.nickname || 'Aventureiro'}
-                  </h2>
-                  <p className="text-slate-600 mt-1" style={{ fontFamily: 'Nunito, sans-serif' }}>
-                    Nível total dos edifícios: {totalBuildingLevel}/30
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm text-slate-500">Próximo nível:</p>
-                  <p className="font-bold text-purple-600">
-                    {totalBuildingLevel < 10 ? 'Vila (10)' : 
-                     totalBuildingLevel < 25 ? 'Cidade (25)' : 
-                     totalBuildingLevel < 50 ? 'Metrópole (50)' : 'Máximo!'}
-                  </p>
-                </div>
-              </div>
-              {/* Progress bar */}
-              <div className="mt-4 bg-slate-200 rounded-full h-3">
-                <div 
-                  className="bg-gradient-to-r from-purple-500 to-blue-500 rounded-full h-3 transition-all"
-                  style={{ width: `${Math.min((totalBuildingLevel / 50) * 100, 100)}%` }}
-                />
-              </div>
-            </div>
-
-            {/* Buildings Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              {Object.entries(BUILDINGS_CONFIG).map(([id, config]) => (
-                <BuildingCard
-                  key={id}
-                  buildingId={id}
-                  config={config}
-                  level={gameState.buildings[id]}
-                  coins={gameState.coins}
-                  onUpgrade={handleUpgrade}
-                  disabled={false}
-                />
-              ))}
-            </div>
-
-            {/* Tips */}
-            <div className="mt-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl p-6 text-white">
-              <h3 className="font-bold text-lg mb-2" style={{ fontFamily: 'Fredoka, sans-serif' }}>
-                <Sparkles className="inline mr-2" size={20} />
-                Dica do Dia
-              </h3>
-              <p style={{ fontFamily: 'Nunito, sans-serif' }}>
-                Responde a quizzes para ganhar moedas e melhorar os teus edifícios! 
-                Quanto mais alto o nível da Escola, mais XP ganhas em cada resposta certa.
-              </p>
-            </div>
-          </div>
+          <IsometricCity gameState={gameState} onRefresh={fetchGameState} />
         )}
 
         {/* Quiz Tab */}
