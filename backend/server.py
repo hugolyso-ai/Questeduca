@@ -2252,17 +2252,68 @@ async def get_schools(
     municipality: Optional[str] = None,
     locality: Optional[str] = None,
     cycle: Optional[str] = None, 
-    school_year: Optional[str] = None
+    school_year: Optional[str] = None,
+    search: Optional[str] = None,
+    limit: int = 100
 ):
     """
-    Get schools filtered by district, municipality, locality and/or cycle.
+    Get schools filtered by district, municipality, locality, cycle and/or text search.
     If school_year is provided, it will be converted to the corresponding cycle.
     """
     # Convert school year to cycle if provided
     if school_year and not cycle:
         cycle = get_cycle_from_year(school_year)
     
-    return get_schools_by_filters(district, municipality, locality, cycle)
+    # Build query
+    query = {}
+    
+    if district:
+        query["district"] = {"$regex": district, "$options": "i"}
+    if municipality:
+        query["municipality"] = {"$regex": municipality, "$options": "i"}
+    if locality:
+        query["locality"] = {"$regex": locality, "$options": "i"}
+    if cycle:
+        query["cycles"] = cycle
+    if search:
+        # Text search on multiple fields
+        query["$or"] = [
+            {"name": {"$regex": search, "$options": "i"}},
+            {"locality": {"$regex": search, "$options": "i"}},
+            {"municipality": {"$regex": search, "$options": "i"}}
+        ]
+    
+    schools = await db.schools.find(query, {"_id": 0}).limit(limit).to_list(limit)
+    return schools
+
+@api_router.get("/schools/districts")
+async def get_school_districts():
+    """Get all unique districts"""
+    districts = await db.schools.distinct("district")
+    return sorted([d for d in districts if d])
+
+@api_router.get("/schools/municipalities")
+async def get_school_municipalities(district: Optional[str] = None):
+    """Get municipalities, optionally filtered by district"""
+    query = {}
+    if district:
+        query["district"] = {"$regex": district, "$options": "i"}
+    municipalities = await db.schools.distinct("municipality", query)
+    return sorted([m for m in municipalities if m])
+
+@api_router.get("/schools/localities")
+async def get_school_localities(
+    district: Optional[str] = None,
+    municipality: Optional[str] = None
+):
+    """Get localities, optionally filtered by district and municipality"""
+    query = {}
+    if district:
+        query["district"] = {"$regex": district, "$options": "i"}
+    if municipality:
+        query["municipality"] = {"$regex": municipality, "$options": "i"}
+    localities = await db.schools.distinct("locality", query)
+    return sorted([l for l in localities if l])
 
 # ==================== BASIC ROUTES ====================
 

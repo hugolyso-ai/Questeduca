@@ -170,6 +170,7 @@ const InteractiveTutorial = ({ userRole = 'student', onComplete }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [highlightRect, setHighlightRect] = useState(null);
 
   const steps = TUTORIAL_STEPS[userRole] || TUTORIAL_STEPS.student;
   const step = steps[currentStep];
@@ -215,18 +216,30 @@ const InteractiveTutorial = ({ userRole = 'student', onComplete }) => {
     onComplete?.();
   };
 
-  // Highlight element
+  // Highlight element and get its position
   useEffect(() => {
     if (step.highlight) {
       const element = document.querySelector(step.highlight);
       if (element) {
-        element.classList.add('tutorial-highlight');
         element.scrollIntoView({ behavior: 'smooth', block: 'center' });
         
+        // Wait for scroll to complete
+        setTimeout(() => {
+          const rect = element.getBoundingClientRect();
+          setHighlightRect({
+            top: rect.top - 8,
+            left: rect.left - 8,
+            width: rect.width + 16,
+            height: rect.height + 16
+          });
+        }, 300);
+        
         return () => {
-          element.classList.remove('tutorial-highlight');
+          setHighlightRect(null);
         };
       }
+    } else {
+      setHighlightRect(null);
     }
   }, [step]);
 
@@ -236,19 +249,77 @@ const InteractiveTutorial = ({ userRole = 'student', onComplete }) => {
     <>
       {showConfetti && <Confetti />}
       
-      {/* Overlay */}
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50" />
+      {/* Dark overlay with cutout for highlighted element */}
+      <div className="fixed inset-0 z-50 pointer-events-none">
+        <svg className="w-full h-full">
+          <defs>
+            <mask id="tutorial-mask">
+              <rect x="0" y="0" width="100%" height="100%" fill="white" />
+              {highlightRect && (
+                <rect
+                  x={highlightRect.left}
+                  y={highlightRect.top}
+                  width={highlightRect.width}
+                  height={highlightRect.height}
+                  rx="12"
+                  fill="black"
+                />
+              )}
+            </mask>
+          </defs>
+          <rect 
+            x="0" 
+            y="0" 
+            width="100%" 
+            height="100%" 
+            fill="rgba(0,0,0,0.75)" 
+            mask="url(#tutorial-mask)"
+          />
+        </svg>
+      </div>
+
+      {/* Highlight border around element */}
+      {highlightRect && (
+        <div
+          className="fixed z-50 pointer-events-none border-4 border-purple-500 rounded-xl animate-pulse"
+          style={{
+            top: highlightRect.top,
+            left: highlightRect.left,
+            width: highlightRect.width,
+            height: highlightRect.height,
+            boxShadow: '0 0 20px rgba(168, 85, 247, 0.6), 0 0 40px rgba(168, 85, 247, 0.4)'
+          }}
+        />
+      )}
+
+      {/* Arrow pointing to element */}
+      {highlightRect && step.position === 'bottom' && (
+        <div
+          className="fixed z-50 pointer-events-none"
+          style={{
+            top: highlightRect.top + highlightRect.height + 10,
+            left: highlightRect.left + highlightRect.width / 2 - 20
+          }}
+        >
+          <ArrowRight className="text-purple-500 transform -rotate-90" size={40} />
+        </div>
+      )}
       
       {/* Tutorial Card */}
       <div 
         className={`fixed z-50 ${
           step.position === 'center' 
             ? 'top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2' 
-            : 'top-24 left-1/2 transform -translate-x-1/2'
+            : highlightRect 
+              ? 'left-1/2 transform -translate-x-1/2'
+              : 'top-24 left-1/2 transform -translate-x-1/2'
         }`}
+        style={highlightRect && step.position !== 'center' ? {
+          top: highlightRect.top + highlightRect.height + 60
+        } : undefined}
       >
         <div className="bg-white rounded-3xl shadow-2xl w-[90vw] max-w-md overflow-hidden animate-bounce-in">
-          {/* Header */}
+          {/* Header with element name */}
           <div className={`bg-gradient-to-r ${step.color} p-6 text-white`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -274,8 +345,17 @@ const InteractiveTutorial = ({ userRole = 'student', onComplete }) => {
             </div>
           </div>
 
-          {/* Content */}
+          {/* Content with visual reference */}
           <div className="p-6">
+            {step.highlight && (
+              <div className="bg-purple-50 border border-purple-200 rounded-xl p-3 mb-4 flex items-center gap-2">
+                <div className="w-3 h-3 bg-purple-500 rounded-full animate-pulse" />
+                <span className="text-purple-700 text-sm font-medium">
+                  Olhe para o elemento destacado acima ↑
+                </span>
+              </div>
+            )}
+            
             <p className="text-slate-600 text-lg mb-6" style={{ fontFamily: 'Nunito, sans-serif' }}>
               {step.description}
             </p>
@@ -337,25 +417,12 @@ const InteractiveTutorial = ({ userRole = 'student', onComplete }) => {
         </div>
       </div>
 
-      {/* CSS for highlight and animations */}
+      {/* CSS for animations */}
       <style>{`
-        .tutorial-highlight {
-          position: relative;
-          z-index: 51;
-          box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.5), 0 0 20px rgba(168, 85, 247, 0.3);
-          border-radius: 12px;
-          animation: pulse-highlight 2s infinite;
-        }
-        
-        @keyframes pulse-highlight {
-          0%, 100% { box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.5), 0 0 20px rgba(168, 85, 247, 0.3); }
-          50% { box-shadow: 0 0 0 8px rgba(168, 85, 247, 0.3), 0 0 30px rgba(168, 85, 247, 0.5); }
-        }
-        
         @keyframes bounce-in {
-          0% { transform: scale(0.8) translateX(-50%) translateY(-50%); opacity: 0; }
-          50% { transform: scale(1.05) translateX(-50%) translateY(-50%); }
-          100% { transform: scale(1) translateX(-50%) translateY(-50%); opacity: 1; }
+          0% { transform: scale(0.8); opacity: 0; }
+          50% { transform: scale(1.05); }
+          100% { transform: scale(1); opacity: 1; }
         }
         
         .animate-bounce-in {

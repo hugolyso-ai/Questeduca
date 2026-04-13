@@ -7,7 +7,7 @@ import {
   Trophy, Clock, ChevronUp, Play, Check, X, Sparkles,
   Home, School, Library, Store, TreePine, Award, Medal,
   Crown, Users, MapPin, Search, UserPlus, Settings, Eye, Calendar,
-  Download, Wifi, WifiOff
+  Download, Wifi, WifiOff, Gamepad2, Brain, Zap, Target
 } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
@@ -665,6 +665,7 @@ const StudentDashboard = () => {
             {[
               { id: 'city', label: 'Minha Cidade', icon: Building2 },
               { id: 'quiz', label: 'Aprender', icon: BookOpen },
+              { id: 'minigames', label: 'Mini-Jogos', icon: Gamepad2 },
               { id: 'challenges', label: 'Desafios', icon: Calendar },
               { id: 'league', label: 'Liga', icon: Crown },
               { id: 'rankings', label: 'Rankings', icon: Trophy },
@@ -1095,6 +1096,165 @@ const StudentDashboard = () => {
                   <p className="text-sm text-slate-400 mt-1">Usa a pesquisa acima para encontrar colegas!</p>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Mini-Games Tab */}
+        {activeTab === 'minigames' && (
+          <div className="space-y-6">
+            <div className="bg-white rounded-3xl p-6 shadow-xl border-b-4 border-purple-200">
+              <h2 className="text-2xl font-bold text-slate-800 mb-2" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+                Mini-Jogos Educativos 🎮
+              </h2>
+              <p className="text-slate-600">Aprende enquanto jogas! Ganha moedas e XP em cada jogo.</p>
+            </div>
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Memory Match */}
+              <div className="bg-gradient-to-br from-pink-500 to-rose-600 rounded-3xl p-6 text-white shadow-xl hover:scale-105 transition transform cursor-pointer"
+                   onClick={() => toast.info('Em breve! 🎮')}>
+                <div className="bg-white/20 w-16 h-16 rounded-2xl flex items-center justify-center mb-4">
+                  <Brain size={32} />
+                </div>
+                <h3 className="text-xl font-bold mb-2" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+                  Memory Match
+                </h3>
+                <p className="text-white/80 text-sm mb-4">
+                  Encontra os pares de cartas com conceitos do teu ano escolar!
+                </p>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Coins size={16} />
+                    <span className="text-sm">+15 moedas</span>
+                  </div>
+                  <div className="bg-white/20 px-3 py-1 rounded-full text-xs">
+                    5 min
+                  </div>
+                </div>
+              </div>
+
+              {/* Speed Math */}
+              <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-3xl p-6 text-white shadow-xl hover:scale-105 transition transform cursor-pointer"
+                   onClick={() => toast.info('Em breve! 🎮')}>
+                <div className="bg-white/20 w-16 h-16 rounded-2xl flex items-center justify-center mb-4">
+                  <Zap size={32} />
+                </div>
+                <h3 className="text-xl font-bold mb-2" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+                  Speed Math
+                </h3>
+                <p className="text-white/80 text-sm mb-4">
+                  Resolve operações matemáticas contra o tempo!
+                </p>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Coins size={16} />
+                    <span className="text-sm">+20 moedas</span>
+                  </div>
+                  <div className="bg-white/20 px-3 py-1 rounded-full text-xs">
+                    3 min
+                  </div>
+                </div>
+              </div>
+
+              {/* Word Hunter */}
+              <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-3xl p-6 text-white shadow-xl hover:scale-105 transition transform cursor-pointer"
+                   onClick={() => toast.info('Em breve! 🎮')}>
+                <div className="bg-white/20 w-16 h-16 rounded-2xl flex items-center justify-center mb-4">
+                  <BookOpen size={32} />
+                </div>
+                <h3 className="text-xl font-bold mb-2" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+                  Caça-Palavras
+                </h3>
+                <p className="text-white/80 text-sm mb-4">
+                  Encontra palavras escondidas do vocabulário escolar!
+                </p>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Coins size={16} />
+                    <span className="text-sm">+10 moedas</span>
+                  </div>
+                  <div className="bg-white/20 px-3 py-1 rounded-full text-xs">
+                    4 min
+                  </div>
+                </div>
+              </div>
+
+              {/* Target Practice */}
+              <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-3xl p-6 text-white shadow-xl hover:scale-105 transition transform cursor-pointer"
+                   onClick={() => toast.info('Em breve! 🎮')}>
+                <div className="bg-white/20 w-16 h-16 rounded-2xl flex items-center justify-center mb-4">
+                  <Target size={32} />
+                </div>
+                <h3 className="text-xl font-bold mb-2" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+                  Quiz Rápido
+                </h3>
+                <p className="text-white/80 text-sm mb-4">
+                  Responde a perguntas rápidas sobre o teu ano!
+                </p>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Coins size={16} />
+                    <span className="text-sm">+25 moedas</span>
+                  </div>
+                  <div className="bg-white/20 px-3 py-1 rounded-full text-xs">
+                    2 min
+                  </div>
+                </div>
+              </div>
+
+              {/* Geography Quest */}
+              <div className="bg-gradient-to-br from-purple-500 to-violet-600 rounded-3xl p-6 text-white shadow-xl hover:scale-105 transition transform cursor-pointer"
+                   onClick={() => toast.info('Em breve! 🎮')}>
+                <div className="bg-white/20 w-16 h-16 rounded-2xl flex items-center justify-center mb-4">
+                  <MapPin size={32} />
+                </div>
+                <h3 className="text-xl font-bold mb-2" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+                  Geo Quest
+                </h3>
+                <p className="text-white/80 text-sm mb-4">
+                  Descobre locais e factos sobre Portugal!
+                </p>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Coins size={16} />
+                    <span className="text-sm">+18 moedas</span>
+                  </div>
+                  <div className="bg-white/20 px-3 py-1 rounded-full text-xs">
+                    5 min
+                  </div>
+                </div>
+              </div>
+
+              {/* History Timeline */}
+              <div className="bg-gradient-to-br from-red-500 to-pink-600 rounded-3xl p-6 text-white shadow-xl hover:scale-105 transition transform cursor-pointer"
+                   onClick={() => toast.info('Em breve! 🎮')}>
+                <div className="bg-white/20 w-16 h-16 rounded-2xl flex items-center justify-center mb-4">
+                  <Clock size={32} />
+                </div>
+                <h3 className="text-xl font-bold mb-2" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+                  Linha do Tempo
+                </h3>
+                <p className="text-white/80 text-sm mb-4">
+                  Ordena eventos históricos corretamente!
+                </p>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Coins size={16} />
+                    <span className="text-sm">+22 moedas</span>
+                  </div>
+                  <div className="bg-white/20 px-3 py-1 rounded-full text-xs">
+                    6 min
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Coming Soon Notice */}
+            <div className="bg-gradient-to-r from-slate-100 to-slate-200 rounded-2xl p-6 text-center">
+              <Gamepad2 className="mx-auto text-slate-400 mb-3" size={48} />
+              <h3 className="text-lg font-bold text-slate-700 mb-2">Mais jogos em breve!</h3>
+              <p className="text-slate-500">Estamos a criar novos mini-jogos educativos para ti.</p>
             </div>
           </div>
         )}

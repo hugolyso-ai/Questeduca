@@ -27,10 +27,11 @@ Criar jogo educativo RTS (QUESTEDUCA) para o 1º, 2º e 3º ciclos do ensino bá
 - [x] Modelos de dados (Users, Students, Parents, Associations, etc.)
 - [x] Rotas básicas de API
 
-### ✅ Fase 2: Dados Reais de Escolas Portuguesas (Concluído)
-- [x] **243 escolas reais** importadas dos ficheiros Excel oficiais
-- [x] Cobertura de todos os 20 distritos portugueses
+### ✅ Fase 2: Dados Reais de Escolas Portuguesas (Concluído - Atualizado 13/04/2025)
+- [x] **5125 escolas reais** importadas dos ficheiros Excel oficiais (1º, 2º e 3º ciclos)
+- [x] Cobertura de todos os 29 distritos portugueses e 308 concelhos
 - [x] Filtros hierárquicos: Distrito → Concelho → Localidade → Escola
+- [x] **Pesquisa por texto** em nome, localidade e concelho
 - [x] Mapeamento de anos escolares para ciclos
 
 ### ✅ Fase 3: Registo de Alunos pelos Pais (Concluído)
@@ -180,12 +181,37 @@ Criar jogo educativo RTS (QUESTEDUCA) para o 1º, 2º e 3º ciclos do ensino bá
 
 ## Backlog Futuro
 
+### 🔴 Próximas Prioridades (P1)
+
+#### Terreno de Jogo RTS Isométrico
+- [ ] Visualização isométrica da cidade do aluno (tipo Age of Empires)
+- [ ] Construções evolutivas no mapa
+- [ ] Sistema de invasões/defesas
+- [ ] Recursos: moedas + materiais (madeira, pedra, ferro, etc.)
+- [ ] Formas de gerar materiais na cidade (fazendas, minas, etc.)
+
+#### Visitas a Cidades de Amigos
+- [ ] Permissões de visita (autorizados)
+- [ ] Visualização do progresso dos amigos
+- [ ] Sistema de ajuda/presentes entre amigos
+
+#### Mapa de Portugal Realista
+- [ ] Substituir mapa atual por mapa interativo realista
+- [ ] Estilo visual mais detalhado (regiões, rios, montanhas)
+
 ### P3 - Melhorias Futuras
 1. ~~**Memory Match completo**~~ ✅ Concluído - Jogo de memória funcional
 2. ~~**Speed Math completo**~~ ✅ Concluído - Desafios matemáticos contra o tempo
 3. ~~**Notificações**~~ ✅ Concluído - Sistema de notificações
 4. ~~**Modo offline**~~ ✅ Concluído - Cache de perguntas com Service Worker e IndexedDB
 5. ~~**Relatórios de progresso**~~ ✅ Concluído via Admin Dashboard e PDF Export
+
+### ✅ Fase 15: Melhorias Dashboard Aluno (Concluído - 13/04/2025)
+- [x] **Tab Mini-Jogos**: Adicionada ao dashboard do aluno com 6 jogos
+- [x] **Escolas completas**: 5125 escolas importadas dos 3 ciclos
+- [x] **Pesquisa avançada**: Por texto, distrito, concelho, localidade
+- [x] **Tutorial melhorado**: Overlay com cutout para destacar elementos
+- [x] **Reset de password**: Endpoint admin para resetar password de utilizadores
 
 ### ✅ Fase 14: Painel Admin Avançado (Concluído - 06/04/2025)
 
