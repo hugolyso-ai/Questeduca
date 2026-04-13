@@ -15,8 +15,26 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  // Initialize user from sessionStorage if available (for OAuth flow persistence)
+  const [user, setUserState] = useState(() => {
+    try {
+      const stored = sessionStorage.getItem('questeduca_user');
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
   const [loading, setLoading] = useState(true);
+
+  // Wrapper to also persist to sessionStorage
+  const setUser = useCallback((userData) => {
+    setUserState(userData);
+    if (userData) {
+      sessionStorage.setItem('questeduca_user', JSON.stringify(userData));
+    } else {
+      sessionStorage.removeItem('questeduca_user');
+    }
+  }, []);
 
   const checkAuth = useCallback(async () => {
     // CRITICAL: If returning from OAuth callback, skip the /me check.
@@ -36,7 +54,7 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [setUser]);
 
   useEffect(() => {
     checkAuth();
@@ -68,7 +86,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, checkAuth }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, checkAuth, setUser }}>
       {children}
     </AuthContext.Provider>
   );

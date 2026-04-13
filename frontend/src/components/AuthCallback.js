@@ -8,7 +8,7 @@ const API = `${BACKEND_URL}/api`;
 
 const AuthCallback = () => {
   const navigate = useNavigate();
-  const { checkAuth } = useAuth();
+  const { setUser } = useAuth();
   const hasProcessed = useRef(false);
 
   useEffect(() => {
@@ -22,11 +22,13 @@ const AuthCallback = () => {
       const sessionId = params.get('session_id');
 
       if (!sessionId) {
-        navigate('/login');
+        console.error('No session_id in URL hash');
+        navigate('/login', { replace: true });
         return;
       }
 
       try {
+        // Step 1: Exchange session_id for session cookie
         const response = await axios.post(
           `${API}/auth/google/session`,
           null,
@@ -37,11 +39,14 @@ const AuthCallback = () => {
         );
 
         const userData = response.data.user;
+        
+        // Step 2: Set user directly in context (don't rely on cookie check)
+        setUser(userData);
 
-        // CRITICAL: Refresh auth context to pick up the new session cookie
-        await checkAuth();
+        // Step 3: Small delay to ensure cookie is set
+        await new Promise(resolve => setTimeout(resolve, 100));
 
-        // Redirect based on role
+        // Step 4: Redirect based on role
         if (userData.role === 'student') {
           navigate('/student/dashboard', { replace: true });
         } else if (userData.role === 'parent') {
@@ -60,7 +65,7 @@ const AuthCallback = () => {
     };
 
     processSession();
-  }, [navigate, checkAuth]);
+  }, [navigate, setUser]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-green-50">
