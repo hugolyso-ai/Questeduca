@@ -840,6 +840,382 @@ async def get_building_info():
     
     return buildings
 
+# ==================== INVASION SYSTEM ====================
+
+@api_router.post("/game/send-raid")
+async def send_raid(
+    target_user_id: str,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Send a raid to another player's city"""
+    if current_user.role != UserRole.STUDENT:
+        raise HTTPException(status_code=403, detail="Apenas para alunos")
+    
+    if target_user_id == current_user.user_id:
+        raise HTTPException(status_code=400, detail="Não podes atacar a tua própria cidade")
+    
+    # Check if target exists and is a student
+    target = await db.users.find_one({"user_id": target_user_id, "role": "student"})
+    if not target:
+        raise HTTPException(status_code=404, detail="Jogador não encontrado")
+    
+    # Get attacker's game state
+    attacker_state = await db.game_states.find_one({"user_id": current_user.user_id}, {"_id": 0})
+    if not attacker_state:
+        raise HTTPException(status_code=404, detail="Estado do jogo não encontrado")
+    
+    # Check if attacker has enough attack power (needs barracks)
+    attack_power = attacker_state.get("attack_power", 0)
+    if attack_power < 5:
+        raise HTTPException(status_code=400, detail="Precisas de pelo menos 5 de poder de ataque. Melhora o Quartel!")
+    
+    # Check cooldown (max 3 raids per day)
+    today = datetime.now(timezone.utc).date().isoformat()
+    raids_today = await db.raids.count_documents({
+        "attacker_id": current_user.user_id,
+        "created_at": {"$gte": today}
+    })
+    if raids_today >= 3:
+        raise HTTPException(status_code=400, detail="Já enviaste 3 ataques hoje. Tenta amanhã!")
+    
+    # Get defender's game state
+    defender_state = await db.game_states.find_one({"user_id": target_user_id}, {"_id": 0})
+    if not defender_state:
+        raise HTTPException(status_code=404, detail="O jogador ainda não tem cidade")
+    
+    defense_power = defender_state.get("defense_power", 5)
+    
+    # Calculate battle result
+    import random
+    attack_roll = attack_power + random.randint(1, 10)
+    defense_roll = defense_power + random.randint(1, 10)
+    
+    victory = attack_roll > defense_roll
+    
+    # Calculate loot if victory
+    loot = {"coins": 0, "wood": 0, "stone": 0, "iron": 0, "food": 0}
+    if victory:
+        defender_resources = defender_state.get("resources", {})
+        loot = {
+            "coins": min(int(defender_state.get("coins", 0) * 0.1), 50),
+            "wood": min(int(defender_resources.get("wood", 0) * 0.1), 20),
+            "stone": min(int(defender_resources.get("stone", 0) * 0.1), 15),
+            "iron": min(int(defender_resources.get("iron", 0) * 0.1), 10),
+            "food": min(int(defender_resources.get("food", 0) * 0.1), 25)
+        }
+        
+        # Apply loot to attacker
+        await db.game_states.update_one(
+            {"user_id": current_user.user_id},
+            {"$inc": {
+                "coins": loot["coins"],
+                "resources.wood": loot["wood"],
+                "resources.stone": loot["stone"],
+                "resources.iron": loot["iron"],
+                "resources.food": loot["food"]
+            }}
+        )
+        
+        # Remove from defender
+        await db.game_states.update_one(
+            {"user_id": target_user_id},
+            {"$inc": {
+                "coins": -loot["coins"],
+                "resources.wood": -loot["wood"],
+                "resources.stone": -loot["stone"],
+                "resources.iron": -loot["iron"],
+                "resources.food": -loot["food"]
+            }}
+        )
+    
+    # Record the raid
+    raid = {
+        "raid_id": f"raid_{uuid.uuid4().hex[:12]}",
+        "attacker_id": current_user.user_id,
+        "attacker_name": attacker_state.get("city_name", "Aventureiro"),
+        "defender_id": target_user_id,
+        "defender_name": defender_state.get("city_name", "Cidade"),
+        "attack_power": attack_power,
+        "defense_power": defense_power,
+        "attack_roll": attack_roll,
+        "defense_roll": defense_roll,
+        "victory": victory,
+        "loot": loot,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.raids.insert_one(raid)
+    
+    # Create notification for defender
+    notification = {
+        "notification_id": f"notif_{uuid.uuid4().hex[:12]}",
+        "user_id": target_user_id,
+        "type": "raid",
+        "title": "A tua cidade foi atacada!" if not victory else "Defendeste um ataque!",
+        "message": f"{'Perdeste' if victory else 'Resististe a'} um ataque de {attacker_state.get('city_name', 'um aventureiro')}!",
+        "data": {"raid_id": raid["raid_id"]},
+        "read": False,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.notifications.insert_one(notification)
+    
+    return {
+        "success": True,
+        "victory": victory,
+        "attack_roll": attack_roll,
+        "defense_roll": defense_roll,
+        "loot": loot if victory else None,
+        "message": "Vitória! Saqueaste recursos!" if victory else "Derrota! A cidade estava bem defendida."
+    }
+
+@api_router.get("/game/raid-history")
+async def get_raid_history(
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Get raid history for the current user"""
+    if current_user.role != UserRole.STUDENT:
+        raise HTTPException(status_code=403, detail="Apenas para alunos")
+    
+    # Get raids as attacker or defender
+    raids = await db.raids.find(
+        {"$or": [
+            {"attacker_id": current_user.user_id},
+            {"defender_id": current_user.user_id}
+        ]},
+        {"_id": 0}
+    ).sort("created_at", -1).limit(20).to_list(20)
+    
+    # Mark which side the user was on
+    for raid in raids:
+        raid["was_attacker"] = raid["attacker_id"] == current_user.user_id
+    
+    return raids
+
+# ==================== FRIEND VISITS ====================
+
+@api_router.post("/game/visit-request")
+async def send_visit_request(
+    friend_user_id: str,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Send a request to visit a friend's city"""
+    if current_user.role != UserRole.STUDENT:
+        raise HTTPException(status_code=403, detail="Apenas para alunos")
+    
+    # Check if they are friends
+    friendship = await db.friendships.find_one({
+        "$or": [
+            {"user1_id": current_user.user_id, "user2_id": friend_user_id, "status": "accepted"},
+            {"user1_id": friend_user_id, "user2_id": current_user.user_id, "status": "accepted"}
+        ]
+    })
+    
+    if not friendship:
+        raise HTTPException(status_code=403, detail="Precisam ser amigos para visitar")
+    
+    # Check if visit permission already exists
+    existing = await db.visit_permissions.find_one({
+        "owner_id": friend_user_id,
+        "visitor_id": current_user.user_id
+    })
+    
+    if existing and existing.get("status") == "approved":
+        return {"success": True, "message": "Já tens permissão para visitar!", "status": "approved"}
+    
+    if existing and existing.get("status") == "pending":
+        return {"success": True, "message": "Pedido já enviado, aguarda aprovação.", "status": "pending"}
+    
+    # Create visit request
+    request = {
+        "request_id": f"visit_{uuid.uuid4().hex[:12]}",
+        "owner_id": friend_user_id,
+        "visitor_id": current_user.user_id,
+        "visitor_name": current_user.name,
+        "status": "pending",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.visit_permissions.insert_one(request)
+    
+    # Notify friend
+    notification = {
+        "notification_id": f"notif_{uuid.uuid4().hex[:12]}",
+        "user_id": friend_user_id,
+        "type": "visit_request",
+        "title": "Pedido de visita!",
+        "message": f"{current_user.name} quer visitar a tua cidade!",
+        "data": {"request_id": request["request_id"], "visitor_id": current_user.user_id},
+        "read": False,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.notifications.insert_one(notification)
+    
+    return {"success": True, "message": "Pedido enviado!", "status": "pending"}
+
+@api_router.post("/game/visit-response")
+async def respond_visit_request(
+    request_id: str,
+    approve: bool,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Approve or reject a visit request"""
+    request = await db.visit_permissions.find_one({
+        "request_id": request_id,
+        "owner_id": current_user.user_id
+    })
+    
+    if not request:
+        raise HTTPException(status_code=404, detail="Pedido não encontrado")
+    
+    new_status = "approved" if approve else "rejected"
+    
+    await db.visit_permissions.update_one(
+        {"request_id": request_id},
+        {"$set": {"status": new_status, "responded_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    # Notify visitor
+    notification = {
+        "notification_id": f"notif_{uuid.uuid4().hex[:12]}",
+        "user_id": request["visitor_id"],
+        "type": "visit_response",
+        "title": "Resposta ao pedido de visita",
+        "message": f"O teu pedido de visita foi {'aprovado' if approve else 'recusado'}!",
+        "data": {"request_id": request_id, "approved": approve},
+        "read": False,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.notifications.insert_one(notification)
+    
+    return {"success": True, "status": new_status}
+
+@api_router.get("/game/visit-permissions")
+async def get_visit_permissions(
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Get all visit permissions for the current user"""
+    # Requests I've sent
+    sent = await db.visit_permissions.find(
+        {"visitor_id": current_user.user_id},
+        {"_id": 0}
+    ).to_list(50)
+    
+    # Requests I've received
+    received = await db.visit_permissions.find(
+        {"owner_id": current_user.user_id},
+        {"_id": 0}
+    ).to_list(50)
+    
+    return {"sent": sent, "received": received}
+
+@api_router.get("/game/visit/{user_id}")
+async def visit_friend_city(
+    user_id: str,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """View a friend's city (if authorized)"""
+    if current_user.role != UserRole.STUDENT:
+        raise HTTPException(status_code=403, detail="Apenas para alunos")
+    
+    # Check permission
+    permission = await db.visit_permissions.find_one({
+        "owner_id": user_id,
+        "visitor_id": current_user.user_id,
+        "status": "approved"
+    })
+    
+    if not permission:
+        raise HTTPException(status_code=403, detail="Não tens permissão para visitar esta cidade")
+    
+    # Get friend's game state (read-only)
+    game_state = await db.game_states.find_one({"user_id": user_id}, {"_id": 0})
+    if not game_state:
+        raise HTTPException(status_code=404, detail="Cidade não encontrada")
+    
+    # Get friend's info
+    friend = await db.users.find_one({"user_id": user_id}, {"_id": 0, "name": 1})
+    student = await db.students.find_one({"user_id": user_id}, {"_id": 0, "nickname": 1})
+    
+    return {
+        "owner_name": student.get("nickname") if student else friend.get("name", "Aventureiro"),
+        "game_state": game_state,
+        "visit_mode": True  # Frontend should render as read-only
+    }
+
+@api_router.post("/game/send-gift")
+async def send_gift_to_friend(
+    friend_user_id: str,
+    gift_type: str,
+    amount: int = 10,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Send a gift to a friend"""
+    if current_user.role != UserRole.STUDENT:
+        raise HTTPException(status_code=403, detail="Apenas para alunos")
+    
+    valid_gifts = ["coins", "wood", "stone", "iron", "food"]
+    if gift_type not in valid_gifts:
+        raise HTTPException(status_code=400, detail=f"Tipo de presente inválido. Escolhe: {valid_gifts}")
+    
+    if amount < 1 or amount > 50:
+        raise HTTPException(status_code=400, detail="Quantidade deve ser entre 1 e 50")
+    
+    # Check friendship
+    friendship = await db.friendships.find_one({
+        "$or": [
+            {"user1_id": current_user.user_id, "user2_id": friend_user_id, "status": "accepted"},
+            {"user1_id": friend_user_id, "user2_id": current_user.user_id, "status": "accepted"}
+        ]
+    })
+    
+    if not friendship:
+        raise HTTPException(status_code=403, detail="Precisam ser amigos para enviar presentes")
+    
+    # Check if sender has enough resources
+    sender_state = await db.game_states.find_one({"user_id": current_user.user_id}, {"_id": 0})
+    if not sender_state:
+        raise HTTPException(status_code=404, detail="Estado do jogo não encontrado")
+    
+    if gift_type == "coins":
+        if sender_state.get("coins", 0) < amount:
+            raise HTTPException(status_code=400, detail="Moedas insuficientes")
+    else:
+        if sender_state.get("resources", {}).get(gift_type, 0) < amount:
+            raise HTTPException(status_code=400, detail=f"{gift_type} insuficiente")
+    
+    # Transfer resources
+    if gift_type == "coins":
+        await db.game_states.update_one(
+            {"user_id": current_user.user_id},
+            {"$inc": {"coins": -amount}}
+        )
+        await db.game_states.update_one(
+            {"user_id": friend_user_id},
+            {"$inc": {"coins": amount}}
+        )
+    else:
+        await db.game_states.update_one(
+            {"user_id": current_user.user_id},
+            {"$inc": {f"resources.{gift_type}": -amount}}
+        )
+        await db.game_states.update_one(
+            {"user_id": friend_user_id},
+            {"$inc": {f"resources.{gift_type}": amount}}
+        )
+    
+    # Notify friend
+    notification = {
+        "notification_id": f"notif_{uuid.uuid4().hex[:12]}",
+        "user_id": friend_user_id,
+        "type": "gift",
+        "title": "Recebeste um presente!",
+        "message": f"{current_user.name} enviou-te {amount} {gift_type}!",
+        "data": {"from": current_user.user_id, "gift_type": gift_type, "amount": amount},
+        "read": False,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.notifications.insert_one(notification)
+    
+    return {"success": True, "message": f"Enviaste {amount} {gift_type} para o teu amigo!"}
+
 # ==================== QUIZ ROUTES ====================
 
 @api_router.get("/quiz/generate")

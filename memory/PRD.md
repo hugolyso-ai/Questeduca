@@ -213,6 +213,37 @@ Criar jogo educativo RTS (QUESTEDUCA) para o 1º, 2º e 3º ciclos do ensino bá
 - [x] **Tutorial melhorado**: Overlay com cutout para destacar elementos
 - [x] **Reset de password**: Endpoint admin para resetar password de utilizadores
 
+### ✅ Fase 16: Sistema RTS Completo (Concluído - 13/04/2025)
+
+#### ✅ Vista Isométrica da Cidade
+- [x] 12 edifícios em grid isométrico com posições fixas
+- [x] Edifícios com ícones coloridos e badges de nível
+- [x] Animações de hover e produção
+- [x] Sol e nuvens animadas no céu
+- [x] Nome da cidade personalizável
+
+#### ✅ Sistema de Recursos
+- [x] 6 tipos de recursos: Moedas, Diamantes, Madeira, Pedra, Ferro, Comida
+- [x] Barra de recursos visual no topo
+- [x] Estatísticas da cidade: População, Defesa, Ataque
+
+#### ✅ Edifícios de Produção
+- [x] Quinta (comida), Serração (madeira), Pedreira (pedra), Mina (ferro), Mercado (moedas)
+- [x] Sistema de timers para produção
+- [x] Recolha de recursos quando pronto
+- [x] Produção escalável por nível do edifício
+
+#### ✅ Sistema de Batalha e Social
+- [x] Tab "Batalha" no dashboard do aluno
+- [x] Sistema de raids a outras cidades
+- [x] Cálculo de batalha (ataque vs defesa + dado)
+- [x] Saque de recursos em vitória (10% do defensor)
+- [x] Histórico de batalhas
+- [x] Sistema de visitas a amigos (com permissões)
+- [x] Envio de presentes entre amigos (moedas, materiais)
+- [x] Notificações de ataques e presentes
+- [x] Limite de 3 raids por dia
+
 ### ✅ Fase 14: Painel Admin Avançado (Concluído - 06/04/2025)
 
 #### ✅ Gestão de Giftcards

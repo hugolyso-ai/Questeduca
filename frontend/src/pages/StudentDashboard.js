@@ -7,7 +7,7 @@ import {
   Trophy, Clock, ChevronUp, Play, Check, X, Sparkles,
   Home, School, Library, Store, TreePine, Award, Medal,
   Crown, Users, MapPin, Search, UserPlus, Settings, Eye, Calendar,
-  Download, Wifi, WifiOff, Gamepad2, Brain, Zap, Target
+  Download, Wifi, WifiOff, Gamepad2, Brain, Zap, Target, Sword
 } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
@@ -21,6 +21,7 @@ import { OnlineStatusIndicator, OfflineBanner, OfflineCacheManager } from '../co
 import { useOnlineStatus } from '../hooks/useOffline';
 import SchoolCalendar from '../components/SchoolCalendar';
 import IsometricCity from '../components/IsometricCity';
+import BattleAndSocial from '../components/BattleAndSocial';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -695,6 +696,7 @@ const StudentDashboard = () => {
               { id: 'city', label: 'Minha Cidade', icon: Building2 },
               { id: 'quiz', label: 'Aprender', icon: BookOpen },
               { id: 'minigames', label: 'Mini-Jogos', icon: Gamepad2 },
+              { id: 'battle', label: 'Batalha', icon: Sword },
               { id: 'challenges', label: 'Desafios', icon: Calendar },
               { id: 'league', label: 'Liga', icon: Crown },
               { id: 'rankings', label: 'Rankings', icon: Trophy },
@@ -1230,6 +1232,16 @@ const StudentDashboard = () => {
               <p className="text-slate-500">Estamos a criar novos mini-jogos educativos para ti.</p>
             </div>
           </div>
+        )}
+
+        {/* Battle Tab */}
+        {activeTab === 'battle' && (
+          <BattleAndSocial 
+            friends={friends} 
+            currentUserId={user?.user_id} 
+            gameState={gameState}
+            onRefresh={fetchGameState}
+          />
         )}
 
         {/* Challenges Tab */}
