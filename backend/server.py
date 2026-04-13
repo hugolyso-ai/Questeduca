@@ -2850,6 +2850,53 @@ async def admin_delete_user(
     
     return {"success": True, "message": "Utilizador eliminado"}
 
+@api_router.post("/admin/users/{user_id}/reset-password")
+async def admin_reset_password(
+    user_id: str,
+    new_password: Optional[str] = None,
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Admin: Reset password for any user. If no password provided, generates a random one."""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Apenas admins")
+    
+    user = await db.users.find_one({"user_id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="Utilizador não encontrado")
+    
+    # Generate random password if not provided
+    if not new_password:
+        import secrets
+        import string
+        chars = string.ascii_letters + string.digits + "!@#$%"
+        new_password = ''.join(secrets.choice(chars) for _ in range(12))
+    
+    # Hash the new password
+    hashed_pw = await hash_password(new_password)
+    
+    # Update user
+    await db.users.update_one(
+        {"user_id": user_id},
+        {
+            "$set": {
+                "password": hashed_pw,
+                "must_change_password": True,
+                "password_reset_at": datetime.now(timezone.utc).isoformat(),
+                "password_reset_by": current_user.user_id
+            }
+        }
+    )
+    
+    # Invalidate all existing sessions for this user
+    await db.user_sessions.delete_many({"user_id": user_id})
+    
+    return {
+        "success": True,
+        "message": f"Password alterada para o utilizador {user.get('email')}",
+        "temp_password": new_password,
+        "must_change_password": True
+    }
+
 # ==================== ADMIN SUBSCRIPTIONS MANAGEMENT ====================
 
 @api_router.put("/admin/subscriptions/{subscription_id}")

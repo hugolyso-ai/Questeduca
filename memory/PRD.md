@@ -422,6 +422,7 @@ Criar jogo educativo RTS (QUESTEDUCA) para o 1º, 2º e 3º ciclos do ensino bá
 - `PUT /api/admin/giftcards/{id}/deactivate` - Desativar giftcard
 - `PUT /api/admin/users/{id}` - Editar utilizador
 - `DELETE /api/admin/users/{id}` - Eliminar utilizador (soft delete)
+- `POST /api/admin/users/{id}/reset-password` - Resetar password de utilizador
 - `PUT /api/admin/subscriptions/{id}` - Editar subscrição
 - `POST /api/admin/subscriptions/create` - Criar subscrição manual
 - `PUT /api/admin/associations/{id}` - Editar associação

@@ -6,7 +6,7 @@ import {
   TrendingUp, DollarSign, BookOpen, School, Search, ChevronLeft,
   ChevronRight, Check, X, Eye, EyeOff, Lock, AlertTriangle,
   Gift, Edit, Trash2, Plus, RefreshCw, Download, Filter,
-  GraduationCap, UserCheck, Calendar
+  GraduationCap, UserCheck, Calendar, Key
 } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
@@ -838,6 +838,24 @@ const AdminDashboard = () => {
     }
   };
 
+  // Reset user password
+  const handleResetPassword = async (userId, userEmail) => {
+    if (!window.confirm(`Resetar a password de ${userEmail}? Uma nova password temporária será gerada.`)) return;
+    try {
+      const response = await axios.post(`${API}/admin/users/${userId}/reset-password`, null, { withCredentials: true });
+      toast.success(
+        <div>
+          <p className="font-bold">Password alterada!</p>
+          <p className="text-sm">Nova password: <code className="bg-slate-100 px-2 py-1 rounded">{response.data.temp_password}</code></p>
+          <p className="text-xs mt-1">O utilizador terá de alterar no próximo login.</p>
+        </div>,
+        { duration: 15000 }
+      );
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Erro ao resetar password');
+    }
+  };
+
   // Update user
   const handleUpdateUser = async (data) => {
     setActionLoading(true);
@@ -1247,6 +1265,7 @@ const AdminDashboard = () => {
                           {u.role !== 'admin' && (
                             <div className="flex gap-2">
                               <button onClick={() => setEditModal({ open: true, type: 'user', data: u })} className="p-2 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200" title="Editar"><Edit size={16} /></button>
+                              <button onClick={() => handleResetPassword(u.user_id, u.email)} className="p-2 rounded-lg bg-amber-100 text-amber-600 hover:bg-amber-200" title="Resetar Password"><Key size={16} /></button>
                               <button onClick={() => handleToggleActive(u.user_id)} className={`p-2 rounded-lg transition ${u.is_active !== false ? 'bg-red-100 text-red-600 hover:bg-red-200' : 'bg-green-100 text-green-600 hover:bg-green-200'}`} title={u.is_active !== false ? 'Desativar' : 'Ativar'}>{u.is_active !== false ? <EyeOff size={16} /> : <Eye size={16} />}</button>
                               <button onClick={() => handleDeleteUser(u.user_id)} className="p-2 rounded-lg bg-red-100 text-red-600 hover:bg-red-200" title="Eliminar"><Trash2 size={16} /></button>
                             </div>

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -7,6 +8,7 @@ const API = `${BACKEND_URL}/api`;
 
 const AuthCallback = () => {
   const navigate = useNavigate();
+  const { checkAuth } = useAuth();
   const hasProcessed = useRef(false);
 
   useEffect(() => {
@@ -36,24 +38,29 @@ const AuthCallback = () => {
 
         const userData = response.data.user;
 
+        // CRITICAL: Refresh auth context to pick up the new session cookie
+        await checkAuth();
+
         // Redirect based on role
         if (userData.role === 'student') {
-          navigate('/student/dashboard', { state: { user: userData } });
+          navigate('/student/dashboard', { replace: true });
         } else if (userData.role === 'parent') {
-          navigate('/parent/dashboard', { state: { user: userData } });
+          navigate('/parent/dashboard', { replace: true });
         } else if (userData.role === 'association') {
-          navigate('/association/dashboard', { state: { user: userData } });
+          navigate('/association/dashboard', { replace: true });
+        } else if (userData.role === 'admin') {
+          navigate('/admin', { replace: true });
         } else {
-          navigate('/login');
+          navigate('/login', { replace: true });
         }
       } catch (error) {
         console.error('Session processing failed:', error);
-        navigate('/login');
+        navigate('/login', { replace: true });
       }
     };
 
     processSession();
-  }, [navigate]);
+  }, [navigate, checkAuth]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-green-50">
