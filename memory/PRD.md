@@ -505,6 +505,18 @@ Criar jogo educativo RTS (QUESTEDUCA) para o 1º, 2º e 3º ciclos do ensino bá
 - [x] **TypeError em rankings** - Função `calculate_building_total()` criada para lidar com buildings como dicts aninhados
 - [x] **DuplicateKeyError em Google Auth** - Session insertion alterada para upsert, evitando erros de chave duplicada
 
+### ✅ Sistema de Streak Diário (26/04/2025)
+- [x] **Backend endpoints**: `GET /api/streak/status`, `POST /api/streak/claim`
+- [x] **Tracking de streak**: current_streak, longest_streak, last_streak_date
+- [x] **Sistema de bónus**: 1-5 diamantes baseado no número de dias consecutivos
+- [x] **Milestones**: Iniciante → Consistente (3d) → Dedicado (7d) → Mestre (14d) → Lenda (30d)
+- [x] **UI Component**: `/app/frontend/src/components/DailyStreak.js` integrado no tab de Quiz
+- [x] **Funcionalidades**:
+  - Barra de progresso para próximo bónus
+  - Stats: Recorde, Bónus atual, Estado de hoje
+  - Botão de reclamar bónus com animação de celebração
+  - Dicas para manter o streak
+
 ## Credenciais
 - **Stripe**: sk_test_emergent
 - **Emergent LLM Key**: Claude Sonnet 4.5
