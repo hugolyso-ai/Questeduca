@@ -517,6 +517,26 @@ Criar jogo educativo RTS (QUESTEDUCA) para o 1º, 2º e 3º ciclos do ensino bá
   - Botão de reclamar bónus com animação de celebração
   - Dicas para manter o streak
 
+### ✅ Cidade RTS Realista (26/04/2025)
+- [x] **Visual inspirado** em Age of Empires, Warhammer 40k, Shadow Tactics
+- [x] **SVG interativo** com edifícios medievais detalhados
+- [x] **Muralhas do castelo** com torres, portões e bandeiras
+- [x] **12 tipos de edifícios** com telhados coloridos e janelas
+- [x] **Atmosfera viva**: nuvens animadas, sol, pássaros, fumo das chaminés
+- [x] **Caminhos e terreno**: estradas, campos agrícolas, árvores decorativas
+- [x] **Controlos**: Zoom in/out, reset view
+- [x] **Painel de edifício** com upgrade, produção e recolha de recursos
+- [x] **Banner "Reino de [Nome]"** estilizado
+
+### ✅ Sistema de Pacotes Sazonais (26/04/2025)
+- [x] **4 pacotes temáticos**: Natal 🎄, Carnaval 🎭, Verão ☀️, Páscoa 🐰
+- [x] **Descontos**: 20-40% por tempo limitado
+- [x] **Conteúdo**: Diamantes, skins de edifícios, decorações, moedas
+- [x] **Timer de expiração**: Contagem regressiva dinâmica
+- [x] **UI atraente**: Cards com gradientes temáticos e efeitos
+- [x] **Explicação**: Secção "Como funcionam os Pacotes Sazonais?"
+- [x] **Preparado para integração** com Stripe
+
 ## Credenciais
 - **Stripe**: sk_test_emergent
 - **Emergent LLM Key**: Claude Sonnet 4.5
