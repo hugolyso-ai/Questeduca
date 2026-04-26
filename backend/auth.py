@@ -121,12 +121,17 @@ async def process_google_session(
         await db.users.insert_one(user_dict)
         user_doc = user_dict
     
-    await db.user_sessions.insert_one({
-        "user_id": user_id,
-        "session_token": data["session_token"],
-        "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
-        "created_at": datetime.now(timezone.utc).isoformat()
-    })
+    # Use upsert to handle duplicate session tokens
+    await db.user_sessions.update_one(
+        {"session_token": data["session_token"]},
+        {"$set": {
+            "user_id": user_id,
+            "session_token": data["session_token"],
+            "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }},
+        upsert=True
+    )
     
     if isinstance(user_doc['created_at'], str):
         user_doc['created_at'] = datetime.fromisoformat(user_doc['created_at'])

@@ -34,6 +34,17 @@ Criar jogo educativo RTS (QUESTEDUCA) para o 1º, 2º e 3º ciclos do ensino bá
 - [x] **Pesquisa por texto** em nome, localidade e concelho
 - [x] Mapeamento de anos escolares para ciclos
 
+### ✅ Fase 2.1: Mapa de Portugal Realista (Concluído - 26/04/2025)
+- [x] **Mapa SVG interativo** baseado em imagem de referência fornecida
+- [x] **18 distritos de Portugal Continental** com paths realistas e cores vibrantes
+- [x] **Açores** representados no canto superior esquerdo (9 ilhas)
+- [x] **Madeira** representada no canto inferior esquerdo (ilha principal + Porto Santo)
+- [x] Hover com tooltip mostrando nome e contagem de alunos
+- [x] Click em distrito para filtrar pesquisa de amigos
+- [x] Textos decorativos "ATLANTIC OCEAN" e "SPAIN"
+- [x] Ondas decorativas no oceano
+- [x] Componente: `/app/frontend/src/components/PortugalMap.js`
+
 ### ✅ Fase 3: Registo de Alunos pelos Pais (Concluído)
 - [x] Modal de "Adicionar Filho" no ParentDashboard
 - [x] Seleção de ano escolar com filtro automático de escolas por ciclo
@@ -489,11 +500,17 @@ Criar jogo educativo RTS (QUESTEDUCA) para o 1º, 2º e 3º ciclos do ensino bá
 - `PUT /api/admin/schools/{id}` - Editar escola
 - `DELETE /api/admin/schools/{id}` - Eliminar escola
 
+### ✅ Bugfixes (26/04/2025)
+- [x] **Pydantic ValidationError em StudentProfile** - Campos `student_id`, `nickname`, `school_year`, `school_name`, `district` agora são Optional para suportar dados legados
+- [x] **TypeError em rankings** - Função `calculate_building_total()` criada para lidar com buildings como dicts aninhados
+- [x] **DuplicateKeyError em Google Auth** - Session insertion alterada para upsert, evitando erros de chave duplicada
+
 ## Credenciais
 - **Stripe**: sk_test_emergent
 - **Emergent LLM Key**: Claude Sonnet 4.5
 - **MongoDB**: localhost:27017
-- **Admin**: info@serv2all.pt / Quest1234* (requer mudança de password)
+- **Admin**: info@serv2all.pt / Quest1234*
+- **Aluno Teste**: aluno@teste.pt / Aluno1234*
 
 ## Links
 - Preview: https://edu-empire-1.preview.emergentagent.com

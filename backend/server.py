@@ -27,6 +27,18 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
+# Helper function to safely calculate building levels
+def calculate_building_total(buildings):
+    """Calculate total building level, handling nested dicts or non-integer values"""
+    total = 0
+    if isinstance(buildings, dict):
+        for v in buildings.values():
+            if isinstance(v, (int, float)):
+                total += int(v)
+            elif isinstance(v, dict) and 'level' in v:
+                total += int(v.get('level', 0))
+    return total
+
 # Dependency to get current user with proper Request injection
 async def get_current_user_dep(
     request: Request,
@@ -1335,7 +1347,7 @@ async def get_school_ranking(
     for i, student in enumerate(students):
         # Calculate total building level for settlement
         buildings = student.get("buildings", {})
-        total_level = sum(buildings.values()) if isinstance(buildings, dict) else 0
+        total_level = calculate_building_total(buildings)
         
         if total_level >= 50:
             settlement = "metropolis"
@@ -1411,7 +1423,7 @@ async def get_district_ranking(
     
     for i, student in enumerate(students):
         buildings = student.get("buildings", {})
-        total_level = sum(buildings.values()) if isinstance(buildings, dict) else 0
+        total_level = calculate_building_total(buildings)
         
         if total_level >= 50:
             settlement = "metropolis"
@@ -1485,7 +1497,7 @@ async def get_national_ranking(
     
     for i, student in enumerate(students):
         buildings = student.get("buildings", {})
-        total_level = sum(buildings.values()) if isinstance(buildings, dict) else 0
+        total_level = calculate_building_total(buildings)
         
         if total_level >= 50:
             settlement = "metropolis"
@@ -1859,7 +1871,7 @@ async def get_my_friends(
     friends = []
     for f in friends_data:
         buildings = f.get("buildings", {})
-        total_level = sum(buildings.values()) if isinstance(buildings, dict) else 0
+        total_level = calculate_building_total(buildings)
         
         if total_level >= 50:
             settlement = "metropolis"
@@ -2440,7 +2452,7 @@ async def get_my_achievements(
     game_state = await db.game_states.find_one({"user_id": current_user.user_id}, {"_id": 0})
     if game_state:
         buildings = game_state.get("buildings", {})
-        total_level = sum(buildings.values()) if isinstance(buildings, dict) else 0
+        total_level = calculate_building_total(buildings)
         max_level_buildings = sum(1 for v in buildings.values() if v >= 5) if isinstance(buildings, dict) else 0
         all_level_1 = all(v >= 1 for v in buildings.values()) if isinstance(buildings, dict) and len(buildings) >= 6 else False
         

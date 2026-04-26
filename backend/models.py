@@ -79,13 +79,13 @@ class StudentProfile(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     
     user_id: str
-    student_id: str
-    nickname: str
+    student_id: Optional[str] = None  # Made optional for legacy data
+    nickname: Optional[str] = None  # Made optional for legacy data
     parent_id: Optional[str] = None
-    school_year: SchoolYear
+    school_year: Optional[SchoolYear] = None  # Made optional for legacy data
     school_id: Optional[str] = None
-    school_name: str
-    district: str
+    school_name: Optional[str] = None  # Made optional for legacy data
+    district: Optional[str] = None  # Made optional for legacy data
     municipality: Optional[str] = None
     locality: Optional[str] = None
     approved_by_parent: bool = False
