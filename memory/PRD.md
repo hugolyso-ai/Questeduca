@@ -517,16 +517,21 @@ Criar jogo educativo RTS (QUESTEDUCA) para o 1º, 2º e 3º ciclos do ensino bá
   - Botão de reclamar bónus com animação de celebração
   - Dicas para manter o streak
 
-### ✅ Cidade RTS Realista (26/04/2025)
-- [x] **Visual inspirado** em Age of Empires, Warhammer 40k, Shadow Tactics
-- [x] **SVG interativo** com edifícios medievais detalhados
-- [x] **Muralhas do castelo** com torres, portões e bandeiras
-- [x] **12 tipos de edifícios** com telhados coloridos e janelas
-- [x] **Atmosfera viva**: nuvens animadas, sol, pássaros, fumo das chaminés
-- [x] **Caminhos e terreno**: estradas, campos agrícolas, árvores decorativas
-- [x] **Controlos**: Zoom in/out, reset view
-- [x] **Painel de edifício** com upgrade, produção e recolha de recursos
-- [x] **Banner "Reino de [Nome]"** estilizado
+### ✅ Cidade RTS Realista - Estilo Age of Empires 2 (26/04/2025)
+- [x] **Visual completamente redesenhado** baseado nas imagens de referência de Age of Empires 2
+- [x] **Paleta de cores mediterrânea**: telhados terracota, paredes creme, pedra cinzenta, relva verde-oliva
+- [x] **Edifícios isométricos detalhados**:
+  - Câmara Municipal com torre e bandeira
+  - Casas com telhados de telha e chaminés
+  - Quinta com campos de cultivo em linhas e moinho
+  - Quartel militar com torres e portão
+  - Muralhas de pedra com ameias
+- [x] **Muralhas massivas** com portão central, torres nos cantos, bandeiras
+- [x] **Terreno realista**: variações de relva, manchas de terra, caminhos
+- [x] **Vegetação mediterrânea**: ciprestes altos e árvores frondosas
+- [x] **Atmosfera viva**: nuvens animadas, sol, sombras realistas
+- [x] **Controlos de zoom** (+ / - / reset)
+- [x] **Interatividade**: click em edifícios abre painel de upgrade/produção
 
 ### ✅ Sistema de Pacotes Sazonais (26/04/2025)
 - [x] **4 pacotes temáticos**: Natal 🎄, Carnaval 🎭, Verão ☀️, Páscoa 🐰
