@@ -434,6 +434,11 @@ async def get_game_state(
             "quizzes_today": 0,
             "last_quiz_date": None,
             "last_resource_collection": datetime.now(timezone.utc).isoformat(),
+            # Daily Streak System
+            "current_streak": 0,
+            "longest_streak": 0,
+            "last_streak_date": None,
+            "streak_claimed_today": False,
             "created_at": datetime.now(timezone.utc).isoformat()
         }
         await db.game_states.insert_one(game_state)
@@ -1293,7 +1298,159 @@ async def submit_quiz_answer(
     
     await db.quiz_answers.insert_one(answer_record)
     
+    # Update streak on quiz submission
+    today = datetime.now(timezone.utc).date().isoformat()
+    game_state = await db.game_states.find_one({"user_id": current_user.user_id})
+    
+    if game_state:
+        last_streak_date = game_state.get("last_streak_date")
+        current_streak = game_state.get("current_streak", 0)
+        
+        if last_streak_date != today:
+            # Check if this is consecutive day
+            if last_streak_date:
+                last_date = datetime.fromisoformat(last_streak_date).date()
+                today_date = datetime.now(timezone.utc).date()
+                diff = (today_date - last_date).days
+                
+                if diff == 1:
+                    # Consecutive day - increase streak
+                    current_streak += 1
+                elif diff > 1:
+                    # Streak broken - reset to 1
+                    current_streak = 1
+            else:
+                # First quiz ever
+                current_streak = 1
+            
+            # Update streak in database
+            longest_streak = max(game_state.get("longest_streak", 0), current_streak)
+            await db.game_states.update_one(
+                {"user_id": current_user.user_id},
+                {"$set": {
+                    "current_streak": current_streak,
+                    "longest_streak": longest_streak,
+                    "last_streak_date": today,
+                    "streak_claimed_today": False
+                }}
+            )
+    
     return {"success": True}
+
+# ==================== STREAK ROUTES ====================
+
+@api_router.get("/streak/status")
+async def get_streak_status(
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Get current streak status for a student"""
+    if current_user.role != UserRole.STUDENT:
+        raise HTTPException(status_code=403, detail="Apenas para alunos")
+    
+    game_state = await db.game_states.find_one(
+        {"user_id": current_user.user_id},
+        {"_id": 0}
+    )
+    
+    if not game_state:
+        return {
+            "current_streak": 0,
+            "longest_streak": 0,
+            "last_streak_date": None,
+            "streak_claimed_today": False,
+            "bonus_available": False,
+            "next_bonus": 1
+        }
+    
+    current_streak = game_state.get("current_streak", 0)
+    last_streak_date = game_state.get("last_streak_date")
+    streak_claimed_today = game_state.get("streak_claimed_today", False)
+    today = datetime.now(timezone.utc).date().isoformat()
+    
+    # Check if streak is still active (played today or yesterday)
+    streak_active = False
+    if last_streak_date:
+        last_date = datetime.fromisoformat(last_streak_date).date()
+        today_date = datetime.now(timezone.utc).date()
+        diff = (today_date - last_date).days
+        streak_active = diff <= 1
+    
+    if not streak_active:
+        current_streak = 0
+    
+    # Calculate bonus based on streak level
+    # Bonus structure: 1 diamond per 3 days of streak (max 5 diamonds)
+    bonus_diamonds = min(current_streak // 3 + 1, 5) if current_streak > 0 else 1
+    
+    return {
+        "current_streak": current_streak,
+        "longest_streak": game_state.get("longest_streak", 0),
+        "last_streak_date": last_streak_date,
+        "streak_claimed_today": streak_claimed_today and last_streak_date == today,
+        "bonus_available": current_streak > 0 and not (streak_claimed_today and last_streak_date == today),
+        "next_bonus": bonus_diamonds,
+        "streak_active": streak_active
+    }
+
+@api_router.post("/streak/claim")
+async def claim_streak_bonus(
+    current_user: User = Depends(get_current_user_dep)
+):
+    """Claim daily streak bonus diamonds"""
+    if current_user.role != UserRole.STUDENT:
+        raise HTTPException(status_code=403, detail="Apenas para alunos")
+    
+    game_state = await db.game_states.find_one(
+        {"user_id": current_user.user_id},
+        {"_id": 0}
+    )
+    
+    if not game_state:
+        raise HTTPException(status_code=404, detail="Estado do jogo não encontrado")
+    
+    current_streak = game_state.get("current_streak", 0)
+    last_streak_date = game_state.get("last_streak_date")
+    streak_claimed_today = game_state.get("streak_claimed_today", False)
+    today = datetime.now(timezone.utc).date().isoformat()
+    
+    # Check if already claimed today
+    if streak_claimed_today and last_streak_date == today:
+        raise HTTPException(status_code=400, detail="Já reclamaste o bónus de streak hoje!")
+    
+    # Check if streak is active
+    if current_streak == 0:
+        raise HTTPException(status_code=400, detail="Responde a um quiz primeiro para iniciar o teu streak!")
+    
+    # Check if streak is still valid (not broken)
+    if last_streak_date:
+        last_date = datetime.fromisoformat(last_streak_date).date()
+        today_date = datetime.now(timezone.utc).date()
+        diff = (today_date - last_date).days
+        if diff > 1:
+            raise HTTPException(status_code=400, detail="O teu streak foi quebrado. Responde a um quiz para começar um novo!")
+    
+    # Calculate bonus diamonds
+    bonus_diamonds = min(current_streak // 3 + 1, 5)
+    
+    # Award bonus
+    current_diamonds = game_state.get("diamonds", 0)
+    new_diamonds = current_diamonds + bonus_diamonds
+    
+    await db.game_states.update_one(
+        {"user_id": current_user.user_id},
+        {"$set": {
+            "diamonds": new_diamonds,
+            "streak_claimed_today": True
+        }}
+    )
+    
+    return {
+        "success": True,
+        "diamonds_awarded": bonus_diamonds,
+        "new_total_diamonds": new_diamonds,
+        "current_streak": current_streak,
+        "message": f"Parabéns! Ganhaste {bonus_diamonds} diamante(s) pelo teu streak de {current_streak} dia(s)!"
+    }
 
 # ==================== RANKING ROUTES ====================
 

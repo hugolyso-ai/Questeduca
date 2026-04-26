@@ -22,6 +22,7 @@ import { useOnlineStatus } from '../hooks/useOffline';
 import SchoolCalendar from '../components/SchoolCalendar';
 import IsometricCity from '../components/IsometricCity';
 import BattleAndSocial from '../components/BattleAndSocial';
+import DailyStreak from '../components/DailyStreak';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -733,6 +734,13 @@ const StudentDashboard = () => {
         {/* Quiz Tab */}
         {activeTab === 'quiz' && (
           <div>
+            {/* Daily Streak Banner */}
+            <div className="mb-6">
+              <DailyStreak onStreakUpdate={(newDiamonds) => {
+                setGameState(prev => ({ ...prev, diamonds: newDiamonds }));
+              }} />
+            </div>
+
             <div className="bg-white rounded-3xl p-6 shadow-xl mb-6">
               <h2 className="text-2xl font-bold text-slate-800 mb-2" style={{ fontFamily: 'Fredoka, sans-serif' }}>
                 <BookOpen className="inline mr-2 text-blue-500" />
