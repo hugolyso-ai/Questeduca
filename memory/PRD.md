@@ -517,21 +517,34 @@ Criar jogo educativo RTS (QUESTEDUCA) para o 1º, 2º e 3º ciclos do ensino bá
   - Botão de reclamar bónus com animação de celebração
   - Dicas para manter o streak
 
-### ✅ Cidade RTS Realista - Estilo Age of Empires 2 (26/04/2025)
-- [x] **Visual completamente redesenhado** baseado nas imagens de referência de Age of Empires 2
-- [x] **Paleta de cores mediterrânea**: telhados terracota, paredes creme, pedra cinzenta, relva verde-oliva
-- [x] **Edifícios isométricos detalhados**:
-  - Câmara Municipal com torre e bandeira
-  - Casas com telhados de telha e chaminés
-  - Quinta com campos de cultivo em linhas e moinho
-  - Quartel militar com torres e portão
-  - Muralhas de pedra com ameias
-- [x] **Muralhas massivas** com portão central, torres nos cantos, bandeiras
-- [x] **Terreno realista**: variações de relva, manchas de terra, caminhos
-- [x] **Vegetação mediterrânea**: ciprestes altos e árvores frondosas
-- [x] **Atmosfera viva**: nuvens animadas, sol, sombras realistas
-- [x] **Controlos de zoom** (+ / - / reset)
-- [x] **Interatividade**: click em edifícios abre painel de upgrade/produção
+### ✅ Cidade RTS Ultra-Realista - Estilo Age of Empires 2 DE (26/04/2025)
+- [x] **Visual completamente redesenhado** baseado nas 4 imagens de referência de AoE2 DE
+- [x] **Paleta mediterrânea**: telhados terracota (#C45C3B), paredes creme (#F0E6D2), pedra (#A8A090)
+- [x] **Edifícios ultra-detalhados**:
+  - Câmara Municipal: torre com bandeira, colunas decorativas, entrada em arco grande
+  - Casas: timber frame, janelas com portadas, vasos de flores, chaminé com fumo animado
+  - Quinta: campos de cultivo em linhas, moinho com pás giratórias, fardos de feno
+  - Quartel: torres com bandeiras, portcullis na entrada, seteiras nas paredes
+  - Mercado: toldo colorido, mercadorias expostas
+- [x] **Unidades militares visíveis**:
+  - Soldados guardas com lança, escudo e capacete metálico
+  - Aldeões trabalhadores com ferramentas (enxada, machado)
+  - Animações de patrulha e trabalho
+- [x] **Muralhas massivas** com portão, torres nos 4 cantos, ameias, bandeiras
+- [x] **Terreno realista**: 120+ patches de relva, caminhos de terra, pedras dispersas
+- [x] **Vegetação mediterrânea**: ciprestes detalhados, árvores frondosas, arbustos
+- [x] **Atmosfera viva**: nuvens animadas, pássaros a voar, sol com brilho, fumo
+
+### ✅ Sistema de Skins Sazonais Aplicáveis (26/04/2025)
+- [x] **3 skins disponíveis**: Normal 🏠, Natal 🎄, Verão ☀️
+- [x] **Skin de Natal**: Neve nos telhados (branco), luzes decorativas piscantes
+- [x] **Skin de Verão**: Telhados dourados, decorações tropicais
+- [x] **Seletor de skin** integrado no painel de Pacotes Sazonais
+- [x] **Aplicação em tempo real** - edifícios mudam visualmente ao selecionar
+
+### ✅ Sistema de Som Ambiente (26/04/2025)
+- [x] **Botão de toggle** para sons ambientais (🔊/🔇)
+- [x] **Preparado para** efeitos sonoros (vento, pássaros, aldeia)
 
 ### ✅ Sistema de Pacotes Sazonais (26/04/2025)
 - [x] **4 pacotes temáticos**: Natal 🎄, Carnaval 🎭, Verão ☀️, Páscoa 🐰
