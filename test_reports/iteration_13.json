@@ -1,0 +1,93 @@
+{
+  "summary": "Tested free-build AoE-style city layout feature. Backend: 6/6 pytest tests pass (100%). Frontend: critical issues found in 2 flows (Estradas tab is empty and clicking non-town_hall buildings opens the wrong panel).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "BuildMenu - Estradas tab",
+        "issue": "The 'Estradas' tab pane is EMPTY. No 'build-road-btn' nor any road-related UI is rendered when build-tab-roads is active. User has no way to enter road-build mode from the UI. The only buttons inside [data-testid='build-menu'] are the 5 tabs + civil items (build-item-house, build-item-garden). Switching tabs does not change the rendered items list when 'Estradas' is selected.",
+        "selector": "[data-testid='build-road-btn']",
+        "priority": "CRITICAL"
+      },
+      {
+        "component": "IsometricCity - building click routing",
+        "issue": "Clicking [data-testid='building-farm'] opens the Câmara Municipal panel instead of the Farm panel. The opened building-panel shows title 'Câmara Municipal' and the protection text 'A Câmara Municipal é o coração da cidade — não pode ser movida nem demolida'. As a consequence, move-building-btn and demolish-building-btn are never reachable for any non-town_hall building. Likely cause: town_hall sprite z-index/hit-area overlaps adjacent tiles, or onClick is bound to wrong building id. Confirmed via building-panel innerText reading 'Câmara Municipal Nível 1/5' even though the click target was building-farm at (5,5).",
+        "selector": "[data-testid='building-farm']",
+        "priority": "CRITICAL"
+      },
+      {
+        "component": "BuildMenu - affordability message",
+        "issue": "Build items show only 'Fundos insuficientes' generic text. After adding 1000 coins via /api/game/add-resources, Casa and Jardim still show 'Fundos insuficientes' because the missing resource is wood/stone, not coins. The label is misleading — should indicate which resource is missing (e.g. 'Madeira insuficiente' / 'Pedra insuficiente').",
+        "selector": "[data-testid^='build-item-']",
+        "priority": "MEDIUM"
+      },
+      {
+        "component": "BuildingPanel close button",
+        "issue": "Spec mentions data-testid 'close-panel-btn' but the actual close button uses 'building-panel-close'. Minor naming inconsistency.",
+        "selector": "[data-testid='building-panel-close']",
+        "priority": "LOW"
+      }
+    ],
+    "integration_issues": [
+      {
+        "flow": "Build a new building",
+        "issue": "Could not validate end-to-end build flow because (a) the test student has only 8 wood / 7 stone — insufficient even for the cheapest building (Jardim needs 10 wood, 5 stone), and (b) Estradas tab does not render the road builder, so the user cannot first build a road to test placement.",
+        "affected_selectors": ["[data-testid='mode-banner']", "[data-testid='build-road-btn']"]
+      },
+      {
+        "flow": "Move / Demolish building",
+        "issue": "Cannot reach move/demolish flow from UI because clicks on non-town_hall buildings route to town_hall panel (see ui_bug above).",
+        "affected_selectors": ["[data-testid='move-building-btn']", "[data-testid='demolish-building-btn']"]
+      }
+    ],
+    "design_issues": []
+  },
+  "passed_tests": [
+    "BACKEND: GET /api/game/city/layout returns grid_size 14, roads list, buildings with positions and migration cross-roads around town_hall (6,6)",
+    "BACKEND: POST /api/game/city/build rejects placement without adjacent road (400 'estrada')",
+    "BACKEND: POST /api/game/city/road/build rejects isolated road (400)",
+    "BACKEND: Full build → duplicate-build (400) → move → demolish cycle with 50% refund",
+    "BACKEND: POST /api/game/city/demolish and /move reject town_hall (400)",
+    "BACKEND: POST /api/game/city/road/build and /road/remove with connectivity validation and 50% refund (refund.wood == 2)",
+    "FRONTEND: Student login, tutorial skip, Minha Cidade tab loads isometric map with town_hall and cross-roads",
+    "FRONTEND: build-menu, all 5 tabs (build-tab-civil/education/resources/military/roads), sound-toggle-btn, city-tile-X-Y, building-town_hall present",
+    "FRONTEND: Affordable items not disabled, unaffordable items disabled with 'Fundos insuficientes' label and blur",
+    "FRONTEND: Town hall panel correctly omits move-building-btn and demolish-building-btn (only upgrade)",
+    "FRONTEND: Tab switching (Civil/Educação/Recursos/Militar/Estradas) does not throw errors"
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_city_layout.py",
+    "/app/test_reports/pytest/pytest_results_city_layout.xml"
+  ],
+  "action_items": [
+    "FIX (CRITICAL): Estradas tab — render the road-build/remove UI (button [data-testid='build-road-btn']) when 'build-tab-roads' is active. Currently the tab pane only renders building items, not road actions.",
+    "FIX (CRITICAL): Clicks on non-town_hall buildings (e.g. building-farm) currently open the Câmara Municipal panel. Audit the onClick handler / z-index / hit-test in IsometricCity / CityGrid so the correct building.id is passed to BuildingPanel.",
+    "IMPROVE: BuildMenu affordability label should specify the missing resource (Moedas / Madeira / Pedra / Ferro) instead of generic 'Fundos insuficientes', because items can be blocked by non-coin resources.",
+    "ALIGN: data-testid 'close-panel-btn' (per spec) vs 'building-panel-close' (actual)."
+  ],
+  "critical_code_review_comments": [
+    "Backend city layout logic is well-isolated and tested (test_city_layout.py covers 6 scenarios including connectivity).",
+    "Frontend IsometricCity click handling appears to misroute clicks to town_hall; needs inspection of CityGrid inverse isometric transform and building click priority.",
+    "BuildMenu road tab is missing its content panel — likely a switch/case branch that returns empty for category === 'roads'."
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "100% (6/6 city layout tests + regression endpoints pass)",
+    "frontend": "~55% (data-testids and UI render correctly, but 2 critical interactions broken)"
+  },
+  "test_credentials": {
+    "student_email": "aluno@teste.pt",
+    "student_password": "Aluno1234*"
+  },
+  "seed_data_creation": "Added 1000 coins to student via POST /api/game/add-resources?coins=1000 during testing. Did not modify wood/stone/iron.",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Backend free-build endpoints all work. Frontend has 2 critical regressions: (1) Estradas tab pane is EMPTY — no road build/remove buttons. Verify BuildMenu category switch includes a 'roads' branch. (2) Clicking building-farm (or any non-town_hall building) opens the town_hall panel — likely the building.id passed to BuildingPanel is hardcoded or click event bubbles to town_hall sprite. After fixes, re-run: open Minha Cidade → check build-tab-roads renders build-road-btn → click building-farm and verify panel title shows 'Quinta' with move-building-btn and demolish-building-btn → run test_city_layout.py for regression. Student needs more wood/stone (db.game_states.update_one) to fully test the build flow UI.",
+  "rca of the issue": {
+    "estradas_empty_tab": "Likely BuildMenu only iterates over CITY_BUILDING_COSTS items by category; the 'roads' category has no entries in that map so the pane renders empty. The road-specific action button (build-road-btn) was not added to the roads branch.",
+    "farm_click_opens_town_hall": "Possible root causes: (a) the building sprite for town_hall has a wider hitbox/larger z-index covering adjacent tiles where farm is rendered; (b) the onClick in the sprite passes the wrong id; (c) the click is delegated to the tile-level handler which always resolves to the nearest large building (town_hall). Confirmed reproducible: clicking [data-testid='building-farm'] consistently yields panel with title 'Câmara Municipal'."
+  }
+}

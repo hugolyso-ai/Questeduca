@@ -748,6 +748,346 @@ async def collect_production(
         "amount": amount
     }
 
+# ==================== CITY LAYOUT (FREE BUILD - AoE STYLE) ====================
+
+from pydantic import BaseModel as _BaseModel
+
+CITY_GRID_SIZE = 14
+TOWN_HALL_POS = (6, 6)
+ROAD_COST = {"wood": 5, "stone": 5}
+
+CITY_BUILDING_COSTS = {
+    "town_hall": {"coins": 100, "wood": 50, "stone": 50, "iron": 20},
+    "house": {"coins": 30, "wood": 20, "stone": 10, "iron": 0},
+    "school": {"coins": 80, "wood": 30, "stone": 30, "iron": 10},
+    "library": {"coins": 60, "wood": 40, "stone": 20, "iron": 5},
+    "market": {"coins": 50, "wood": 25, "stone": 25, "iron": 5},
+    "farm": {"coins": 20, "wood": 15, "stone": 5, "iron": 0},
+    "lumber_mill": {"coins": 25, "wood": 10, "stone": 10, "iron": 5},
+    "quarry": {"coins": 30, "wood": 10, "stone": 5, "iron": 10},
+    "mine": {"coins": 40, "wood": 15, "stone": 15, "iron": 5},
+    "barracks": {"coins": 100, "wood": 40, "stone": 50, "iron": 30},
+    "wall": {"coins": 50, "wood": 20, "stone": 60, "iron": 15},
+    "garden": {"coins": 15, "wood": 10, "stone": 5, "iron": 0}
+}
+
+
+class TileRequest(_BaseModel):
+    x: int
+    y: int
+
+
+class CityBuildRequest(_BaseModel):
+    building_id: str
+    x: int
+    y: int
+
+
+class CityDemolishRequest(_BaseModel):
+    building_id: str
+
+
+def _tile_neighbors(x, y):
+    return [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)]
+
+
+def _in_bounds(x, y):
+    return 0 <= x < CITY_GRID_SIZE and 0 <= y < CITY_GRID_SIZE
+
+
+def _layout_sets(game_state):
+    """Return (roads_set, occupied_dict {(x,y): building_id}) from game state"""
+    roads = {tuple(r) for r in game_state.get("roads", [])}
+    occupied = {}
+    for bid, b in game_state.get("buildings", {}).items():
+        if isinstance(b, dict) and b.get("level", 0) > 0 and b.get("placed"):
+            occupied[(b.get("x"), b.get("y"))] = bid
+    return roads, occupied
+
+
+def _town_hall_pos(game_state):
+    th = game_state.get("buildings", {}).get("town_hall", {})
+    if isinstance(th, dict) and th.get("placed"):
+        return (th.get("x"), th.get("y"))
+    return TOWN_HALL_POS
+
+
+def _has_adjacent_road(x, y, roads):
+    return any(n in roads for n in _tile_neighbors(x, y))
+
+
+async def _get_state_or_404(user_id):
+    game_state = await db.game_states.find_one({"user_id": user_id}, {"_id": 0})
+    if not game_state:
+        raise HTTPException(status_code=404, detail="Estado do jogo não encontrado")
+    return game_state
+
+
+def _ensure_student(current_user):
+    if current_user.role != UserRole.STUDENT:
+        raise HTTPException(status_code=403, detail="Apenas para alunos")
+
+
+@api_router.get("/game/city/layout")
+async def get_city_layout(current_user: User = Depends(get_current_user_dep)):
+    """Get the city layout (roads + building placements). Auto-migrates old cities to a default layout."""
+    _ensure_student(current_user)
+    game_state = await _get_state_or_404(current_user.user_id)
+
+    buildings = game_state.get("buildings", {})
+    # Normalize old int format
+    for bid in list(buildings.keys()):
+        if not isinstance(buildings[bid], dict):
+            buildings[bid] = {"level": buildings[bid] or 0, "producing": False}
+
+    if "roads" not in game_state:
+        # Default migration layout: town hall in the center, road cross, built buildings around roads
+        cx, cy = TOWN_HALL_POS
+        roads = [(cx - 1, cy), (cx + 1, cy), (cx, cy - 1), (cx, cy + 1),
+                 (cx - 2, cy), (cx + 2, cy), (cx, cy - 2), (cx, cy + 2)]
+        spots = [(cx - 1, cy - 1), (cx + 1, cy - 1), (cx - 1, cy + 1), (cx + 1, cy + 1),
+                 (cx - 2, cy - 1), (cx + 2, cy - 1), (cx - 2, cy + 1), (cx + 2, cy + 1),
+                 (cx - 3, cy), (cx + 3, cy), (cx, cy - 3), (cx, cy + 3)]
+        spot_i = 0
+        for bid, b in buildings.items():
+            if bid == "town_hall":
+                b.update({"x": cx, "y": cy, "placed": True})
+                if b.get("level", 0) < 1:
+                    b["level"] = 1
+            elif b.get("level", 0) > 0 and spot_i < len(spots):
+                sx, sy = spots[spot_i]
+                spot_i += 1
+                b.update({"x": sx, "y": sy, "placed": True})
+            else:
+                b["placed"] = False
+        game_state["roads"] = [list(r) for r in roads]
+        await db.game_states.update_one(
+            {"user_id": current_user.user_id},
+            {"$set": {"roads": game_state["roads"], "buildings": buildings}}
+        )
+
+    return {
+        "grid_size": CITY_GRID_SIZE,
+        "roads": game_state["roads"],
+        "buildings": buildings,
+        "road_cost": ROAD_COST,
+        "building_costs": CITY_BUILDING_COSTS
+    }
+
+
+@api_router.post("/game/city/build")
+async def city_build(req: CityBuildRequest, current_user: User = Depends(get_current_user_dep)):
+    """Construct a new building (level 1) on a free tile adjacent to a road."""
+    _ensure_student(current_user)
+    if req.building_id not in CITY_BUILDING_COSTS:
+        raise HTTPException(status_code=404, detail="Edifício não encontrado")
+    game_state = await _get_state_or_404(current_user.user_id)
+
+    building = game_state.get("buildings", {}).get(req.building_id, {})
+    level = building.get("level", 0) if isinstance(building, dict) else building
+    if level > 0:
+        raise HTTPException(status_code=400, detail="Este edifício já está construído. Podes evoluí-lo no mapa.")
+
+    if not _in_bounds(req.x, req.y):
+        raise HTTPException(status_code=400, detail="Posição fora do mapa")
+    roads, occupied = _layout_sets(game_state)
+    if (req.x, req.y) in roads or (req.x, req.y) in occupied:
+        raise HTTPException(status_code=400, detail="Este terreno já está ocupado")
+    if not _has_adjacent_road(req.x, req.y, roads):
+        raise HTTPException(status_code=400, detail="Precisas de uma estrada junto ao terreno para construir. Constrói primeiro a estrada!")
+
+    costs = CITY_BUILDING_COSTS[req.building_id]
+    resources = game_state.get("resources", {})
+    if game_state.get("coins", 0) < costs["coins"]:
+        raise HTTPException(status_code=400, detail=f"Moedas insuficientes. Precisas de {costs['coins']}")
+    for res in ("wood", "stone", "iron"):
+        if resources.get(res, 0) < costs.get(res, 0):
+            nomes = {"wood": "Madeira", "stone": "Pedra", "iron": "Ferro"}
+            raise HTTPException(status_code=400, detail=f"{nomes[res]} insuficiente. Precisas de {costs[res]}")
+
+    stat_updates = {}
+    if req.building_id == "house":
+        stat_updates["max_population"] = game_state.get("max_population", 20) + 10
+    elif req.building_id == "barracks":
+        stat_updates["attack_power"] = game_state.get("attack_power", 0) + 5
+    elif req.building_id == "wall":
+        stat_updates["defense_power"] = game_state.get("defense_power", 5) + 10
+
+    await db.game_states.update_one(
+        {"user_id": current_user.user_id},
+        {
+            "$inc": {
+                "coins": -costs["coins"],
+                "resources.wood": -costs.get("wood", 0),
+                "resources.stone": -costs.get("stone", 0),
+                "resources.iron": -costs.get("iron", 0)
+            },
+            "$set": {
+                f"buildings.{req.building_id}": {"level": 1, "x": req.x, "y": req.y, "placed": True, "producing": False},
+                **stat_updates
+            }
+        }
+    )
+    return {"success": True, "building_id": req.building_id, "x": req.x, "y": req.y, "costs_paid": costs}
+
+
+@api_router.post("/game/city/move")
+async def city_move_building(req: CityBuildRequest, current_user: User = Depends(get_current_user_dep)):
+    """Move a placed building to another free tile adjacent to a road (free of charge)."""
+    _ensure_student(current_user)
+    game_state = await _get_state_or_404(current_user.user_id)
+
+    building = game_state.get("buildings", {}).get(req.building_id)
+    if not isinstance(building, dict) or building.get("level", 0) == 0 or not building.get("placed"):
+        raise HTTPException(status_code=400, detail="Edifício não construído")
+    if req.building_id == "town_hall":
+        raise HTTPException(status_code=400, detail="A Câmara Municipal é o centro da cidade e não pode ser movida")
+
+    if not _in_bounds(req.x, req.y):
+        raise HTTPException(status_code=400, detail="Posição fora do mapa")
+    roads, occupied = _layout_sets(game_state)
+    occupied.pop((building.get("x"), building.get("y")), None)
+    if (req.x, req.y) in roads or (req.x, req.y) in occupied:
+        raise HTTPException(status_code=400, detail="Este terreno já está ocupado")
+    if not _has_adjacent_road(req.x, req.y, roads):
+        raise HTTPException(status_code=400, detail="O edifício precisa de ficar junto a uma estrada")
+
+    await db.game_states.update_one(
+        {"user_id": current_user.user_id},
+        {"$set": {f"buildings.{req.building_id}.x": req.x, f"buildings.{req.building_id}.y": req.y}}
+    )
+    return {"success": True, "building_id": req.building_id, "x": req.x, "y": req.y}
+
+
+@api_router.post("/game/city/demolish")
+async def city_demolish(req: CityDemolishRequest, current_user: User = Depends(get_current_user_dep)):
+    """Demolish a building, refunding 50% of all resources invested."""
+    _ensure_student(current_user)
+    if req.building_id == "town_hall":
+        raise HTTPException(status_code=400, detail="A Câmara Municipal não pode ser demolida")
+    game_state = await _get_state_or_404(current_user.user_id)
+
+    building = game_state.get("buildings", {}).get(req.building_id)
+    level = building.get("level", 0) if isinstance(building, dict) else (building or 0)
+    if level == 0:
+        raise HTTPException(status_code=400, detail="Edifício não construído")
+
+    base = CITY_BUILDING_COSTS.get(req.building_id, {"coins": 50, "wood": 20, "stone": 20, "iron": 10})
+    # Total invested = sum of base * multiplier for each level bought
+    total_mult = sum(range(1, level + 1))
+    refund = {k: int(base.get(k, 0) * total_mult * 0.5) for k in ("coins", "wood", "stone", "iron")}
+
+    stat_updates = {}
+    if req.building_id == "house":
+        stat_updates["max_population"] = max(20, game_state.get("max_population", 20) - 10 * level)
+    elif req.building_id == "barracks":
+        stat_updates["attack_power"] = max(0, game_state.get("attack_power", 0) - 5 * level)
+    elif req.building_id == "wall":
+        stat_updates["defense_power"] = max(5, game_state.get("defense_power", 5) - 10 * level)
+
+    await db.game_states.update_one(
+        {"user_id": current_user.user_id},
+        {
+            "$inc": {
+                "coins": refund["coins"],
+                "resources.wood": refund["wood"],
+                "resources.stone": refund["stone"],
+                "resources.iron": refund["iron"]
+            },
+            "$set": {
+                f"buildings.{req.building_id}.level": 0,
+                f"buildings.{req.building_id}.placed": False,
+                f"buildings.{req.building_id}.producing": False,
+                **stat_updates
+            },
+            "$unset": {f"production_timers.{req.building_id}": ""}
+        }
+    )
+    return {"success": True, "refund": refund}
+
+
+@api_router.post("/game/city/road/build")
+async def city_build_road(req: TileRequest, current_user: User = Depends(get_current_user_dep)):
+    """Build a road tile. Must connect to the existing road network or the Town Hall."""
+    _ensure_student(current_user)
+    game_state = await _get_state_or_404(current_user.user_id)
+    if "roads" not in game_state:
+        raise HTTPException(status_code=400, detail="Layout da cidade não inicializado")
+
+    if not _in_bounds(req.x, req.y):
+        raise HTTPException(status_code=400, detail="Posição fora do mapa")
+    roads, occupied = _layout_sets(game_state)
+    if (req.x, req.y) in roads or (req.x, req.y) in occupied:
+        raise HTTPException(status_code=400, detail="Este terreno já está ocupado")
+
+    th_pos = _town_hall_pos(game_state)
+    connects = _has_adjacent_road(req.x, req.y, roads) or th_pos in _tile_neighbors(req.x, req.y)
+    if not connects:
+        raise HTTPException(status_code=400, detail="A estrada tem de ligar à rede existente ou à Câmara Municipal")
+
+    resources = game_state.get("resources", {})
+    for res, cost in ROAD_COST.items():
+        if resources.get(res, 0) < cost:
+            nomes = {"wood": "Madeira", "stone": "Pedra"}
+            raise HTTPException(status_code=400, detail=f"{nomes[res]} insuficiente. Cada estrada custa {ROAD_COST['wood']} madeira + {ROAD_COST['stone']} pedra")
+
+    await db.game_states.update_one(
+        {"user_id": current_user.user_id},
+        {
+            "$push": {"roads": [req.x, req.y]},
+            "$inc": {"resources.wood": -ROAD_COST["wood"], "resources.stone": -ROAD_COST["stone"]}
+        }
+    )
+    return {"success": True, "x": req.x, "y": req.y, "cost": ROAD_COST}
+
+
+@api_router.post("/game/city/road/remove")
+async def city_remove_road(req: TileRequest, current_user: User = Depends(get_current_user_dep)):
+    """Remove a road tile (50% refund) if no building loses access and the network stays connected."""
+    _ensure_student(current_user)
+    game_state = await _get_state_or_404(current_user.user_id)
+
+    roads, occupied = _layout_sets(game_state)
+    if (req.x, req.y) not in roads:
+        raise HTTPException(status_code=400, detail="Não existe estrada nesse terreno")
+
+    remaining = roads - {(req.x, req.y)}
+
+    # Every placed building (except town hall) must keep at least one adjacent road
+    for (bx, by), bid in occupied.items():
+        if bid == "town_hall":
+            continue
+        if not _has_adjacent_road(bx, by, remaining):
+            raise HTTPException(status_code=400, detail="Não podes remover: um edifício ficaria sem acesso à estrada")
+
+    # Remaining roads must stay connected to the Town Hall
+    if remaining:
+        th_pos = _town_hall_pos(game_state)
+        anchors = {r for r in remaining if r in set(_tile_neighbors(*th_pos))}
+        if not anchors:
+            raise HTTPException(status_code=400, detail="Não podes remover: a rede de estradas ficaria desligada da Câmara Municipal")
+        visited = set(anchors)
+        queue = list(anchors)
+        while queue:
+            cx, cy = queue.pop()
+            for n in _tile_neighbors(cx, cy):
+                if n in remaining and n not in visited:
+                    visited.add(n)
+                    queue.append(n)
+        if visited != remaining:
+            raise HTTPException(status_code=400, detail="Não podes remover: parte da rede de estradas ficaria isolada")
+
+    refund = {res: cost // 2 for res, cost in ROAD_COST.items()}
+    await db.game_states.update_one(
+        {"user_id": current_user.user_id},
+        {
+            "$pull": {"roads": [req.x, req.y]},
+            "$inc": {"resources.wood": refund["wood"], "resources.stone": refund["stone"]}
+        }
+    )
+    return {"success": True, "refund": refund}
+
+
 @api_router.get("/game/building-info")
 async def get_building_info():
     """Get information about all buildings and their costs"""
