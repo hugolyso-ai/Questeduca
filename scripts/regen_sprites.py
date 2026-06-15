@@ -108,4 +108,5 @@ async def main():
         except Exception as e:
             print(f"ERROR {name}: {e}")
 
-asyncio.run(main())
+if __name__ == '__main__':
+    asyncio.run(main())

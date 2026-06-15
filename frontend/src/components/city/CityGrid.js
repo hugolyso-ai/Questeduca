@@ -36,8 +36,38 @@ const Tile = ({ x, y, gridSize, isRoad, showGrid, overlayColor }) => {
   );
 };
 
+// Pixel-perfect alpha hit-testing: cache a canvas per asset and sample the alpha
+const alphaCtxCache = {};
+const sampleSpriteAlpha = (id, imgEl, clientX, clientY) => {
+  const rect = imgEl.getBoundingClientRect();
+  if (rect.width === 0 || rect.height === 0) return 0;
+  const relX = (clientX - rect.left) / rect.width;
+  const relY = (clientY - rect.top) / rect.height;
+  if (relX < 0 || relX > 1 || relY < 0 || relY > 1) return 0;
+  try {
+    let ctx = alphaCtxCache[id];
+    if (!ctx) {
+      if (!imgEl.complete || imgEl.naturalWidth === 0) return 255;
+      const canvas = document.createElement('canvas');
+      canvas.width = imgEl.naturalWidth;
+      canvas.height = imgEl.naturalHeight;
+      ctx = canvas.getContext('2d', { willReadFrequently: true });
+      ctx.drawImage(imgEl, 0, 0);
+      alphaCtxCache[id] = ctx;
+    }
+    const px = ctx.getImageData(
+      Math.min(Math.floor(relX * imgEl.naturalWidth), imgEl.naturalWidth - 1),
+      Math.min(Math.floor(relY * imgEl.naturalHeight), imgEl.naturalHeight - 1),
+      1, 1
+    ).data;
+    return px[3];
+  } catch {
+    return 255; // CORS or other failure: treat as opaque
+  }
+};
+
 // Placed building sprite anchored to its tile
-const BuildingSprite = ({ id, building, gridSize, isSelected, skinFilter, onClick, dimmed, interactive }) => {
+const BuildingSprite = ({ id, building, gridSize, isSelected, skinFilter, dimmed, interactive }) => {
   const config = BUILDING_CONFIG[id];
   const { left, top } = gridToScreen(building.x, building.y, gridSize);
   const cx = left + TILE_W / 2;
@@ -61,7 +91,7 @@ const BuildingSprite = ({ id, building, gridSize, isSelected, skinFilter, onClic
         transition: 'opacity 0.2s',
         pointerEvents: interactive ? 'none' : 'auto',
       }}
-      onClick={(e) => { e.stopPropagation(); onClick(id); }}
+      data-building-id={id}
       data-testid={`building-${id}`}
     >
       {/* Ground contact shadow to integrate with terrain */}
@@ -160,9 +190,27 @@ const CityGrid = ({
   };
 
   const handleClick = (e) => {
-    if (!interactive) return;
-    const t = tileFromEvent(e);
-    if (t) onTileClick(t.x, t.y);
+    if (interactive) {
+      const t = tileFromEvent(e);
+      if (t) onTileClick(t.x, t.y);
+      return;
+    }
+    // View mode: resolve which building was really clicked using pixel-alpha hit-testing
+    // (transparent corners of overlapping PNG sprites must not steal clicks)
+    const els = document.elementsFromPoint(e.clientX, e.clientY);
+    const seen = new Set();
+    for (const el of els) {
+      const wrapper = el.closest?.('[data-building-id]');
+      if (!wrapper) continue;
+      const id = wrapper.dataset.buildingId;
+      if (seen.has(id)) continue;
+      seen.add(id);
+      const img = wrapper.querySelector('img');
+      if (img && sampleSpriteAlpha(id, img, e.clientX, e.clientY) > 30) {
+        onBuildingClick(id);
+        return;
+      }
+    }
   };
 
   const tiles = [];
@@ -209,7 +257,6 @@ const CityGrid = ({
           gridSize={gridSize}
           isSelected={selectedBuildingId === id}
           skinFilter={skinBuildingFilter}
-          onClick={onBuildingClick}
           dimmed={mode === 'move' && ghostBuildingId === id}
           interactive={interactive}
         />

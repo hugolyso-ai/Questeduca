@@ -555,6 +555,24 @@ Criar jogo educativo RTS (QUESTEDUCA) para o 1º, 2º e 3º ciclos do ensino bá
 - [x] **Explicação**: Secção "Como funcionam os Pacotes Sazonais?"
 - [x] **Preparado para integração** com Stripe
 
+### ✅ Sistema de Construção Livre estilo Age of Empires (10/06/2026)
+- [x] **Grelha isométrica 14x14** com tiles de relva texturizados (textura gerada por IA, sem edifícios "colados")
+- [x] **Colocação livre de edifícios**: o aluno organiza a cidade como entender
+- [x] **Sistema de estradas obrigatórias**: edifícios só podem ser construídos junto a uma estrada; estradas partem da Câmara Municipal e têm de ficar ligadas em rede (validação de conectividade BFS no backend)
+- [x] **Custo de estradas**: 5 madeira + 5 pedra por troço; remoção devolve 50%
+- [x] **Menu de construção AoE** com separadores por categoria (Civil, Educação, Recursos, Militar, Estradas); edifícios sem fundos em blur com indicação do recurso em falta ("Falta: Madeira")
+- [x] **Mover edifícios** (grátis) e **demolir** (devolve 50% do investimento total)
+- [x] **Câmara Municipal protegida** (não pode ser movida/demolida — centro da cidade)
+- [x] **Migração automática**: cidades existentes recebem layout inicial (Câmara ao centro + estradas em cruz + edifícios construídos colocados à frente)
+- [x] **Sprites com transparência real**: 12 edifícios regenerados (Gemini Nano Banana, fundo magenta + chroma key) — integram-se no terreno
+- [x] **Hit-testing por alfa de pixel**: cliques em sprites sobrepostos resolvem o edifício correto
+- [x] **Ghost preview** verde/vermelho ao colocar/mover; grelha visível só em modo de construção; ESC cancela
+- [x] **Dicas educativas de urbanismo** (toast aleatório ao construir + dica no menu)
+- [x] **Som ambiente** com botão toggle funcional (elemento <audio> + persistência)
+- [x] **Backend**: GET /api/game/city/layout, POST /api/game/city/build|move|demolish, POST /api/game/city/road/build|remove
+- [x] **Refactoring**: IsometricCity dividido em /components/city/ (cityConfig, CityGrid, BuildMenu, BuildingPanel, ResourceBar, Snowfall, SkinSelector)
+- [x] **Testes**: /app/backend/tests/test_city_layout.py (6/6 passam) + validação E2E frontend
+
 ## Credenciais
 - **Stripe**: sk_test_emergent
 - **Emergent LLM Key**: Claude Sonnet 4.5

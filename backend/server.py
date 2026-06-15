@@ -845,9 +845,10 @@ async def get_city_layout(current_user: User = Depends(get_current_user_dep)):
         cx, cy = TOWN_HALL_POS
         roads = [(cx - 1, cy), (cx + 1, cy), (cx, cy - 1), (cx, cy + 1),
                  (cx - 2, cy), (cx + 2, cy), (cx, cy - 2), (cx, cy + 2)]
-        spots = [(cx - 1, cy - 1), (cx + 1, cy - 1), (cx - 1, cy + 1), (cx + 1, cy + 1),
-                 (cx - 2, cy - 1), (cx + 2, cy - 1), (cx - 2, cy + 1), (cx + 2, cy + 1),
-                 (cx - 3, cy), (cx + 3, cy), (cx, cy - 3), (cx, cy + 3)]
+        # Spots ordered front-first (higher x+y renders in front, avoids hiding behind the town hall)
+        spots = [(cx - 1, cy + 1), (cx + 1, cy + 1), (cx + 1, cy - 1), (cx - 1, cy - 1),
+                 (cx - 2, cy + 1), (cx + 2, cy + 1), (cx - 2, cy - 1), (cx + 2, cy - 1),
+                 (cx, cy + 3), (cx + 3, cy), (cx - 3, cy), (cx, cy - 3)]
         spot_i = 0
         for bid, b in buildings.items():
             if bid == "town_hall":

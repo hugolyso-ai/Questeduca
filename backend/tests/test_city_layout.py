@@ -15,6 +15,17 @@ def session():
     s = requests.Session()
     r = s.post(f"{BASE}/auth/login", json=STUDENT)
     assert r.status_code == 200, r.text
+    # Ensure game state exists, then top up resources directly in Mongo so build tests never starve
+    assert s.get(f"{BASE}/game/state").status_code == 200
+    from pymongo import MongoClient
+    load_dotenv('/app/backend/.env')
+    client = MongoClient(os.environ['MONGO_URL'])
+    db = client[os.environ['DB_NAME']]
+    db.game_states.update_one(
+        {"user_id": "user_27e0fcfdfcfc"},
+        {"$set": {"resources.wood": 500, "resources.stone": 500, "resources.iron": 200}, "$inc": {"coins": 500}}
+    )
+    client.close()
     return s
 
 

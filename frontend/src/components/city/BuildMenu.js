@@ -34,6 +34,14 @@ const CostRow = ({ cost, gameState }) => {
   );
 };
 
+const RESOURCE_LABELS = { coins: 'Moedas', wood: 'Madeira', stone: 'Pedra', iron: 'Ferro' };
+
+const getMissingResources = (gameState, cost) => {
+  const res = gameState?.resources || {};
+  const have = { coins: gameState?.coins || 0, wood: res.wood || 0, stone: res.stone || 0, iron: res.iron || 0 };
+  return Object.keys(RESOURCE_LABELS).filter((k) => have[k] < (cost[k] || 0)).map((k) => RESOURCE_LABELS[k]);
+};
+
 const BuildingCard = ({ id, gameState, buildings, placingId, onStartPlace }) => {
   const config = BUILDING_CONFIG[id];
   const cost = BUILDING_COSTS[id];
@@ -42,6 +50,7 @@ const BuildingCard = ({ id, gameState, buildings, placingId, onStartPlace }) => 
   const isBuilt = level > 0;
   const affordable = canAfford(gameState, cost);
   const isPlacing = placingId === id;
+  const missing = affordable ? [] : getMissingResources(gameState, cost);
 
   if (isBuilt) {
     return (
@@ -81,7 +90,9 @@ const BuildingCard = ({ id, gameState, buildings, placingId, onStartPlace }) => 
       </span>
       <CostRow cost={cost} gameState={gameState} />
       {!affordable && (
-        <span className="text-[9px] text-red-400 font-semibold">Fundos insuficientes</span>
+        <span className="text-[9px] text-red-400 font-semibold leading-tight">
+          Falta: {missing.join(', ')}
+        </span>
       )}
     </button>
   );
