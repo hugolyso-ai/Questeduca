@@ -1,13 +1,15 @@
 {
-  "buildCommand": "cd frontend && yarn install && CI=false DISABLE_ESLINT_PLUGIN=true yarn build",
-  "installCommand": "cd frontend && yarn install",
-  "outputDirectory": "frontend/build",
-  "framework": null,
-  "build": {
-    "env": {
-      "CI": "false",
-      "DISABLE_ESLINT_PLUGIN": "true"
+    "experimentalServices": {
+        "backend": {
+            "root": "backend",
+            "routePrefix": "/_/backend"
+        },
+        "frontend": {
+            "root": "frontend",
+            "routePrefix": "/",
+            "framework": "create-react-app",
+            "buildCommand": "yarn install && yarn build"
+        }
     }
-  }
 }
 
