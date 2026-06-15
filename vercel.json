@@ -10,17 +10,4 @@
     }
   }
 }
-{
-    "experimentalServices": {
-        "backend": {
-            "root": "backend",
-            "routePrefix": "/_/backend"
-        },
-        "frontend": {
-            "root": "frontend",
-            "routePrefix": "/",
-            "framework": "create-react-app",
-            "buildCommand": "yarn install && yarn build"
-        }
-    }
-}
+
