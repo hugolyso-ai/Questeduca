@@ -1,0 +1,480 @@
+import React, { useState, useEffect } from 'react'
+import { useNavigate, Link } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
+import { Castle, Mail, Lock, User, Building2, MapPin, School, Users, Plus, Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
+import { supabase } from '../lib/supabase'
+
+const RegisterPage = () => {
+  const navigate = useNavigate()
+  const { register } = useAuth()
+
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    confirmPassword: '',
+    name: '',
+    role: 'parent'
+  })
+
+  const [associationData, setAssociationData] = useState({
+    association_name: '',
+    district: '',
+    municipality: '',
+    locality: '',
+    school_id: '',
+    school_name: '',
+    iban: '',
+    responsible_names: ['']
+  })
+
+  const [loading, setLoading] = useState(false)
+  const [districts, setDistricts] = useState([])
+  const [municipalities, setMunicipalities] = useState([])
+  const [localities, setLocalities] = useState([])
+  const [schools, setSchools] = useState([])
+
+  useEffect(() => {
+    const fetchDistricts = async () => {
+      const { data } = await supabase.from('districts').select('*').order('name')
+      if (data) setDistricts(data)
+    }
+    fetchDistricts()
+  }, [])
+
+  useEffect(() => {
+    if (!associationData.district) return
+    const fetchMunicipalities = async () => {
+      const { data } = await supabase
+        .from('schools')
+        .select('municipality')
+        .eq('district', associationData.district)
+        .order('municipality')
+      const unique = [...new Set(data?.map(s => s.municipality) || [])]
+      setMunicipalities(unique)
+      setAssociationData(prev => ({ ...prev, municipality: '', locality: '', school_id: '', school_name: '' }))
+      setLocalities([])
+      setSchools([])
+    }
+    fetchMunicipalities()
+  }, [associationData.district])
+
+  useEffect(() => {
+    if (!associationData.municipality) return
+    const fetchLocalities = async () => {
+      const { data } = await supabase
+        .from('schools')
+        .select('locality')
+        .eq('district', associationData.district)
+        .eq('municipality', associationData.municipality)
+        .order('locality')
+      const unique = [...new Set(data?.map(s => s.locality).filter(Boolean) || [])]
+      setLocalities(unique)
+      setAssociationData(prev => ({ ...prev, locality: '', school_id: '', school_name: '' }))
+      setSchools([])
+    }
+    fetchLocalities()
+  }, [associationData.municipality])
+
+  useEffect(() => {
+    if (!associationData.locality) return
+    const fetchSchools = async () => {
+      const { data } = await supabase
+        .from('schools')
+        .select('*')
+        .eq('district', associationData.district)
+        .eq('municipality', associationData.municipality)
+        .eq('locality', associationData.locality)
+        .order('name')
+      setSchools(data || [])
+      setAssociationData(prev => ({ ...prev, school_id: '', school_name: '' }))
+    }
+    fetchSchools()
+  }, [associationData.locality])
+
+  const handleSchoolSelect = (schoolId) => {
+    const school = schools.find(s => s.school_id === schoolId)
+    if (school) {
+      setAssociationData(prev => ({ ...prev, school_id: school.school_id, school_name: school.name }))
+    }
+  }
+
+  const addResponsible = () => {
+    setAssociationData(prev => ({ ...prev, responsible_names: [...prev.responsible_names, ''] }))
+  }
+
+  const updateResponsible = (index, value) => {
+    setAssociationData(prev => {
+      const newNames = [...prev.responsible_names]
+      newNames[index] = value
+      return { ...prev, responsible_names: newNames }
+    })
+  }
+
+  const removeResponsible = (index) => {
+    if (associationData.responsible_names.length > 1) {
+      setAssociationData(prev => ({ ...prev, responsible_names: prev.responsible_names.filter((_, i) => i !== index) }))
+    }
+  }
+
+  const generateAssociationCode = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+    let code = ''
+    for (let i = 0; i < 8; i++) code += chars[Math.floor(Math.random() * chars.length)]
+    return code
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+
+    if (formData.password !== formData.confirmPassword) {
+      toast.error('As passwords não coincidem')
+      return
+    }
+
+    setLoading(true)
+
+    try {
+      if (formData.role === 'association') {
+        if (!associationData.association_name || !associationData.school_id || !associationData.iban) {
+          toast.error('Por favor preencha todos os campos obrigatórios')
+          setLoading(false)
+          return
+        }
+
+        const responsibleNames = associationData.responsible_names.filter(n => n.trim())
+        if (responsibleNames.length === 0) {
+          toast.error('Adicione pelo menos um responsável')
+          setLoading(false)
+          return
+        }
+
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+          options: { data: { name: formData.name, role: 'association' } }
+        })
+        if (authError) throw authError
+
+        const userId = authData.user.id
+        const associationCode = generateAssociationCode()
+
+        await supabase.from('user_profiles').insert({
+          id: userId,
+          email: formData.email,
+          name: formData.name,
+          role: 'association',
+        })
+
+        const { data: assocData, error: assocError } = await supabase.from('association_profiles').insert({
+          user_id: userId,
+          association_name: associationData.association_name,
+          district: associationData.district,
+          municipality: associationData.municipality,
+          locality: associationData.locality,
+          school_id: associationData.school_id,
+          school_name: associationData.school_name,
+          iban: associationData.iban,
+          responsible_names: responsibleNames,
+          association_code: associationCode,
+          approved: false,
+        }).select().single()
+
+        if (assocError) throw assocError
+
+        toast.success(
+          `Associação registada! Código: ${associationCode}. Partilhe este código com os pais da escola!`,
+          { duration: 15000 }
+        )
+        navigate('/login')
+      } else {
+        await register(formData.email, formData.password, formData.name, formData.role)
+        toast.success('Registo bem-sucedido! Por favor, faça login.')
+        navigate('/login')
+      }
+    } catch (err) {
+      toast.error(err.message || 'Erro ao registar')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const isAssociation = formData.role === 'association'
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-slate-50 to-green-50 flex items-center justify-center p-4 py-8">
+      <div className="w-full max-w-lg">
+        <div className="text-center mb-8">
+          <Link to="/" className="inline-flex items-center gap-3 mb-4">
+            <Castle className="h-12 w-12 text-green-500" strokeWidth={2.5} />
+            <span className="text-4xl font-bold text-slate-900" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+              QUESTEDUCA
+            </span>
+          </Link>
+          <p className="text-slate-600 mt-2" style={{ fontFamily: 'Nunito, sans-serif' }}>
+            {isAssociation ? 'Registe a sua Associação de Pais' : 'Cria a tua conta e começa a aventura!'}
+          </p>
+        </div>
+
+        <div className="bg-white rounded-3xl shadow-2xl p-8 border-b-4 border-slate-200">
+          <h2 className="text-3xl font-bold text-slate-900 mb-6" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+            Registar
+          </h2>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-2" style={{ fontFamily: 'Nunito, sans-serif' }}>
+                Tipo de Conta
+              </label>
+              <select
+                value={formData.role}
+                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all"
+                style={{ fontFamily: 'Nunito, sans-serif' }}
+              >
+                <option value="parent">Pai/Encarregado de Educação</option>
+                <option value="association">Associação de Pais</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-2" style={{ fontFamily: 'Nunito, sans-serif' }}>
+                {isAssociation ? 'Nome do Representante' : 'Nome Completo'}
+              </label>
+              <div className="relative">
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  required
+                  className="w-full pl-12 pr-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all"
+                  style={{ fontFamily: 'Nunito, sans-serif' }}
+                  placeholder="João Silva"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-2" style={{ fontFamily: 'Nunito, sans-serif' }}>
+                Email
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  required
+                  className="w-full pl-12 pr-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all"
+                  style={{ fontFamily: 'Nunito, sans-serif' }}
+                  placeholder="seu@email.com"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2" style={{ fontFamily: 'Nunito, sans-serif' }}>
+                  Password
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+                  <input
+                    type="password"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    required
+                    className="w-full pl-12 pr-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all"
+                    style={{ fontFamily: 'Nunito, sans-serif' }}
+                    placeholder="••••••••"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2" style={{ fontFamily: 'Nunito, sans-serif' }}>
+                  Confirmar
+                </label>
+                <input
+                  type="password"
+                  value={formData.confirmPassword}
+                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                  required
+                  className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all"
+                  style={{ fontFamily: 'Nunito, sans-serif' }}
+                  placeholder="••••••••"
+                />
+              </div>
+            </div>
+
+            {isAssociation && (
+              <div className="space-y-5 pt-4 border-t-2 border-slate-100">
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2" style={{ fontFamily: 'Nunito, sans-serif' }}>
+                    Nome da Associação
+                  </label>
+                  <div className="relative">
+                    <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+                    <input
+                      type="text"
+                      value={associationData.association_name}
+                      onChange={(e) => setAssociationData({ ...associationData, association_name: e.target.value })}
+                      required
+                      className="w-full pl-12 pr-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all"
+                      style={{ fontFamily: 'Nunito, sans-serif' }}
+                      placeholder="Associação de Pais - Escola X"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-2" style={{ fontFamily: 'Nunito, sans-serif' }}>
+                      Distrito
+                    </label>
+                    <select
+                      value={associationData.district}
+                      onChange={(e) => setAssociationData({ ...associationData, district: e.target.value })}
+                      required
+                      className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all"
+                      style={{ fontFamily: 'Nunito, sans-serif' }}
+                    >
+                      <option value="">Selecionar...</option>
+                      {districts.map(d => (
+                        <option key={d.district_id} value={d.name}>{d.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-2" style={{ fontFamily: 'Nunito, sans-serif' }}>
+                      Concelho
+                    </label>
+                    <select
+                      value={associationData.municipality}
+                      onChange={(e) => setAssociationData({ ...associationData, municipality: e.target.value })}
+                      required
+                      disabled={!associationData.district}
+                      className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all disabled:opacity-50"
+                      style={{ fontFamily: 'Nunito, sans-serif' }}
+                    >
+                      <option value="">Selecionar...</option>
+                      {municipalities.map(m => (
+                        <option key={m} value={m}>{m}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-2" style={{ fontFamily: 'Nunito, sans-serif' }}>
+                      Localidade
+                    </label>
+                    <select
+                      value={associationData.locality}
+                      onChange={(e) => setAssociationData({ ...associationData, locality: e.target.value })}
+                      required
+                      disabled={!associationData.municipality}
+                      className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all disabled:opacity-50"
+                      style={{ fontFamily: 'Nunito, sans-serif' }}
+                    >
+                      <option value="">Selecionar...</option>
+                      {localities.map(l => (
+                        <option key={l} value={l}>{l}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-2" style={{ fontFamily: 'Nunito, sans-serif' }}>
+                      Escola
+                    </label>
+                    <select
+                      value={associationData.school_id}
+                      onChange={(e) => handleSchoolSelect(e.target.value)}
+                      required
+                      disabled={!associationData.locality}
+                      className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all disabled:opacity-50"
+                      style={{ fontFamily: 'Nunito, sans-serif' }}
+                    >
+                      <option value="">Selecionar...</option>
+                      {schools.map(s => (
+                        <option key={s.school_id} value={s.school_id}>{s.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2" style={{ fontFamily: 'Nunito, sans-serif' }}>
+                    IBAN
+                  </label>
+                  <input
+                    type="text"
+                    value={associationData.iban}
+                    onChange={(e) => setAssociationData({ ...associationData, iban: e.target.value })}
+                    required
+                    className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all"
+                    style={{ fontFamily: 'Nunito, sans-serif' }}
+                    placeholder="PT50 0000 0000 0000 0000 0000 0"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2" style={{ fontFamily: 'Nunito, sans-serif' }}>
+                    Responsáveis
+                  </label>
+                  {associationData.responsible_names.map((name, index) => (
+                    <div key={index} className="flex gap-2 mb-2">
+                      <input
+                        type="text"
+                        value={name}
+                        onChange={(e) => updateResponsible(index, e.target.value)}
+                        className="flex-1 px-4 py-2 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all"
+                        style={{ fontFamily: 'Nunito, sans-serif' }}
+                        placeholder="Nome do responsável"
+                      />
+                      {associationData.responsible_names.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeResponsible(index)}
+                          className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={addResponsible}
+                    className="text-blue-600 font-bold text-sm flex items-center gap-1 hover:text-blue-700"
+                  >
+                    <Plus size={16} /> Adicionar responsável
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full px-8 py-4 rounded-full font-bold text-white text-lg bg-green-500 hover:bg-green-600 shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all border-b-4 border-green-600 active:translate-y-0 active:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ fontFamily: 'Nunito, sans-serif' }}
+            >
+              {loading ? 'A registar...' : 'Registar'}
+            </button>
+          </form>
+
+          <p className="text-center mt-6 text-slate-600" style={{ fontFamily: 'Nunito, sans-serif' }}>
+            Já tens conta?{' '}
+            <Link to="/login" className="text-green-600 font-bold hover:text-green-700">
+              Entrar
+            </Link>
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default RegisterPage
