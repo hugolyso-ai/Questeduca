@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import { AuthProvider } from './context/AuthContext'
 import { AccessibilityProvider } from './context/AccessibilityContext'
+import CookieConsent from './components/CookieConsent'
 import ProtectedRoute from './components/ProtectedRoute'
 import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
@@ -46,6 +47,7 @@ function App() {
             <Route path="/admin/dashboard" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
             <Route path="*" element={<LandingPage />} />
           </Routes>
+          <CookieConsent />
         </AuthProvider>
       </AccessibilityProvider>
     </BrowserRouter>
