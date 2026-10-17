@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { ShieldCheck, Mail, UserPlus, Check, X, Trash2, HeartHandshake } from 'lucide-react';
+import { ShieldCheck, Mail, Check, X, Trash2, HeartHandshake } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
@@ -8,7 +8,7 @@ const ParentAuthorizations = () => {
   const { user } = useAuth();
   const [authorizations, setAuthorizations] = useState([]);
   const [pendingFriendRequests, setPendingFriendRequests] = useState([]);
-  const [newAuth, setNewAuth] = useState({ email: '', nickname: '' });
+  const [newAuth, setNewAuth] = useState({ email: '' });
   const [childIds, setChildIds] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -46,8 +46,8 @@ const ParentAuthorizations = () => {
 
   const addAuthorization = async (e) => {
     e.preventDefault();
-    if (!newAuth.email.trim() || !newAuth.nickname.trim()) {
-      toast.error('Preencha o email e o nickname do filho');
+    if (!newAuth.email.trim()) {
+      toast.error('Preencha o email do filho');
       return;
     }
     setLoading(true);
@@ -55,15 +55,15 @@ const ParentAuthorizations = () => {
       const { error } = await supabase.from('student_authorizations').insert({
         parent_id: user.id,
         student_email: newAuth.email.trim().toLowerCase(),
-        nickname: newAuth.nickname.trim(),
+        nickname: newAuth.email.trim().toLowerCase().split('@')[0],
         status: 'authorized',
       });
       if (error) throw error;
-      toast.success(`Autorização criada! O ${newAuth.nickname} pode agora registar-se com ${newAuth.email}.`);
-      setNewAuth({ email: '', nickname: '' });
+      toast.success(`Autorização criada! O seu filho já pode registar-se com ${newAuth.email}.`);
+      setNewAuth({ email: '' });
       fetchAll();
     } catch (err) {
-      toast.error(err.code === '23505' ? 'Esse nickname já foi autorizado por si.' : 'Erro ao criar autorização.');
+      toast.error(err.code === '23505' ? 'Esse email já foi autorizado por si.' : 'Erro ao criar autorização.');
     } finally {
       setLoading(false);
     }
@@ -111,7 +111,7 @@ const ParentAuthorizations = () => {
             <p className="text-white/80 text-xs">Registe o email que o seu filho vai usar. Só quem estiver aqui autorizado pode criar conta de aluno.</p>
           </div>
         </div>
-        <form onSubmit={addAuthorization} className="p-5 grid md:grid-cols-[1fr_1fr_auto] gap-3 items-end">
+        <form onSubmit={addAuthorization} className="p-5 grid md:grid-cols-[1fr_auto] gap-3 items-end">
           <div>
             <label className="flex items-center gap-1.5 text-xs font-bold text-slate-600 mb-1"><Mail size={14} /> Email do filho</label>
             <input
@@ -119,16 +119,6 @@ const ParentAuthorizations = () => {
               value={newAuth.email}
               onChange={e => setNewAuth({ ...newAuth, email: e.target.value })}
               placeholder="filho@email.com"
-              className="w-full px-4 py-2.5 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-[hsl(35,92%,50%)] focus:outline-none transition"
-            />
-          </div>
-          <div>
-            <label className="flex items-center gap-1.5 text-xs font-bold text-slate-600 mb-1"><UserPlus size={14} /> Nickname no jogo</label>
-            <input
-              type="text"
-              value={newAuth.nickname}
-              onChange={e => setNewAuth({ ...newAuth, nickname: e.target.value })}
-              placeholder="Ex.: SuperAna"
               className="w-full px-4 py-2.5 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-[hsl(35,92%,50%)] focus:outline-none transition"
             />
           </div>

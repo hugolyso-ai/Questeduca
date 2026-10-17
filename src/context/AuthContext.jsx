@@ -134,12 +134,14 @@ export const AuthProvider = ({ children }) => {
       }
 
       if (role === 'student') {
-        // Valida a autorização parental (email + nickname) e cria o perfil de aluno
+        // Valida a autorização parental (email) e cria o perfil de aluno com o nickname escolhido
         const { error: authErr } = await supabase.rpc('start_student_signup', {
           p_nickname: nickname || name,
         })
         if (authErr) {
+          // Limpa o perfil criado para poder voltar a tentar sem "utilizador já existe"
           await supabase.from('user_profiles').delete().eq('id', data.user.id)
+          await supabase.auth.signOut()
           throw authErr
         }
         await supabase.rpc('complete_student_auth')
