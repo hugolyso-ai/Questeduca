@@ -56,27 +56,11 @@ const LandingPage = () => {
     }
   }, [])
 
-  const handleInstallClick = async (platform) => {
+  const handleInstallClick = async () => {
     if (installed) {
       setInstructions('already')
       return
     }
-    if (platform === 'mobile') {
-      if (isIos) {
-        setInstructions('ios')
-        return
-      }
-      if (deferredPrompt) {
-        deferredPrompt.prompt()
-        const { outcome } = await deferredPrompt.userChoice
-        if (outcome === 'accepted') setInstalled(true)
-        setDeferredPrompt(null)
-        return
-      }
-      setInstructions('android')
-      return
-    }
-    // desktop
     if (deferredPrompt) {
       deferredPrompt.prompt()
       const { outcome } = await deferredPrompt.userChoice
@@ -84,7 +68,7 @@ const LandingPage = () => {
       setDeferredPrompt(null)
       return
     }
-    setInstructions('desktop')
+    setInstructions(isIos ? 'ios' : isMobile ? 'android' : 'desktop')
   }
 
   const installHint = isMobile
@@ -159,53 +143,24 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Cartões de plataforma */}
+      {/* Instalação da app */}
       <section className="px-4 -mt-10 relative z-10">
-        <div className="max-w-2xl mx-auto parchment rounded-2xl shadow-lg p-8">
-          <p className="text-center text-sm font-bold tracking-[0.2em] uppercase text-[hsl(25,10%,40%)] mb-6">
+        <div className="max-w-2xl mx-auto parchment rounded-2xl shadow-lg p-8 text-center">
+          <p className="text-center text-sm font-bold tracking-[0.2em] uppercase text-[hsl(25,10%,40%)] mb-3">
             Disponível em todas as plataformas
           </p>
-          <p className="text-center text-xs text-[hsl(25,10%,45%)] mb-4">{installHint}</p>
-          <div className="grid sm:grid-cols-2 gap-4">
-            <button
-              onClick={() => handleInstallClick('mobile')}
-              className={`flex items-center gap-4 p-5 rounded-xl hover:-translate-y-0.5 transition-all shadow-md ${
-                isMobile
-                  ? 'bg-[hsl(24,10%,18%)] text-[hsl(45,55%,97%)]'
-                  : 'bg-[hsl(24,10%,18%)]/60 text-[hsl(45,55%,97%)]/70'
-              }`}
-            >
-              <span className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center">
-                <Smartphone size={24} />
-              </span>
-              <span className="text-left">
-                <span className="block text-xs opacity-70">Instalar no</span>
-                <span className="block font-bold text-lg">Telemóvel / Tablet</span>
-                {!isMobile && (
-                  <span className="block text-xs text-[hsl(38,95%,65%)]">não é o teu equipamento — muda para telemóvel</span>
-                )}
-              </span>
-            </button>
-            <button
-              onClick={() => handleInstallClick('desktop')}
-              className={`flex items-center gap-4 p-5 rounded-xl hover:-translate-y-0.5 transition-all shadow-sm ${
-                !isMobile
-                  ? 'bg-[hsl(45,55%,99%)] border-2 border-[hsl(35,60%,60%)]'
-                  : 'bg-[hsl(45,55%,99%)]/70 border-2 border-[hsl(35,25%,85%)]'
-              }`}
-            >
-              <span className="w-12 h-12 rounded-xl bg-[hsl(36,33%,91%)] flex items-center justify-center text-[hsl(24,10%,25%)]">
-                <Monitor size={24} />
-              </span>
-              <span className="text-left">
-                <span className="block text-xs text-[hsl(25,10%,40%)]">Jogar no</span>
-                <span className="block font-bold text-lg text-[hsl(24,10%,18%)]">PC / Browser</span>
-                {isMobile && (
-                  <span className="block text-xs text-[hsl(28,85%,40%)]">não é o teu equipamento — abre no PC</span>
-                )}
-              </span>
-            </button>
-          </div>
+          <p className="text-center text-xs text-[hsl(25,10%,45%)] mb-6">{installHint}</p>
+          <button
+            onClick={handleInstallClick}
+            disabled={installed}
+            className="inline-flex items-center gap-3 px-10 py-4 rounded-xl font-bold text-lg btn-gold hover:-translate-y-0.5 transition-all disabled:opacity-60"
+          >
+            {isMobile ? <Smartphone size={22} /> : <Monitor size={22} />}
+            {installed ? 'App já instalada' : 'Instalar a App'}
+          </button>
+          <p className="text-center text-xs text-[hsl(25,10%,45%)] mt-4">
+            O botão deteta o teu equipamento {isMobile ? '(telemóvel/tablet)' : '(computador)'} e instala a versão certa.
+          </p>
         </div>
       </section>
 
