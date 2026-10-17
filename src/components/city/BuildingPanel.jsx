@@ -44,7 +44,7 @@ const BuildingPanel = ({
             <X size={24} className="text-white" />
           </button>
           <div className="absolute bottom-3 left-6">
-            <h2 className="text-2xl font-black text-white drop-shadow-lg" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+            <h2 className="text-2xl font-black text-white drop-shadow-lg" style={{ fontFamily: 'Cinzel, serif' }}>
               {config.name}
             </h2>
             <div className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full inline-block mt-1">
@@ -60,27 +60,27 @@ const BuildingPanel = ({
 
           {/* Production */}
           {config.produces && level > 0 && (
-            <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl p-4 border-2 border-blue-200">
+            <div className="bg-gradient-to-r from-[hsl(40,33%,96%)] to-cyan-50 rounded-2xl p-4 border-2 border-[hsl(200,40%,85%)]">
               <h3 className="font-black text-blue-800 mb-3 flex items-center gap-2">
                 <Clock size={20} /> Sistema de Produção
               </h3>
               {!isProducing && !productionReady && (
                 <button onClick={() => onStartProduction(building.id)} disabled={loading}
-                  className="w-full py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-black rounded-2xl hover:from-blue-600 hover:to-cyan-600 flex items-center justify-center gap-2 shadow-xl transition-all"
+                  className="w-full py-3 bg-gradient-to-r from-[hsl(35,92%,50%)]0 to-cyan-500 text-white font-black rounded-2xl hover:from-[hsl(28,85%,40%)] hover:to-[hsl(24,70%,42%)] flex items-center justify-center gap-2 shadow-xl transition-all"
                   data-testid="start-production-btn">
                   <Play size={20} /> INICIAR PRODUÇÃO
                 </button>
               )}
               {productionReady && (
                 <button onClick={() => onCollect(building.id)} disabled={loading}
-                  className="w-full py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white font-black rounded-2xl animate-pulse flex items-center justify-center gap-2 shadow-xl"
+                  className="w-full py-3 bg-gradient-to-r from-[hsl(35,92%,50%)] to-emerald-500 text-white font-black rounded-2xl animate-pulse flex items-center justify-center gap-2 shadow-xl"
                   data-testid="collect-production-btn">
                   <Check size={20} /> RECOLHER RECURSOS!
                 </button>
               )}
               {isProducing && !productionReady && (
-                <div className="text-center py-3 text-blue-600 font-bold flex items-center justify-center gap-2">
-                  <div className="animate-spin rounded-full h-6 w-6 border-4 border-blue-600 border-t-transparent" />
+                <div className="text-center py-3 text-[hsl(28,85%,40%)] font-bold flex items-center justify-center gap-2">
+                  <div className="animate-spin rounded-full h-6 w-6 border-4 border-[hsl(24,70%,42%)] border-t-transparent" />
                   A produzir recursos...
                 </div>
               )}
@@ -100,7 +100,7 @@ const BuildingPanel = ({
                   { icon: <Mountain size={16} />, val: costs.stone, have: gameState?.resources?.stone || 0 },
                   { icon: <Pickaxe size={16} />, val: costs.iron, have: gameState?.resources?.iron || 0 },
                 ].map((r, i) => (
-                  <div key={i} className={`flex flex-col items-center gap-1 p-2 rounded-xl font-bold text-sm ${r.have >= r.val ? 'bg-green-100 text-green-700 border-2 border-green-300' : 'bg-red-100 text-red-700 border-2 border-red-300'}`}>
+                  <div key={i} className={`flex flex-col items-center gap-1 p-2 rounded-xl font-bold text-sm ${r.have >= r.val ? 'bg-[hsl(142,45%,88%)] text-green-700 border-2 border-green-300' : 'bg-red-100 text-red-700 border-2 border-red-300'}`}>
                     {r.icon}
                     <span>{r.val}</span>
                   </div>
@@ -130,7 +130,7 @@ const BuildingPanel = ({
               <button
                 onClick={() => onStartMove(building.id)}
                 disabled={loading}
-                className="flex-1 py-3 bg-gradient-to-r from-sky-500 to-blue-500 text-white font-black rounded-2xl hover:from-sky-600 hover:to-blue-600 flex items-center justify-center gap-2 shadow-lg transition-all"
+                className="flex-1 py-3 bg-gradient-to-r from-[hsl(35,92%,50%)] to-[hsl(24,70%,42%)] text-white font-black rounded-2xl hover:from-[hsl(35,92%,50%)] hover:to-[hsl(24,70%,42%)] flex items-center justify-center gap-2 shadow-lg transition-all"
                 data-testid="move-building-btn"
               >
                 <Move size={18} /> Mover

@@ -57,7 +57,7 @@ const LibraryPanel = () => {
     return (
       <div className="bg-white rounded-3xl shadow-lg p-8 text-center">
         <Library size={40} className="mx-auto text-slate-300 mb-3" />
-        <h4 className="font-bold text-slate-700" style={{ fontFamily: 'Fredoka, sans-serif' }}>A tua biblioteca está vazia</h4>
+        <h4 className="font-bold text-slate-700" style={{ fontFamily: 'Cinzel, serif' }}>A tua biblioteca está vazia</h4>
         <p className="text-slate-400 text-sm mt-1">Quando os teus professores adicionarem ou sugerirem livros, aparecem aqui.</p>
       </div>
     );
@@ -68,11 +68,11 @@ const LibraryPanel = () => {
       {/* Leitor de livro digital */}
       {viewer && (
         <div className="bg-white rounded-3xl shadow-lg overflow-hidden">
-          <div className="bg-gradient-to-r from-blue-600 to-cyan-600 p-4 text-white flex items-center justify-between">
+          <div className="bg-gradient-to-r from-[hsl(28,85%,40%)] to-cyan-600 p-4 text-white flex items-center justify-between">
             <div className="flex items-center gap-2">
               <BookOpen size={20} />
               <div>
-                <p className="font-bold text-sm" style={{ fontFamily: 'Fredoka, sans-serif' }}>{viewer.title}</p>
+                <p className="font-bold text-sm" style={{ fontFamily: 'Cinzel, serif' }}>{viewer.title}</p>
                 {viewer.author && <p className="text-white/70 text-xs">{viewer.author}</p>}
               </div>
             </div>
@@ -89,7 +89,7 @@ const LibraryPanel = () => {
                 target="_blank"
                 rel="noreferrer"
                 onClick={() => markRead(viewer.id)}
-                className="flex-1 py-2.5 bg-gradient-to-r from-blue-500 to-cyan-600 text-white font-bold rounded-xl text-sm flex items-center justify-center gap-2 hover:opacity-90 transition"
+                className="flex-1 py-2.5 bg-gradient-to-r from-[hsl(35,92%,50%)] to-cyan-600 text-white font-bold rounded-xl text-sm flex items-center justify-center gap-2 hover:opacity-90 transition"
               >
                 <Download size={16} /> Descarregar
               </a>
@@ -108,7 +108,7 @@ const LibraryPanel = () => {
 
       {/* Lista de livros */}
       <div className="bg-white rounded-3xl shadow-lg p-5">
-        <h4 className="font-bold text-slate-800 mb-4 flex items-center gap-2" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+        <h4 className="font-bold text-slate-800 mb-4 flex items-center gap-2" style={{ fontFamily: 'Cinzel, serif' }}>
           <Library size={20} className="text-amber-500" /> A Minha Biblioteca ({books.length})
         </h4>
         <div className="grid md:grid-cols-2 gap-3">
@@ -117,9 +117,9 @@ const LibraryPanel = () => {
             return (
               <div key={book.id} className={`rounded-2xl border-2 p-4 transition ${read ? 'border-emerald-200 bg-emerald-50/50' : 'border-slate-200 bg-white hover:border-amber-300'}`}>
                 <div className="flex items-start gap-3">
-                  <div className={`p-2.5 rounded-xl shrink-0 ${book.book_type === 'digital' ? 'bg-blue-100' : 'bg-amber-100'}`}>
+                  <div className={`p-2.5 rounded-xl shrink-0 ${book.book_type === 'digital' ? 'bg-[hsl(200,55%,88%)]' : 'bg-amber-100'}`}>
                     {book.book_type === 'digital'
-                      ? <FileText size={22} className="text-blue-600" />
+                      ? <FileText size={22} className="text-[hsl(28,85%,40%)]" />
                       : <BookOpen size={22} className="text-amber-600" />}
                   </div>
                   <div className="min-w-0 flex-1">
@@ -127,7 +127,7 @@ const LibraryPanel = () => {
                     {book.author && <p className="text-xs text-slate-500 truncate">{book.author}</p>}
                     <div className="flex flex-wrap gap-1.5 mt-1.5">
                       <span className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full text-[10px] font-bold">{book.subject}</span>
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${book.book_type === 'digital' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'}`}>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${book.book_type === 'digital' ? 'bg-[hsl(200,55%,88%)] text-[hsl(28,85%,32%)]' : 'bg-amber-100 text-amber-700'}`}>
                         {book.book_type === 'digital' ? 'Digital' : 'Físico'}
                       </span>
                       {read && <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full text-[10px] font-bold">Lido</span>}

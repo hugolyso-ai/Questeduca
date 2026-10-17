@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { Castle, Mail, Lock, User, Building2, MapPin, School, Users, Plus, Trash2, Paperclip, Phone } from 'lucide-react'
+import { Swords, Mail, Lock, User, Building2, MapPin, School, Users, Plus, Trash2, Paperclip, Phone } from 'lucide-react'
 import { toast } from 'sonner'
 import { supabase } from '../lib/supabase'
 
@@ -303,12 +303,14 @@ const RegisterPage = () => {
   const isTeacher = formData.role === 'teacher'
   const isStudent = formData.role === 'student'
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-slate-50 to-green-50 flex items-center justify-center p-4 py-8">
+    <div className="min-h-screen bg-[hsl(40,33%,96%)] flex items-center justify-center p-4 py-8">
       <div className="w-full max-w-lg">
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-3 mb-4">
-            <Castle className="h-12 w-12 text-green-500" strokeWidth={2.5} />
-            <span className="text-4xl font-bold text-slate-900" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+            <span className="w-12 h-12 rounded-2xl btn-gold flex items-center justify-center shadow-md">
+              <Swords className="h-6 w-6 text-white" />
+            </span>
+            <span className="text-3xl font-bold text-[hsl(24,10%,18%)] tracking-wide" style={{ fontFamily: 'Cinzel, serif' }}>
               QUESTEDUCA
             </span>
           </Link>
@@ -317,8 +319,8 @@ const RegisterPage = () => {
           </p>
         </div>
 
-        <div className="bg-white rounded-3xl shadow-2xl p-8 border-b-4 border-slate-200">
-          <h2 className="text-3xl font-bold text-slate-900 mb-6" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+        <div className="parchment rounded-3xl shadow-xl p-8">
+          <h2 className="text-2xl font-bold text-[hsl(24,10%,18%)] mb-6" style={{ fontFamily: 'Cinzel, serif' }}>
             Registar
           </h2>
 
@@ -330,7 +332,7 @@ const RegisterPage = () => {
               <select
                 value={formData.role}
                 onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all"
+                className="w-full px-4 py-3 bg-[hsl(36,33%,93%)] border-2 border-[hsl(35,25%,85%)] rounded-xl focus:border-[hsl(35,92%,50%)] focus:ring-4 focus:ring-[hsl(35,92%,50%)]/20 transition-all"
                 style={{ fontFamily: 'Nunito, sans-serif' }}
               >
                 <option value="parent">Pai/Encarregado de Educação</option>
@@ -351,7 +353,7 @@ const RegisterPage = () => {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   required
-                  className="w-full pl-12 pr-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all"
+                  className="w-full pl-12 pr-4 py-3 bg-[hsl(36,33%,93%)] border-2 border-[hsl(35,25%,85%)] rounded-xl focus:border-[hsl(35,92%,50%)] focus:ring-4 focus:ring-[hsl(35,92%,50%)]/20 transition-all"
                   style={{ fontFamily: 'Nunito, sans-serif' }}
                   placeholder="João Silva"
                 />
@@ -369,7 +371,7 @@ const RegisterPage = () => {
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   required
-                  className="w-full pl-12 pr-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all"
+                  className="w-full pl-12 pr-4 py-3 bg-[hsl(36,33%,93%)] border-2 border-[hsl(35,25%,85%)] rounded-xl focus:border-[hsl(35,92%,50%)] focus:ring-4 focus:ring-[hsl(35,92%,50%)]/20 transition-all"
                   style={{ fontFamily: 'Nunito, sans-serif' }}
                   placeholder="seu@email.com"
                 />
@@ -388,7 +390,7 @@ const RegisterPage = () => {
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     required
-                    className="w-full pl-12 pr-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all"
+                    className="w-full pl-12 pr-4 py-3 bg-[hsl(36,33%,93%)] border-2 border-[hsl(35,25%,85%)] rounded-xl focus:border-[hsl(35,92%,50%)] focus:ring-4 focus:ring-[hsl(35,92%,50%)]/20 transition-all"
                     style={{ fontFamily: 'Nunito, sans-serif' }}
                     placeholder="••••••••"
                   />
@@ -403,7 +405,7 @@ const RegisterPage = () => {
                   value={formData.confirmPassword}
                   onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                   required
-                  className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all"
+                  className="w-full px-4 py-3 bg-[hsl(36,33%,93%)] border-2 border-[hsl(35,25%,85%)] rounded-xl focus:border-[hsl(35,92%,50%)] focus:ring-4 focus:ring-[hsl(35,92%,50%)]/20 transition-all"
                   style={{ fontFamily: 'Nunito, sans-serif' }}
                   placeholder="••••••••"
                 />
@@ -423,7 +425,7 @@ const RegisterPage = () => {
                   value={formData.nickname}
                   onChange={(e) => setFormData({ ...formData, nickname: e.target.value.replace(/\s/g, '') })}
                   required
-                  className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all"
+                  className="w-full px-4 py-3 bg-[hsl(36,33%,93%)] border-2 border-[hsl(35,25%,85%)] rounded-xl focus:border-[hsl(35,92%,50%)] focus:ring-4 focus:ring-[hsl(35,92%,50%)]/20 transition-all"
                   style={{ fontFamily: 'Nunito, sans-serif' }}
                   placeholder="Ex.: SuperAna"
                 />
@@ -441,11 +443,11 @@ const RegisterPage = () => {
                       onClick={() => setTeacherData({ ...teacherData, teacher_kind: 'tutelar' })}
                       className={`p-4 rounded-xl border-2 text-left transition ${
                         teacherData.teacher_kind === 'tutelar'
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-slate-200 hover:border-slate-300'
+                          ? 'border-[hsl(35,92%,50%)] bg-[hsl(38,95%,92%)]'
+                          : 'border-[hsl(35,25%,85%)] hover:border-[hsl(35,40%,75%)]'
                       }`}
                     >
-                      <p className="font-bold text-slate-800 text-sm">Professor Tutelar</p>
+                      <p className="font-bold text-[hsl(24,10%,18%)] text-sm">Professor Tutelar</p>
                       <p className="text-xs text-slate-500 mt-1">Titular da turma, acompanha o progresso completo.</p>
                     </button>
                     <button
@@ -453,11 +455,11 @@ const RegisterPage = () => {
                       onClick={() => setTeacherData({ ...teacherData, teacher_kind: 'explicador' })}
                       className={`p-4 rounded-xl border-2 text-left transition ${
                         teacherData.teacher_kind === 'explicador'
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-slate-200 hover:border-slate-300'
+                          ? 'border-[hsl(35,92%,50%)] bg-[hsl(38,95%,92%)]'
+                          : 'border-[hsl(35,25%,85%)] hover:border-[hsl(35,40%,75%)]'
                       }`}
                     >
-                      <p className="font-bold text-slate-800 text-sm">Explicador / Centro de Estudos</p>
+                      <p className="font-bold text-[hsl(24,10%,18%)] text-sm">Explicador / Centro de Estudos</p>
                       <p className="text-xs text-slate-500 mt-1">Apoio em disciplinas específicas.</p>
                     </button>
                   </div>
@@ -475,8 +477,8 @@ const RegisterPage = () => {
                         onClick={() => toggleDiscipline(d)}
                         className={`px-3 py-1.5 rounded-full text-sm font-semibold transition ${
                           teacherData.disciplines.includes(d)
-                            ? 'bg-blue-500 text-white shadow'
-                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                            ? 'bg-[hsl(35,92%,50%)] text-white shadow'
+                            : 'bg-[hsl(36,33%,91%)] text-[hsl(25,10%,40%)] hover:bg-[hsl(36,33%,86%)]'
                         }`}
                       >
                         {d}
@@ -493,7 +495,7 @@ const RegisterPage = () => {
                       type="text"
                       value={teacherData.school_name}
                       onChange={(e) => setTeacherData({ ...teacherData, school_name: e.target.value })}
-                      className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all"
+                      className="w-full px-4 py-3 bg-[hsl(36,33%,93%)] border-2 border-[hsl(35,25%,85%)] rounded-xl focus:border-[hsl(35,92%,50%)] focus:ring-4 focus:ring-[hsl(35,92%,50%)]/20 transition-all"
                       style={{ fontFamily: 'Nunito, sans-serif' }}
                       placeholder="Nome da escola"
                     />
@@ -506,7 +508,7 @@ const RegisterPage = () => {
                       type="text"
                       value={teacherData.class_name}
                       onChange={(e) => setTeacherData({ ...teacherData, class_name: e.target.value })}
-                      className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all"
+                      className="w-full px-4 py-3 bg-[hsl(36,33%,93%)] border-2 border-[hsl(35,25%,85%)] rounded-xl focus:border-[hsl(35,92%,50%)] focus:ring-4 focus:ring-[hsl(35,92%,50%)]/20 transition-all"
                       style={{ fontFamily: 'Nunito, sans-serif' }}
                       placeholder="Ex: 5ºA"
                     />
@@ -523,7 +525,7 @@ const RegisterPage = () => {
                       value={teacherData.mobile_phone}
                       onChange={(e) => setTeacherData({ ...teacherData, mobile_phone: e.target.value })}
                       required
-                      className="w-full pl-12 pr-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all"
+                      className="w-full pl-12 pr-4 py-3 bg-[hsl(36,33%,93%)] border-2 border-[hsl(35,25%,85%)] rounded-xl focus:border-[hsl(35,92%,50%)] focus:ring-4 focus:ring-[hsl(35,92%,50%)]/20 transition-all"
                       style={{ fontFamily: 'Nunito, sans-serif' }}
                       placeholder="9XXXXXXXX"
                     />
@@ -533,9 +535,9 @@ const RegisterPage = () => {
                   <label className="block text-sm font-bold text-slate-700 mb-2" style={{ fontFamily: 'Nunito, sans-serif' }}>
                     Comprovativo (cédula profissional ou declaração da escola)
                   </label>
-                  <label className="flex items-center gap-3 px-4 py-3 bg-slate-50 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:border-blue-400 transition">
-                    <Paperclip className="text-slate-400" size={20} />
-                    <span className="text-sm text-slate-600 truncate" style={{ fontFamily: 'Nunito, sans-serif' }}>
+                  <label className="flex items-center gap-3 px-4 py-3 bg-slate-50 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:border-[hsl(35,60%,60%)] transition">
+                    <Paperclip className="text-[hsl(25,10%,45%)]" size={20} />
+                    <span className="text-sm text-[hsl(25,10%,35%)] truncate" style={{ fontFamily: 'Nunito, sans-serif' }}>
                       {teacherData.proof_file ? teacherData.proof_file.name : 'Anexar ficheiro (PDF ou imagem)'}
                     </span>
                     <input
@@ -565,7 +567,7 @@ const RegisterPage = () => {
                       value={associationData.association_name}
                       onChange={(e) => setAssociationData({ ...associationData, association_name: e.target.value })}
                       required
-                      className="w-full pl-12 pr-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all"
+                      className="w-full pl-12 pr-4 py-3 bg-[hsl(36,33%,93%)] border-2 border-[hsl(35,25%,85%)] rounded-xl focus:border-[hsl(35,92%,50%)] focus:ring-4 focus:ring-[hsl(35,92%,50%)]/20 transition-all"
                       style={{ fontFamily: 'Nunito, sans-serif' }}
                       placeholder="Associação de Pais - Escola X"
                     />
@@ -581,7 +583,7 @@ const RegisterPage = () => {
                       value={associationData.district}
                       onChange={(e) => setAssociationData({ ...associationData, district: e.target.value })}
                       required
-                      className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all"
+                      className="w-full px-4 py-3 bg-[hsl(36,33%,93%)] border-2 border-[hsl(35,25%,85%)] rounded-xl focus:border-[hsl(35,92%,50%)] focus:ring-4 focus:ring-[hsl(35,92%,50%)]/20 transition-all"
                       style={{ fontFamily: 'Nunito, sans-serif' }}
                     >
                       <option value="">Selecionar...</option>
@@ -599,7 +601,7 @@ const RegisterPage = () => {
                       onChange={(e) => setAssociationData({ ...associationData, municipality: e.target.value })}
                       required
                       disabled={!associationData.district}
-                      className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all disabled:opacity-50"
+                      className="w-full px-4 py-3 bg-[hsl(36,33%,93%)] border-2 border-[hsl(35,25%,85%)] rounded-xl focus:border-[hsl(35,92%,50%)] focus:ring-4 focus:ring-[hsl(35,92%,50%)]/20 transition-all disabled:opacity-50"
                       style={{ fontFamily: 'Nunito, sans-serif' }}
                     >
                       <option value="">Selecionar...</option>
@@ -620,7 +622,7 @@ const RegisterPage = () => {
                       onChange={(e) => setAssociationData({ ...associationData, locality: e.target.value })}
                       required
                       disabled={!associationData.municipality}
-                      className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all disabled:opacity-50"
+                      className="w-full px-4 py-3 bg-[hsl(36,33%,93%)] border-2 border-[hsl(35,25%,85%)] rounded-xl focus:border-[hsl(35,92%,50%)] focus:ring-4 focus:ring-[hsl(35,92%,50%)]/20 transition-all disabled:opacity-50"
                       style={{ fontFamily: 'Nunito, sans-serif' }}
                     >
                       <option value="">Selecionar...</option>
@@ -638,7 +640,7 @@ const RegisterPage = () => {
                       onChange={(e) => handleSchoolSelect(e.target.value)}
                       required
                       disabled={!associationData.locality}
-                      className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all disabled:opacity-50"
+                      className="w-full px-4 py-3 bg-[hsl(36,33%,93%)] border-2 border-[hsl(35,25%,85%)] rounded-xl focus:border-[hsl(35,92%,50%)] focus:ring-4 focus:ring-[hsl(35,92%,50%)]/20 transition-all disabled:opacity-50"
                       style={{ fontFamily: 'Nunito, sans-serif' }}
                     >
                       <option value="">Selecionar...</option>
@@ -658,7 +660,7 @@ const RegisterPage = () => {
                     value={associationData.iban}
                     onChange={(e) => setAssociationData({ ...associationData, iban: e.target.value })}
                     required
-                    className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all"
+                    className="w-full px-4 py-3 bg-[hsl(36,33%,93%)] border-2 border-[hsl(35,25%,85%)] rounded-xl focus:border-[hsl(35,92%,50%)] focus:ring-4 focus:ring-[hsl(35,92%,50%)]/20 transition-all"
                     style={{ fontFamily: 'Nunito, sans-serif' }}
                     placeholder="PT50 0000 0000 0000 0000 0000 0"
                   />
@@ -674,7 +676,7 @@ const RegisterPage = () => {
                         type="text"
                         value={name}
                         onChange={(e) => updateResponsible(index, e.target.value)}
-                        className="flex-1 px-4 py-2 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all"
+                        className="flex-1 px-4 py-2 bg-[hsl(36,33%,93%)] border-2 border-[hsl(35,25%,85%)] rounded-xl focus:border-[hsl(35,92%,50%)] focus:ring-4 focus:ring-[hsl(35,92%,50%)]/20 transition-all"
                         style={{ fontFamily: 'Nunito, sans-serif' }}
                         placeholder="Nome do responsável"
                       />
@@ -692,7 +694,7 @@ const RegisterPage = () => {
                   <button
                     type="button"
                     onClick={addResponsible}
-                    className="text-blue-600 font-bold text-sm flex items-center gap-1 hover:text-blue-700"
+                    className="text-[hsl(28,85%,40%)] font-bold text-sm flex items-center gap-1 hover:text-[hsl(28,85%,32%)]"
                   >
                     <Plus size={16} /> Adicionar responsável
                   </button>
@@ -709,7 +711,7 @@ const RegisterPage = () => {
                       value={associationData.mobile_phone}
                       onChange={(e) => setAssociationData({ ...associationData, mobile_phone: e.target.value })}
                       required
-                      className="w-full pl-12 pr-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all"
+                      className="w-full pl-12 pr-4 py-3 bg-[hsl(36,33%,93%)] border-2 border-[hsl(35,25%,85%)] rounded-xl focus:border-[hsl(35,92%,50%)] focus:ring-4 focus:ring-[hsl(35,92%,50%)]/20 transition-all"
                       style={{ fontFamily: 'Nunito, sans-serif' }}
                       placeholder="9XXXXXXXX"
                     />
@@ -720,9 +722,9 @@ const RegisterPage = () => {
                   <label className="block text-sm font-bold text-slate-700 mb-2" style={{ fontFamily: 'Nunito, sans-serif' }}>
                     Comprovativo da atividade (estatutos ou comprovativo de constituição)
                   </label>
-                  <label className="flex items-center gap-3 px-4 py-3 bg-slate-50 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:border-blue-400 transition">
-                    <Paperclip className="text-slate-400" size={20} />
-                    <span className="text-sm text-slate-600 truncate" style={{ fontFamily: 'Nunito, sans-serif' }}>
+                  <label className="flex items-center gap-3 px-4 py-3 bg-slate-50 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:border-[hsl(35,60%,60%)] transition">
+                    <Paperclip className="text-[hsl(25,10%,45%)]" size={20} />
+                    <span className="text-sm text-[hsl(25,10%,35%)] truncate" style={{ fontFamily: 'Nunito, sans-serif' }}>
                       {associationData.proof_file ? associationData.proof_file.name : 'Anexar ficheiro (PDF ou imagem)'}
                     </span>
                     <input
@@ -743,7 +745,7 @@ const RegisterPage = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full px-8 py-4 rounded-full font-bold text-white text-lg bg-green-500 hover:bg-green-600 shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all border-b-4 border-green-600 active:translate-y-0 active:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-8 py-4 rounded-xl font-bold text-white text-lg btn-gold hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               style={{ fontFamily: 'Nunito, sans-serif' }}
             >
               {loading ? 'A registar...' : 'Registar'}
@@ -752,7 +754,7 @@ const RegisterPage = () => {
 
           <p className="text-center mt-6 text-slate-600" style={{ fontFamily: 'Nunito, sans-serif' }}>
             Já tens conta?{' '}
-            <Link to="/login" className="text-green-600 font-bold hover:text-green-700">
+            <Link to="/login" className="text-[hsl(28,85%,40%)] font-bold hover:text-[hsl(28,85%,32%)]">
               Entrar
             </Link>
           </p>

@@ -21,7 +21,7 @@ export const OnlineStatusIndicator = () => {
   const isOnline = useOnlineStatus()
   if (isOnline) {
     return (
-      <div className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+      <div className="flex items-center gap-1 px-2 py-1 bg-[hsl(142,45%,88%)] text-green-700 rounded-full text-xs font-medium">
         <Wifi size={12} /><span className="hidden sm:inline">Online</span>
       </div>
     )
@@ -57,11 +57,11 @@ const OfflineCacheManager = ({ isOpen, onClose }) => {
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
       <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
-        <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-6 text-white">
+        <div className="bg-gradient-to-r from-[hsl(35,92%,50%)] to-indigo-600 p-6 text-white">
           <div className="flex items-center gap-3">
             <Download size={28} />
             <div>
-              <h2 className="text-xl font-bold" style={{ fontFamily: 'Fredoka, sans-serif' }}>Modo Offline</h2>
+              <h2 className="text-xl font-bold" style={{ fontFamily: 'Cinzel, serif' }}>Modo Offline</h2>
               <p className="text-white/80 text-sm">Guarda perguntas para jogar sem internet</p>
             </div>
           </div>
@@ -70,12 +70,12 @@ const OfflineCacheManager = ({ isOpen, onClose }) => {
           <div className="bg-slate-50 rounded-2xl p-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-slate-600">Estado:</span>
-              <span className={`flex items-center gap-1 font-semibold ${isOnline ? 'text-green-600' : 'text-amber-600'}`}>
+              <span className={`flex items-center gap-1 font-semibold ${isOnline ? 'text-[hsl(28,85%,40%)]' : 'text-amber-600'}`}>
                 {isOnline ? <Wifi size={16} /> : <WifiOff size={16} />}{isOnline ? 'Online' : 'Offline'}
               </span>
             </div>
           </div>
-          <div className="bg-blue-50 rounded-xl p-4 text-sm text-blue-700">
+          <div className="bg-[hsl(38,80%,93%)] rounded-xl p-4 text-sm text-blue-700">
             <p className="font-semibold mb-1">Dica:</p>
             <p>O modo offline estará disponível em breve. Por enquanto, precisa de conexão à internet para jogar.</p>
           </div>

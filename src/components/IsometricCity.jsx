@@ -103,7 +103,7 @@ const Minimap = ({ gridSize, roads, buildings, selectedId }) => {
         {placed.map(([id, b]) => (
           <div
             key={id}
-            className={`absolute rounded-full ${selectedId === id ? 'bg-yellow-300 w-2.5 h-2.5 animate-pulse' : 'bg-green-400 w-2 h-2'}`}
+            className={`absolute rounded-full ${selectedId === id ? 'bg-yellow-300 w-2.5 h-2.5 animate-pulse' : 'bg-[hsl(38,95%,60%)] w-2 h-2'}`}
             style={{ ...toPct(b.x, b.y), transform: 'translate(-50%, -50%)' }}
           />
         ))}
@@ -520,10 +520,10 @@ const IsometricCity = ({ gameState, onRefresh }) => {
           </button>
           <button
             onClick={toggleSound}
-            className={`p-3 rounded-xl shadow-lg transition border ${soundEnabled ? 'bg-green-100 border-green-300 hover:bg-green-200' : 'bg-white border-gray-200 hover:bg-gray-50'}`}
+            className={`p-3 rounded-xl shadow-lg transition border ${soundEnabled ? 'bg-[hsl(142,45%,88%)] border-[hsl(142,45%,80%)] hover:bg-[hsl(142,40%,86%)]' : 'bg-white border-gray-200 hover:bg-gray-50'}`}
             data-testid="sound-toggle-btn"
           >
-            {soundEnabled ? <Volume2 size={22} className="text-green-700" /> : <VolumeX size={22} className="text-gray-700" />}
+            {soundEnabled ? <Volume2 size={22} className="text-[hsl(28,85%,32%)]" /> : <VolumeX size={22} className="text-gray-700" />}
           </button>
           <div className="px-4 py-2.5 bg-gray-100 rounded-xl text-sm text-gray-600 font-semibold hidden md:flex items-center gap-2">
             <Move size={18} /> Arrastar para mover

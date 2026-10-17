@@ -12,7 +12,7 @@ const TUTORIAL_STEPS = {
       title: 'Bem-vindo ao QUESTEDUCA! 🎮',
       description: 'Vamos guiar-te pelas funcionalidades principais do jogo. Este tutorial só aparece uma vez!',
       icon: Sparkles,
-      color: 'from-purple-500 to-pink-500',
+      color: 'from-purple-500 to-[hsl(340,60%,55%)]',
       highlight: null,
       position: 'center'
     },
@@ -39,7 +39,7 @@ const TUTORIAL_STEPS = {
       title: 'Aprender & Ganhar 📚',
       description: 'Na aba "Aprender", responde a quizzes do teu ano escolar para ganhar moedas e XP!',
       icon: BookOpen,
-      color: 'from-blue-500 to-indigo-600',
+      color: 'from-[hsl(35,92%,50%)] to-indigo-600',
       highlight: '[data-testid="tab-quiz"]',
       position: 'bottom'
     },
@@ -48,7 +48,7 @@ const TUTORIAL_STEPS = {
       title: 'Desafios Semanais 🎯',
       description: 'Completa desafios todas as semanas para ganhar recompensas especiais!',
       icon: Target,
-      color: 'from-green-500 to-teal-600',
+      color: 'from-[hsl(35,92%,50%)] to-teal-600',
       highlight: '[data-testid="tab-challenges"]',
       position: 'bottom'
     },
@@ -57,7 +57,7 @@ const TUTORIAL_STEPS = {
       title: 'Liga Mensal 🏆',
       description: 'Compete com outros alunos! Os top 10 do mês ganham diamantes e badges.',
       icon: Trophy,
-      color: 'from-purple-500 to-pink-500',
+      color: 'from-purple-500 to-[hsl(340,60%,55%)]',
       highlight: '[data-testid="tab-league"]',
       position: 'bottom'
     },
@@ -66,7 +66,7 @@ const TUTORIAL_STEPS = {
       title: 'Encontra Amigos 👥',
       description: 'Usa o mapa de Portugal para encontrar amigos de todo o país!',
       icon: Users,
-      color: 'from-pink-500 to-rose-500',
+      color: 'from-[hsl(340,65%,55%)] to-rose-500',
       highlight: '[data-testid="tab-friends"]',
       position: 'bottom'
     },
@@ -75,7 +75,7 @@ const TUTORIAL_STEPS = {
       title: 'Pronto para Jogar! 🚀',
       description: 'Agora já sabes tudo! Começa por fazer um quiz e ganhar as tuas primeiras moedas.',
       icon: Gift,
-      color: 'from-gradient-to-br from-purple-500 via-pink-500 to-red-500',
+      color: 'from-gradient-to-br from-purple-500 via-[hsl(340,60%,55%)] to-red-500',
       highlight: null,
       position: 'center',
       showConfetti: true
@@ -87,7 +87,7 @@ const TUTORIAL_STEPS = {
       title: 'Bem-vindo, Pai/Mãe! 👋',
       description: 'Vamos mostrar-lhe como gerir a conta dos seus filhos no QUESTEDUCA.',
       icon: Sparkles,
-      color: 'from-blue-500 to-indigo-600',
+      color: 'from-[hsl(35,92%,50%)] to-indigo-600',
       highlight: null,
       position: 'center'
     },
@@ -96,7 +96,7 @@ const TUTORIAL_STEPS = {
       title: 'Gestão de Filhos 👨‍👩‍👧‍👦',
       description: 'Aqui pode adicionar e gerir os perfis dos seus filhos. Cada filho tem a sua própria conta.',
       icon: Users,
-      color: 'from-green-500 to-teal-600',
+      color: 'from-[hsl(35,92%,50%)] to-teal-600',
       highlight: '[data-testid="tab-children"]',
       position: 'bottom'
     },
@@ -105,7 +105,7 @@ const TUTORIAL_STEPS = {
       title: 'Subscrição Premium 💎',
       description: 'Subscreva o plano Premium para desbloquear todas as funcionalidades e apoiar o projeto.',
       icon: Star,
-      color: 'from-purple-500 to-pink-500',
+      color: 'from-purple-500 to-[hsl(340,60%,55%)]',
       highlight: '[data-testid="tab-subscription"]',
       position: 'bottom'
     },
@@ -123,7 +123,7 @@ const TUTORIAL_STEPS = {
       title: 'Tudo Pronto! ✨',
       description: 'Agora pode começar a gerir as contas dos seus filhos. Bom estudo!',
       icon: Check,
-      color: 'from-green-500 to-emerald-600',
+      color: 'from-[hsl(35,92%,50%)] to-emerald-600',
       highlight: null,
       position: 'center'
     }
@@ -330,7 +330,7 @@ const InteractiveTutorial = ({ userRole = 'student', onComplete }) => {
                   <p className="text-white/80 text-sm">
                     Passo {currentStep + 1} de {steps.length}
                   </p>
-                  <h3 className="text-xl font-bold" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+                  <h3 className="text-xl font-bold" style={{ fontFamily: 'Cinzel, serif' }}>
                     {step.title}
                   </h3>
                 </div>

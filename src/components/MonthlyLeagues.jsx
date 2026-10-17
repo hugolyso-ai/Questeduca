@@ -200,7 +200,7 @@ const MonthlyLeagues = () => {
               <Trophy size={32} />
             </div>
             <div>
-              <h2 className="text-2xl font-bold" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+              <h2 className="text-2xl font-bold" style={{ fontFamily: 'Cinzel, serif' }}>
                 Liga Mensal
               </h2>
               <p className="text-white/80">{leagueData.month_name}</p>
@@ -239,7 +239,7 @@ const MonthlyLeagues = () => {
 
       {/* Pódio */}
       <div className="bg-white rounded-3xl p-6 shadow-xl">
-        <h3 className="text-xl font-bold text-slate-800 mb-6 text-center" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+        <h3 className="text-xl font-bold text-slate-800 mb-6 text-center" style={{ fontFamily: 'Cinzel, serif' }}>
           <Sparkles className="inline mr-2 text-yellow-500" size={24} />
           Top 3 do Mês
         </h3>
@@ -259,7 +259,7 @@ const MonthlyLeagues = () => {
       {rest.length > 0 && (
         <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
           <div className="p-6 border-b border-slate-100">
-            <h3 className="font-bold text-slate-800" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+            <h3 className="font-bold text-slate-800" style={{ fontFamily: 'Cinzel, serif' }}>
               Classificação 4º - 10º
             </h3>
           </div>
@@ -295,7 +295,7 @@ const MonthlyLeagues = () => {
 
       {/* Recompensas */}
       <div className="bg-gradient-to-br from-amber-50 to-yellow-100 rounded-3xl p-6 border-2 border-amber-200">
-        <h3 className="text-xl font-bold text-amber-800 mb-4 text-center" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+        <h3 className="text-xl font-bold text-amber-800 mb-4 text-center" style={{ fontFamily: 'Cinzel, serif' }}>
           <Award className="inline mr-2" size={24} />
           Recompensas da Liga
         </h3>

@@ -79,7 +79,7 @@ const ProfileSettingsPanel = ({ studentProfile, onSaved }) => {
             <GraduationCap size={28} />
           </div>
           <div>
-            <h2 className="text-2xl font-bold" style={{ fontFamily: 'Fredoka, sans-serif' }}>O Meu Perfil Escolar</h2>
+            <h2 className="text-2xl font-bold" style={{ fontFamily: 'Cinzel, serif' }}>O Meu Perfil Escolar</h2>
             <p className="text-white/80 text-sm">Define a tua turma e escola para entrares nas classificações!</p>
           </div>
         </div>

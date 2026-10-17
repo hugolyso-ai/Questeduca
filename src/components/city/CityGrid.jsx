@@ -202,7 +202,7 @@ const BuildingSprite = ({ id, building, gridSize, isSelected, skinFilter, dimmed
       </div>
       {/* Production indicator */}
       {building.producing && (
-        <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 px-3 py-1 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full text-white text-[10px] font-bold animate-pulse shadow-lg whitespace-nowrap">
+        <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 px-3 py-1 bg-gradient-to-r from-[hsl(35,92%,50%)] to-emerald-500 rounded-full text-white text-[10px] font-bold animate-pulse shadow-lg whitespace-nowrap">
           ⚡ A Produzir
         </div>
       )}

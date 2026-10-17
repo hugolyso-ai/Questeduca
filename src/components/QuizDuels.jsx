@@ -97,7 +97,7 @@ const DuelGame = ({ duel, onExit, onFinished }) => {
     return (
       <div className="bg-white rounded-3xl shadow-xl p-8 text-center">
         <Trophy className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
-        <h3 className="text-2xl font-bold text-slate-800 mb-2" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+        <h3 className="text-2xl font-bold text-slate-800 mb-2" style={{ fontFamily: 'Cinzel, serif' }}>
           Duelo concluído!
         </h3>
         <p className="text-slate-500 mb-4">Acertaste <strong>{correct}</strong> de {questions.length} perguntas.</p>
@@ -114,18 +114,18 @@ const DuelGame = ({ duel, onExit, onFinished }) => {
         <div className="bg-red-100 px-4 py-2 rounded-xl">
           <span className="text-sm text-red-600 font-bold">⚔️ Duelo · Pergunta {idx + 1}/{questions.length}</span>
         </div>
-        <div className="bg-green-100 px-4 py-2 rounded-xl">
+        <div className="bg-[hsl(142,45%,88%)] px-4 py-2 rounded-xl">
           <span className="text-sm text-green-700 font-bold">{correct} corretas</span>
         </div>
       </div>
       <div className="bg-gradient-to-r from-red-500 to-orange-500 rounded-2xl p-6 text-white text-center mb-4">
-        <p className="text-xl font-bold" style={{ fontFamily: 'Fredoka, sans-serif' }}>{q.question}</p>
+        <p className="text-xl font-bold" style={{ fontFamily: 'Cinzel, serif' }}>{q.question}</p>
       </div>
       <div className="grid grid-cols-2 gap-3">
         {q.options.map((opt, i) => {
           let cls = 'bg-white border-2 border-slate-200 hover:border-red-400';
           if (answered) {
-            if (i === q.correct_answer) cls = 'bg-green-100 border-2 border-green-500';
+            if (i === q.correct_answer) cls = 'bg-[hsl(142,45%,88%)] border-2 border-[hsl(35,92%,50%)]';
             else if (i === picked) cls = 'bg-red-100 border-2 border-red-500';
             else cls = 'bg-slate-100 border-2 border-slate-200 opacity-50';
           }
@@ -255,7 +255,7 @@ const QuizDuels = ({ friends, onRefresh }) => {
               <Swords size={26} />
             </div>
             <div>
-              <h3 className="text-xl font-bold" style={{ fontFamily: 'Fredoka, sans-serif' }}>Duelos de Conhecimento</h3>
+              <h3 className="text-xl font-bold" style={{ fontFamily: 'Cinzel, serif' }}>Duelos de Conhecimento</h3>
               <p className="text-white/80 text-sm">Desafia um amigo: as mesmas 10 perguntas, quem acerta mais vence 50 moedas!</p>
             </div>
           </div>
@@ -348,7 +348,7 @@ const QuizDuels = ({ friends, onRefresh }) => {
                         {iPlayed ? 'Já jogaste' : isChallenger ? 'Jogar' : 'Aceitar e Jogar'}
                       </button>
                     ) : (
-                      <span className="text-xs text-green-600 font-bold">Concluído</span>
+                      <span className="text-xs text-[hsl(28,85%,40%)] font-bold">Concluído</span>
                     )}
                   </div>
                 );

@@ -220,7 +220,7 @@ const PortugalMap = ({ onDistrictSelect, selectedDistrict, studentsPerDistrict =
         <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-4 pointer-events-none z-20 border border-slate-200/50" style={{ minWidth: '160px' }}>
           <div className="flex items-center gap-2 mb-1">
             <div className="w-4 h-4 rounded-full ring-2 ring-white shadow-sm" style={{ backgroundColor: DISTRICT_COLORS[hoveredDistrict] }} />
-            <span className="font-bold text-slate-800 text-sm" style={{ fontFamily: 'Fredoka, sans-serif' }}>{hoveredDistrict}</span>
+            <span className="font-bold text-slate-800 text-sm" style={{ fontFamily: 'Cinzel, serif' }}>{hoveredDistrict}</span>
           </div>
           <p className="text-xs text-slate-500 flex items-center gap-1">
             <Users size={12} />
@@ -354,7 +354,7 @@ const PortugalFriendMap = () => {
       <div className="bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-600 p-6 text-white">
         <div className="flex items-center justify-between relative z-10">
           <div>
-            <h3 className="text-xl font-bold flex items-center gap-2" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+            <h3 className="text-xl font-bold flex items-center gap-2" style={{ fontFamily: 'Cinzel, serif' }}>
               <MapPin size={24} />
               Mapa de Portugal
             </h3>
@@ -424,7 +424,7 @@ const PortugalFriendMap = () => {
         {/* Zoom nível 2: municípios */}
         {selectedDistrict && !selectedMunicipality && municipalities.length > 0 && (
           <div className="mb-5">
-            <h4 className="font-bold text-slate-800 mb-2 text-sm flex items-center gap-2" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+            <h4 className="font-bold text-slate-800 mb-2 text-sm flex items-center gap-2" style={{ fontFamily: 'Cinzel, serif' }}>
               <MapPin size={16} className="text-teal-600" /> Municípios em {selectedDistrict}
             </h4>
             <div className="flex flex-wrap gap-2">
@@ -444,7 +444,7 @@ const PortugalFriendMap = () => {
         {/* Lista de alunos */}
         {(students.length > 0 || loading) && (
           <div>
-            <h4 className="font-bold text-slate-800 mb-3 flex items-center gap-2" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+            <h4 className="font-bold text-slate-800 mb-3 flex items-center gap-2" style={{ fontFamily: 'Cinzel, serif' }}>
               <Users size={20} className="text-teal-600" />
               {selectedMunicipality
                 ? `Alunos em ${selectedMunicipality}`

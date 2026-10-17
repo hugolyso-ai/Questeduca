@@ -18,9 +18,9 @@ const BattleResultModal = ({ result, onClose }) => {
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-bounce-in">
         {/* Header */}
-        <div className={`p-8 text-white text-center ${isVictory ? 'bg-gradient-to-r from-green-500 to-emerald-600' : 'bg-gradient-to-r from-red-500 to-rose-600'}`}>
+        <div className={`p-8 text-white text-center ${isVictory ? 'bg-gradient-to-r from-[hsl(35,92%,50%)] to-emerald-600' : 'bg-gradient-to-r from-red-500 to-rose-600'}`}>
           <div className="text-6xl mb-4">{isVictory ? '⚔️🏆' : '🛡️💨'}</div>
-          <h2 className="text-3xl font-bold" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+          <h2 className="text-3xl font-bold" style={{ fontFamily: 'Cinzel, serif' }}>
             {isVictory ? 'VITÓRIA!' : 'DERROTA!'}
           </h2>
           <p className="text-white/80 mt-2">{result.message}</p>
@@ -34,10 +34,10 @@ const BattleResultModal = ({ result, onClose }) => {
               <p className="text-sm text-slate-500">Teu Ataque</p>
               <p className="text-2xl font-bold text-red-600">{result.attack_roll}</p>
             </div>
-            <div className="bg-blue-50 rounded-xl p-4 text-center">
-              <Shield className="text-blue-500 mx-auto mb-2" size={24} />
+            <div className="bg-[hsl(38,80%,93%)] rounded-xl p-4 text-center">
+              <Shield className="text-[hsl(35,92%,45%)] mx-auto mb-2" size={24} />
               <p className="text-sm text-slate-500">Defesa Inimiga</p>
-              <p className="text-2xl font-bold text-blue-600">{result.defense_roll}</p>
+              <p className="text-2xl font-bold text-[hsl(28,85%,40%)]">{result.defense_roll}</p>
             </div>
           </div>
 
@@ -78,7 +78,7 @@ const BattleResultModal = ({ result, onClose }) => {
           <button
             onClick={onClose}
             className={`w-full py-3 font-bold rounded-xl text-white transition ${
-              isVictory ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'
+              isVictory ? 'bg-[hsl(35,92%,50%)] hover:bg-[hsl(33,90%,45%)]' : 'bg-red-500 hover:bg-red-600'
             }`}
           >
             Continuar
@@ -118,11 +118,11 @@ const RaidHistory = ({ raids, currentUserId }) => {
         return (
           <div
             key={raid.id}
-            className={`p-4 rounded-xl border-l-4 ${won ? 'bg-green-50 border-green-500' : 'bg-red-50 border-red-500'}`}
+            className={`p-4 rounded-xl border-l-4 ${won ? 'bg-[hsl(38,80%,93%)] border-[hsl(35,92%,50%)]' : 'bg-red-50 border-red-500'}`}
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${won ? 'bg-green-200' : 'bg-red-200'}`}>
+                <div className={`p-2 rounded-lg ${won ? 'bg-[hsl(142,40%,86%)]' : 'bg-red-200'}`}>
                   {wasAttacker ? <Sword size={20} /> : <Shield size={20} />}
                 </div>
                 <div>
@@ -134,7 +134,7 @@ const RaidHistory = ({ raids, currentUserId }) => {
                   </p>
                 </div>
               </div>
-              <div className={`px-3 py-1 rounded-full text-xs font-bold ${won ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}>
+              <div className={`px-3 py-1 rounded-full text-xs font-bold ${won ? 'bg-[hsl(35,92%,50%)] text-white' : 'bg-red-500 text-white'}`}>
                 {won ? 'Vitória' : 'Derrota'}
               </div>
             </div>
@@ -244,7 +244,7 @@ const SendGiftModal = ({ isOpen, onClose, friendId, friendName, gameState, onSuc
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden">
-        <div className="bg-gradient-to-r from-pink-500 to-rose-500 p-6 text-white">
+        <div className="bg-gradient-to-r from-[hsl(340,65%,55%)] to-rose-500 p-6 text-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Gift size={28} />
@@ -268,7 +268,7 @@ const SendGiftModal = ({ isOpen, onClose, friendId, friendName, gameState, onSuc
                   key={opt.id}
                   onClick={() => setGiftType(opt.id)}
                   className={`p-3 rounded-xl flex flex-col items-center gap-1 transition ${
-                    giftType === opt.id ? 'bg-pink-100 border-2 border-pink-500' : 'bg-slate-50 hover:bg-slate-100'
+                    giftType === opt.id ? 'bg-[hsl(340,60%,90%)] border-2 border-[hsl(340,60%,55%)]' : 'bg-slate-50 hover:bg-slate-100'
                   }`}
                 >
                   <opt.icon className={opt.color} size={24} />
@@ -294,7 +294,7 @@ const SendGiftModal = ({ isOpen, onClose, friendId, friendName, gameState, onSuc
           <button
             onClick={handleSend}
             disabled={loading}
-            className="w-full py-3 bg-gradient-to-r from-pink-500 to-rose-500 text-white font-bold rounded-xl hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full py-3 bg-gradient-to-r from-[hsl(340,65%,55%)] to-rose-500 text-white font-bold rounded-xl hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center gap-2"
           >
             <Send size={18} />
             {loading ? 'A enviar...' : 'Enviar Presente'}
@@ -577,7 +577,7 @@ const BattleAndSocial = ({ friends, currentUserId, gameState, onRefresh }) => {
 
       {/* Stats Header */}
       <div className="bg-white rounded-3xl p-6 shadow-xl">
-        <h2 className="text-2xl font-bold text-slate-800 mb-4" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+        <h2 className="text-2xl font-bold text-slate-800 mb-4" style={{ fontFamily: 'Cinzel, serif' }}>
           Batalha & Social ⚔️
         </h2>
 
@@ -592,13 +592,13 @@ const BattleAndSocial = ({ friends, currentUserId, gameState, onRefresh }) => {
             </div>
           </div>
 
-          <div className="bg-blue-50 rounded-xl p-4 flex items-center gap-3">
-            <div className="bg-blue-500 p-3 rounded-xl">
+          <div className="bg-[hsl(38,80%,93%)] rounded-xl p-4 flex items-center gap-3">
+            <div className="bg-[hsl(35,92%,50%)] p-3 rounded-xl">
               <Shield className="text-white" size={24} />
             </div>
             <div>
               <p className="text-sm text-slate-500">Poder de Defesa</p>
-              <p className="text-2xl font-bold text-blue-600">{defensePower}</p>
+              <p className="text-2xl font-bold text-[hsl(28,85%,40%)]">{defensePower}</p>
             </div>
           </div>
         </div>
@@ -653,7 +653,7 @@ const BattleAndSocial = ({ friends, currentUserId, gameState, onRefresh }) => {
                       className="flex items-center justify-between p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-blue-500 rounded-full flex items-center justify-center text-white font-bold">
+                        <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-[hsl(24,70%,42%)] rounded-full flex items-center justify-center text-white font-bold">
                           {friend.name?.[0]?.toUpperCase() || '?'}
                         </div>
                         <div>
@@ -701,7 +701,7 @@ const BattleAndSocial = ({ friends, currentUserId, gameState, onRefresh }) => {
                         <div className="flex gap-2">
                           <button
                             onClick={() => handleVisitResponse(req.id, true)}
-                            className="p-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+                            className="p-2 bg-[hsl(35,92%,50%)] text-white rounded-lg hover:bg-[hsl(33,90%,45%)]"
                           >
                             <Check size={16} />
                           </button>
@@ -731,7 +731,7 @@ const BattleAndSocial = ({ friends, currentUserId, gameState, onRefresh }) => {
                         <div key={friend.friend_id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
                           <span className="font-medium">{friend.name}</span>
                           {status === 'approved' ? (
-                            <span className="text-green-600 text-sm font-semibold">✓ Aprovado</span>
+                            <span className="text-[hsl(28,85%,40%)] text-sm font-semibold">✓ Aprovado</span>
                           ) : status === 'pending' ? (
                             <span className="text-amber-600 text-sm">Pendente...</span>
                           ) : (
@@ -763,14 +763,14 @@ const BattleAndSocial = ({ friends, currentUserId, gameState, onRefresh }) => {
                   {effectiveFriends.map(friend => (
                     <div key={friend.friend_id} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-pink-400 to-rose-500 rounded-full flex items-center justify-center text-white font-bold">
+                        <div className="w-10 h-10 bg-gradient-to-br from-[hsl(340,65%,70%)] to-rose-500 rounded-full flex items-center justify-center text-white font-bold">
                           {friend.name?.[0]?.toUpperCase() || '?'}
                         </div>
                         <span className="font-medium">{friend.name}</span>
                       </div>
                       <button
                         onClick={() => setGiftModal({ open: true, friendId: friend.friend_id, friendName: friend.name })}
-                        className="px-4 py-2 bg-pink-500 text-white font-semibold rounded-xl hover:bg-pink-600 transition flex items-center gap-2"
+                        className="px-4 py-2 bg-[hsl(340,60%,55%)] text-white font-semibold rounded-xl hover:bg-[hsl(340,55%,45%)] transition flex items-center gap-2"
                       >
                         <Gift size={16} />
                         Enviar

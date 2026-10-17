@@ -121,20 +121,20 @@ const ParentDashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50">
-        <div className="w-16 h-16 border-4 border-green-500 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[hsl(38,80%,93%)] to-[hsl(40,33%,96%)]">
+        <div className="w-16 h-16 border-4 border-[hsl(35,92%,50%)] border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-slate-50">
+    <div className="min-h-screen bg-gradient-to-br from-[hsl(40,33%,96%)]0 via-[hsl(40,33%,96%)] to-slate-50">
       <nav className="backdrop-blur-xl bg-white/80 border-b border-slate-200/50 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-3">
-              <Castle className="h-8 w-8 text-green-500" strokeWidth={2.5} />
-              <span className="text-xl font-bold text-slate-900" style={{ fontFamily: 'Fredoka, sans-serif' }}>QUESTEDUCA</span>
+              <Castle className="h-8 w-8 text-[hsl(35,92%,45%)]" strokeWidth={2.5} />
+              <span className="text-xl font-bold text-slate-900" style={{ fontFamily: 'Cinzel, serif' }}>QUESTEDUCA</span>
               <span className="text-sm text-slate-500 ml-2">Pai/Encarregado</span>
             </div>
             <div className="flex items-center gap-2 md:gap-4">
@@ -166,20 +166,20 @@ const ParentDashboard = () => {
           <div className="lg:col-span-1">
             <div className="bg-white rounded-3xl shadow-lg p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold" style={{ fontFamily: 'Fredoka, sans-serif' }}>Os Meus Filhos</h2>
-                <button onClick={() => setShowAddChild(true)} className="p-2 bg-green-100 text-green-600 rounded-xl hover:bg-green-200 transition"><Plus size={20} /></button>
+                <h2 className="text-xl font-bold" style={{ fontFamily: 'Cinzel, serif' }}>Os Meus Filhos</h2>
+                <button onClick={() => setShowAddChild(true)} className="p-2 bg-[hsl(142,45%,88%)] text-[hsl(28,85%,40%)] rounded-xl hover:bg-green-200 transition"><Plus size={20} /></button>
               </div>
               {children.length === 0 ? (
                 <div className="text-center py-12">
                   <Users className="mx-auto text-slate-300 mb-4" size={48} />
                   <p className="text-slate-500 mb-4">Ainda não adicionaste nenhum filho</p>
-                  <button onClick={() => setShowAddChild(true)} className="px-6 py-3 bg-green-500 text-white font-bold rounded-xl hover:bg-green-600 transition flex items-center gap-2 mx-auto"><Plus size={20} /> Adicionar Filho</button>
+                  <button onClick={() => setShowAddChild(true)} className="px-6 py-3 bg-[hsl(35,92%,50%)] text-white font-bold rounded-xl hover:bg-[hsl(33,90%,45%)] transition flex items-center gap-2 mx-auto"><Plus size={20} /> Adicionar Filho</button>
                 </div>
               ) : (
                 <div className="space-y-3">
                   {children.map(child => (
-                    <button onClick={() => setSelectedChild(child)} className={`w-full flex items-center gap-3 p-3 rounded-xl transition text-left ${selectedChild?.user_id === child.user_id ? 'bg-green-50 border-2 border-green-200' : 'hover:bg-slate-50'}`}>
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center text-white font-bold text-lg">{child.nickname?.[0]?.toUpperCase() || '?'}</div>
+                    <button onClick={() => setSelectedChild(child)} className={`w-full flex items-center gap-3 p-3 rounded-xl transition text-left ${selectedChild?.user_id === child.user_id ? 'bg-[hsl(38,80%,93%)] border-2 border-green-200' : 'hover:bg-slate-50'}`}>
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-[hsl(24,70%,42%)] flex items-center justify-center text-white font-bold text-lg">{child.nickname?.[0]?.toUpperCase() || '?'}</div>
                       <div className="flex-1">
                         <p className="font-bold text-slate-800">{child.nickname}</p>
                         <p className="text-sm text-slate-500">{child.school_year}º Ano</p>
@@ -188,7 +188,7 @@ const ParentDashboard = () => {
                         role="button"
                         tabIndex={0}
                         onClick={(e) => { e.stopPropagation(); setRenameChild(child); setNewNickname(child.nickname || '') }}
-                        className="p-2 text-slate-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition"
+                        className="p-2 text-slate-400 hover:text-[hsl(28,85%,40%)] hover:bg-[hsl(38,80%,93%)] rounded-lg transition"
                         title="Alterar nickname"
                       >
                         <Pencil size={16} />
@@ -207,20 +207,20 @@ const ParentDashboard = () => {
                 <div className="bg-white rounded-3xl shadow-lg p-6">
                   <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-4">
-                      <div className="w-16 h-16 rounded-full bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center text-white font-bold text-2xl">{selectedChild.nickname?.[0]?.toUpperCase()}</div>
+                      <div className="w-16 h-16 rounded-full bg-gradient-to-br from-green-400 to-[hsl(24,70%,42%)] flex items-center justify-center text-white font-bold text-2xl">{selectedChild.nickname?.[0]?.toUpperCase()}</div>
                       <div>
-                        <h2 className="text-2xl font-bold" style={{ fontFamily: 'Fredoka, sans-serif' }}>{selectedChild.nickname}</h2>
+                        <h2 className="text-2xl font-bold" style={{ fontFamily: 'Cinzel, serif' }}>{selectedChild.nickname}</h2>
                         <p className="text-slate-500">{selectedChild.school_year}º Ano</p>
                       </div>
                     </div>
-                    <button onClick={() => setShowReport(true)} className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white font-semibold rounded-xl hover:bg-blue-600 transition"><FileText size={18} /> Relatório</button>
+                    <button onClick={() => setShowReport(true)} className="flex items-center gap-2 px-4 py-2 bg-[hsl(35,92%,50%)] text-white font-semibold rounded-xl hover:bg-[hsl(24,70%,42%)] transition"><FileText size={18} /> Relatório</button>
                   </div>
 
                   {childGameData.gameState && (
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                       <div className="bg-amber-50 rounded-xl p-4 text-center"><Coins className="mx-auto text-amber-500 mb-2" size={24} /><p className="text-2xl font-bold text-amber-700">{childGameData.gameState.coins}</p><p className="text-xs text-slate-500">Moedas</p></div>
                       <div className="bg-cyan-50 rounded-xl p-4 text-center"><Gem className="mx-auto text-cyan-500 mb-2" size={24} /><p className="text-2xl font-bold text-cyan-700">{childGameData.gameState.diamonds}</p><p className="text-xs text-slate-500">Diamantes</p></div>
-                      <div className="bg-green-50 rounded-xl p-4 text-center"><TrendingUp className="mx-auto text-green-500 mb-2" size={24} /><p className="text-2xl font-bold text-green-700">{childGameData.gameState.xp}</p><p className="text-xs text-slate-500">XP Total</p></div>
+                      <div className="bg-[hsl(38,80%,93%)] rounded-xl p-4 text-center"><TrendingUp className="mx-auto text-[hsl(35,92%,45%)] mb-2" size={24} /><p className="text-2xl font-bold text-green-700">{childGameData.gameState.xp}</p><p className="text-xs text-slate-500">XP Total</p></div>
                       <div className="bg-purple-50 rounded-xl p-4 text-center"><Trophy className="mx-auto text-purple-500 mb-2" size={24} /><p className="text-2xl font-bold text-purple-700">{childGameData.gameState.current_streak}</p><p className="text-xs text-slate-500">Dias Seguidos</p></div>
                     </div>
                   )}
@@ -230,13 +230,13 @@ const ParentDashboard = () => {
 
                   {/* Quiz History */}
                   <div>
-                    <h3 className="font-bold text-lg mb-3" style={{ fontFamily: 'Fredoka, sans-serif' }}>Histórico de Quizzes</h3>
+                    <h3 className="font-bold text-lg mb-3" style={{ fontFamily: 'Cinzel, serif' }}>Histórico de Quizzes</h3>
                     {childGameData.quizHistory && childGameData.quizHistory.length > 0 ? (
                       <div className="space-y-2">
                         {childGameData.quizHistory.map((quiz, idx) => (
                           <div key={idx} className="flex items-center justify-between bg-slate-50 rounded-xl p-3">
                             <div className="flex items-center gap-3">
-                              <BookOpen className="text-blue-500" size={20} />
+                              <BookOpen className="text-[hsl(35,92%,45%)]" size={20} />
                               <div>
                                 <p className="font-semibold text-slate-700">{quiz.subject}</p>
                                 <p className="text-xs text-slate-400">{new Date(quiz.created_at).toLocaleDateString('pt-PT')}</p>
@@ -244,7 +244,7 @@ const ParentDashboard = () => {
                             </div>
                             <div className="text-right">
                               <p className="font-bold text-slate-700">{quiz.correct_answers}/{quiz.total_questions}</p>
-                              <p className="text-xs text-green-600">{Math.round((quiz.correct_answers / quiz.total_questions) * 100)}% acerto</p>
+                              <p className="text-xs text-[hsl(28,85%,40%)]">{Math.round((quiz.correct_answers / quiz.total_questions) * 100)}% acerto</p>
                             </div>
                           </div>
                         ))}
@@ -270,21 +270,21 @@ const ParentDashboard = () => {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowAddChild(false)}>
           <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl p-6" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold" style={{ fontFamily: 'Fredoka, sans-serif' }}>Adicionar Filho</h2>
+              <h2 className="text-2xl font-bold" style={{ fontFamily: 'Cinzel, serif' }}>Adicionar Filho</h2>
               <button onClick={() => setShowAddChild(false)} className="p-2 hover:bg-slate-100 rounded-xl"><X size={20} /></button>
             </div>
             <form onSubmit={handleAddChild} className="space-y-4">
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-2">Nickname</label>
-                <input type="text" value={newChild.nickname} onChange={e => setNewChild({ ...newChild, nickname: e.target.value })} required className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-green-500 focus:ring-4 focus:ring-green-500/20 transition" placeholder="Ex: João" />
+                <input type="text" value={newChild.nickname} onChange={e => setNewChild({ ...newChild, nickname: e.target.value })} required className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-[hsl(35,92%,50%)] focus:ring-4 focus:ring-[hsl(35,92%,50%)]/20 transition" placeholder="Ex: João" />
               </div>
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-2">Ano Escolar</label>
-                <select value={newChild.school_year} onChange={e => setNewChild({ ...newChild, school_year: e.target.value })} className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-green-500 focus:ring-4 focus:ring-green-500/20 transition">
+                <select value={newChild.school_year} onChange={e => setNewChild({ ...newChild, school_year: e.target.value })} className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-[hsl(35,92%,50%)] focus:ring-4 focus:ring-[hsl(35,92%,50%)]/20 transition">
                   {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(y => <option key={y} value={y}>{y}º Ano</option>)}
                 </select>
               </div>
-              <button type="submit" className="w-full py-4 bg-green-500 text-white font-bold rounded-xl hover:bg-green-600 transition">Adicionar</button>
+              <button type="submit" className="w-full py-4 bg-[hsl(35,92%,50%)] text-white font-bold rounded-xl hover:bg-[hsl(33,90%,45%)] transition">Adicionar</button>
             </form>
           </div>
         </div>
@@ -294,7 +294,7 @@ const ParentDashboard = () => {
       {renameChild && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setRenameChild(null)}>
           <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl p-6" onClick={e => e.stopPropagation()}>
-            <h2 className="text-2xl font-bold mb-2" style={{ fontFamily: 'Fredoka, sans-serif' }}>Alterar Nickname</h2>
+            <h2 className="text-2xl font-bold mb-2" style={{ fontFamily: 'Cinzel, serif' }}>Alterar Nickname</h2>
             <p className="text-sm text-slate-500 mb-4">
               O novo nickname atualiza automaticamente a listagem de professores e associações de pais onde {renameChild.nickname} já estiver inscrito.
             </p>
@@ -318,10 +318,10 @@ const ParentDashboard = () => {
                 value={newNickname}
                 onChange={e => setNewNickname(e.target.value.replace(/\s/g, ''))}
                 required
-                className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-green-500 focus:ring-4 focus:ring-green-500/20 transition"
+                className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-[hsl(35,92%,50%)] focus:ring-4 focus:ring-[hsl(35,92%,50%)]/20 transition"
                 placeholder="Novo nickname (sem espaços)"
               />
-              <button type="submit" className="w-full py-4 bg-green-500 text-white font-bold rounded-xl hover:bg-green-600 transition">Guardar</button>
+              <button type="submit" className="w-full py-4 bg-[hsl(35,92%,50%)] text-white font-bold rounded-xl hover:bg-[hsl(33,90%,45%)] transition">Guardar</button>
             </form>
           </div>
         </div>

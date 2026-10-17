@@ -56,7 +56,7 @@ const DiagnosisPanel = ({ userId }) => {
   if (loading) {
     return (
       <div className="bg-white rounded-3xl shadow-lg p-6 text-center">
-        <div className="w-8 h-8 border-4 border-blue-400 border-t-transparent rounded-full animate-spin mx-auto" />
+        <div className="w-8 h-8 border-4 border-[hsl(35,60%,60%)] border-t-transparent rounded-full animate-spin mx-auto" />
       </div>
     );
   }
@@ -77,13 +77,13 @@ const DiagnosisPanel = ({ userId }) => {
 
   return (
     <div className="bg-white rounded-3xl shadow-lg overflow-hidden">
-      <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-5 text-white">
+      <div className="bg-gradient-to-r from-[hsl(35,92%,50%)] to-indigo-600 p-5 text-white">
         <div className="flex items-center gap-3">
           <div className="bg-white/20 p-2.5 rounded-xl">
             <Brain size={24} />
           </div>
           <div>
-            <h3 className="text-lg font-bold" style={{ fontFamily: 'Fredoka, sans-serif' }}>Diagnóstico de Aprendizagem</h3>
+            <h3 className="text-lg font-bold" style={{ fontFamily: 'Cinzel, serif' }}>Diagnóstico de Aprendizagem</h3>
             <p className="text-white/80 text-xs">Pontos fortes e áreas a reforçar, com base nas últimas 300 respostas</p>
           </div>
         </div>
@@ -91,13 +91,13 @@ const DiagnosisPanel = ({ userId }) => {
 
       <div className="p-5 space-y-3">
         {bySubject.map(({ subject, pct, total }) => {
-          const color = pct >= 70 ? 'bg-green-500' : pct >= 40 ? 'bg-amber-500' : 'bg-red-500';
+          const color = pct >= 70 ? 'bg-[hsl(35,92%,50%)]' : pct >= 40 ? 'bg-amber-500' : 'bg-red-500';
           const Icon = pct >= 70 ? TrendingUp : pct >= 40 ? TrendingDown : AlertTriangle;
           const label = SUBJECT_LABELS[subject] || subject;
           return (
             <div key={subject} className="flex items-center gap-3">
-              <div className={`p-2 rounded-lg ${pct >= 70 ? 'bg-green-100' : pct >= 40 ? 'bg-amber-100' : 'bg-red-100'}`}>
-                <Icon size={16} className={pct >= 70 ? 'text-green-600' : pct >= 40 ? 'text-amber-600' : 'text-red-600'} />
+              <div className={`p-2 rounded-lg ${pct >= 70 ? 'bg-[hsl(142,45%,88%)]' : pct >= 40 ? 'bg-amber-100' : 'bg-red-100'}`}>
+                <Icon size={16} className={pct >= 70 ? 'text-[hsl(28,85%,40%)]' : pct >= 40 ? 'text-amber-600' : 'text-red-600'} />
               </div>
               <div className="flex-1">
                 <div className="flex justify-between text-sm mb-0.5">
@@ -113,9 +113,9 @@ const DiagnosisPanel = ({ userId }) => {
         })}
 
         {bySubject.length >= 2 && (
-          <div className="mt-4 bg-blue-50 border border-blue-100 rounded-2xl p-4 flex items-start gap-3">
-            <Lightbulb className="text-blue-500 flex-shrink-0 mt-0.5" size={20} />
-            <p className="text-sm text-blue-800">
+          <div className="mt-4 bg-[hsl(38,80%,93%)] border border-[hsl(200,55%,80%)] rounded-2xl p-4 flex items-start gap-3">
+            <Lightbulb className="text-[hsl(35,92%,45%)] flex-shrink-0 mt-0.5" size={20} />
+            <p className="text-sm text-[hsl(28,85%,30%)]">
               <strong>Sugestão:</strong> {SUBJECT_LABELS[weakest.subject] || weakest.subject} é a área que precisa de mais
               apoio ({weakest.pct}% de acerto). {SUBJECT_LABELS[strongest.subject] || strongest.subject} é o ponto forte
               ({strongest.pct}%) — podes usá-lo para motivar: "Se dominares {SUBJECT_LABELS[weakest.subject] || weakest.subject},

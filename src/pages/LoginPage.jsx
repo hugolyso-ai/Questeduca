@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { Castle, Mail, Lock, AlertCircle } from 'lucide-react'
+import { Swords, Mail, Lock, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 
 const GoogleIcon = () => (
@@ -72,12 +72,14 @@ const LoginPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-slate-50 to-green-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[hsl(40,33%,96%)] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-3 mb-4">
-            <Castle className="h-12 w-12 text-green-500" strokeWidth={2.5} />
-            <span className="text-4xl font-bold text-slate-900" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+            <span className="w-12 h-12 rounded-2xl btn-gold flex items-center justify-center shadow-md">
+              <Swords className="h-6 w-6 text-white" />
+            </span>
+            <span className="text-3xl font-bold text-[hsl(24,10%,18%)] tracking-wide" style={{ fontFamily: 'Cinzel, serif' }}>
               QUESTEDUCA
             </span>
           </Link>
@@ -86,8 +88,8 @@ const LoginPage = () => {
           </p>
         </div>
 
-        <div className="bg-white rounded-3xl shadow-2xl p-8 border-b-4 border-slate-200">
-          <h2 className="text-3xl font-bold text-slate-900 mb-6" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+        <div className="parchment rounded-3xl shadow-xl p-8">
+          <h2 className="text-2xl font-bold text-[hsl(24,10%,18%)] mb-6" style={{ fontFamily: 'Cinzel, serif' }}>
             Entrar
           </h2>
 
@@ -110,7 +112,7 @@ const LoginPage = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="w-full pl-12 pr-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all"
+                  className="w-full pl-12 pr-4 py-3 bg-[hsl(36,33%,93%)] border-2 border-[hsl(35,25%,85%)] rounded-xl focus:border-[hsl(35,92%,50%)] focus:ring-4 focus:ring-[hsl(35,92%,50%)]/20 transition-all"
                   style={{ fontFamily: 'Nunito, sans-serif' }}
                   placeholder="seu@email.com"
                 />
@@ -128,7 +130,7 @@ const LoginPage = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full pl-12 pr-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all"
+                  className="w-full pl-12 pr-4 py-3 bg-[hsl(36,33%,93%)] border-2 border-[hsl(35,25%,85%)] rounded-xl focus:border-[hsl(35,92%,50%)] focus:ring-4 focus:ring-[hsl(35,92%,50%)]/20 transition-all"
                   style={{ fontFamily: 'Nunito, sans-serif' }}
                   placeholder="••••••••"
                 />
@@ -138,7 +140,7 @@ const LoginPage = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full px-8 py-4 rounded-full font-bold text-white text-lg bg-green-500 hover:bg-green-600 shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all border-b-4 border-green-600 active:translate-y-0 active:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-8 py-4 rounded-xl font-bold text-white text-lg btn-gold hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               style={{ fontFamily: 'Nunito, sans-serif' }}
             >
               {loading ? 'A entrar...' : 'Entrar'}
@@ -164,7 +166,7 @@ const LoginPage = () => {
 
           <p className="text-center mt-6 text-slate-600" style={{ fontFamily: 'Nunito, sans-serif' }}>
             Não tens conta?{' '}
-            <Link to="/register" className="text-green-600 font-bold hover:text-green-700">
+            <Link to="/register" className="text-[hsl(28,85%,40%)] font-bold hover:text-[hsl(28,85%,32%)]">
               Registar
             </Link>
           </p>

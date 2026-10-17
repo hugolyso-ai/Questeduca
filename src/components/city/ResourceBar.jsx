@@ -14,7 +14,7 @@ const ResourceBar = ({ gameState }) => {
             { icon: <TreePine size={22} />, value: resources.wood, label: 'Madeira', bg: 'from-amber-600 to-amber-800', shadow: 'shadow-amber-700/40' },
             { icon: <Mountain size={22} />, value: resources.stone, label: 'Pedra', bg: 'from-slate-400 to-slate-600', shadow: 'shadow-slate-500/40' },
             { icon: <Pickaxe size={22} />, value: resources.iron, label: 'Ferro', bg: 'from-zinc-500 to-zinc-700', shadow: 'shadow-zinc-600/40' },
-            { icon: <Wheat size={22} />, value: resources.food, label: 'Comida', bg: 'from-lime-500 to-green-600', shadow: 'shadow-lime-500/40' },
+            { icon: <Wheat size={22} />, value: resources.food, label: 'Comida', bg: 'from-lime-500 to-[hsl(28,85%,40%)]', shadow: 'shadow-lime-500/40' },
           ].map((item, i) => (
             <div key={i} className="flex items-center gap-2 bg-white rounded-xl px-4 py-2 shadow-lg border border-gray-100">
               <div className={`bg-gradient-to-br ${item.bg} text-white p-2 rounded-lg shadow-lg ${item.shadow}`}>
@@ -31,7 +31,7 @@ const ResourceBar = ({ gameState }) => {
 
           <div className="flex items-center gap-3">
             {[
-              { icon: <Home size={20} />, value: `${gameState?.population || 10}/${gameState?.max_population || 20}`, bg: 'bg-blue-100', text: 'text-blue-700', iconColor: 'text-blue-500' },
+              { icon: <Home size={20} />, value: `${gameState?.population || 10}/${gameState?.max_population || 20}`, bg: 'bg-[hsl(200,55%,88%)]', text: 'text-blue-700', iconColor: 'text-[hsl(35,92%,45%)]' },
               { icon: <Shield size={20} />, value: gameState?.defense_power || 5, bg: 'bg-emerald-100', text: 'text-emerald-700', iconColor: 'text-emerald-500' },
               { icon: <Sword size={20} />, value: gameState?.attack_power || 0, bg: 'bg-red-100', text: 'text-red-700', iconColor: 'text-red-500' },
             ].map((stat, i) => (

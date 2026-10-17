@@ -7,7 +7,7 @@ function ProtectedRoute({ allowedRoles, children }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-sky-400 to-blue-500">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-sky-400 to-[hsl(24,70%,42%)]">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-white text-lg font-semibold">A carregar...</p>

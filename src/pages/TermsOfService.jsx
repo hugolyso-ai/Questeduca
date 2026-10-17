@@ -3,14 +3,14 @@ import { Link } from 'react-router-dom'
 import { Castle } from 'lucide-react'
 
 const TermsOfService = () => (
-  <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-12 px-4">
+  <div className="min-h-screen bg-gradient-to-br from-[hsl(40,33%,96%)] to-[hsl(38,80%,93%)] py-12 px-4">
     <div className="max-w-3xl mx-auto">
       <Link to="/" className="inline-flex items-center gap-3 mb-8">
-        <Castle className="h-8 w-8 text-green-500" strokeWidth={2.5} />
-        <span className="text-2xl font-bold text-slate-900" style={{ fontFamily: 'Fredoka, sans-serif' }}>QUESTEDUCA</span>
+        <Castle className="h-8 w-8 text-[hsl(35,92%,45%)]" strokeWidth={2.5} />
+        <span className="text-2xl font-bold text-slate-900" style={{ fontFamily: 'Cinzel, serif' }}>QUESTEDUCA</span>
       </Link>
       <div className="bg-white rounded-3xl shadow-xl p-8 md:p-12">
-        <h1 className="text-3xl font-bold text-slate-900 mb-6" style={{ fontFamily: 'Fredoka, sans-serif' }}>Termos e Condições</h1>
+        <h1 className="text-3xl font-bold text-slate-900 mb-6" style={{ fontFamily: 'Cinzel, serif' }}>Termos e Condições</h1>
         <div className="prose prose-slate max-w-none space-y-4 text-slate-700" style={{ fontFamily: 'Nunito, sans-serif' }}>
           <p>Última atualização: Janeiro de 2026</p>
           <h2 className="text-xl font-bold text-slate-900">1. Aceitação dos Termos</h2>

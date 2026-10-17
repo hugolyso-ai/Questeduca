@@ -25,7 +25,7 @@ export const ACHIEVEMENTS = {
     name: 'Estudante Aplicado',
     description: 'Completa 10 quizzes',
     icon: Book,
-    color: 'from-blue-400 to-blue-600',
+    color: 'from-[hsl(35,92%,60%)] to-[hsl(28,85%,38%)]',
     category: 'quiz',
     rarity: 'common',
     xpReward: 50,
@@ -61,7 +61,7 @@ export const ACHIEVEMENTS = {
     name: 'Perfeição',
     description: 'Acerta todas as perguntas num quiz',
     icon: Target,
-    color: 'from-green-400 to-emerald-600',
+    color: 'from-[hsl(38,95%,60%)] to-emerald-600',
     category: 'quiz',
     rarity: 'uncommon',
     xpReward: 30,
@@ -111,7 +111,7 @@ export const ACHIEVEMENTS = {
     name: 'Aldeia Completa',
     description: 'Todos os edifícios ao nível 1',
     icon: Home,
-    color: 'from-green-400 to-teal-500',
+    color: 'from-[hsl(38,95%,60%)] to-teal-500',
     category: 'city',
     rarity: 'uncommon',
     xpReward: 100,
@@ -135,7 +135,7 @@ export const ACHIEVEMENTS = {
     name: 'Metrópole Nascente',
     description: 'Atinge o nível de Cidade',
     icon: Crown,
-    color: 'from-purple-500 to-pink-600',
+    color: 'from-purple-500 to-[hsl(340,60%,50%)]',
     category: 'city',
     rarity: 'rare',
     xpReward: 300,
@@ -173,7 +173,7 @@ export const ACHIEVEMENTS = {
     name: 'Primeiro Amigo',
     description: 'Adiciona um amigo',
     icon: Users,
-    color: 'from-pink-400 to-rose-500',
+    color: 'from-[hsl(340,65%,70%)] to-rose-500',
     category: 'social',
     rarity: 'common',
     xpReward: 20,
@@ -197,7 +197,7 @@ export const ACHIEVEMENTS = {
     name: 'Companheiro de Jogo',
     description: 'Joga o primeiro mini-jogo com um pai',
     icon: Zap,
-    color: 'from-cyan-400 to-blue-500',
+    color: 'from-cyan-400 to-[hsl(24,70%,42%)]',
     category: 'social',
     rarity: 'common',
     xpReward: 25,
@@ -247,7 +247,7 @@ export const ACHIEVEMENTS = {
     name: 'Milionário',
     description: 'Junta 10000 moedas',
     icon: Diamond,
-    color: 'from-cyan-400 to-blue-500',
+    color: 'from-cyan-400 to-[hsl(24,70%,42%)]',
     category: 'resources',
     rarity: 'epic',
     xpReward: 200,
@@ -282,17 +282,17 @@ export const ACHIEVEMENTS = {
 
 // Categorias de conquistas
 export const ACHIEVEMENT_CATEGORIES = {
-  quiz: { name: 'Quizzes', icon: Book, color: 'text-blue-500' },
+  quiz: { name: 'Quizzes', icon: Book, color: 'text-[hsl(35,92%,45%)]' },
   city: { name: 'Cidade', icon: Building2, color: 'text-amber-500' },
-  social: { name: 'Social', icon: Users, color: 'text-pink-500' },
+  social: { name: 'Social', icon: Users, color: 'text-[hsl(340,60%,55%)]' },
   resources: { name: 'Recursos', icon: Coins, color: 'text-yellow-500' }
 };
 
 // Raridades
 export const RARITY_CONFIG = {
   common: { name: 'Comum', color: 'from-slate-400 to-slate-500', border: 'border-slate-300' },
-  uncommon: { name: 'Incomum', color: 'from-green-400 to-green-600', border: 'border-green-400' },
-  rare: { name: 'Raro', color: 'from-blue-400 to-blue-600', border: 'border-blue-400' },
+  uncommon: { name: 'Incomum', color: 'from-[hsl(38,95%,60%)] to-[hsl(28,80%,38%)]', border: 'border-[hsl(38,95%,60%)]' },
+  rare: { name: 'Raro', color: 'from-[hsl(35,92%,60%)] to-[hsl(28,85%,38%)]', border: 'border-[hsl(35,60%,60%)]' },
   epic: { name: 'Épico', color: 'from-purple-400 to-purple-600', border: 'border-purple-400' },
   legendary: { name: 'Lendário', color: 'from-yellow-400 to-amber-500', border: 'border-yellow-400' }
 };
@@ -357,10 +357,10 @@ export const AchievementsList = ({ stats, unlockedIds = [] }) => {
   return (
     <div>
       {/* Progress Header */}
-      <div className="bg-gradient-to-r from-purple-500 to-blue-600 rounded-2xl p-6 text-white mb-6">
+      <div className="bg-gradient-to-r from-purple-500 to-[hsl(24,70%,42%)] rounded-2xl p-6 text-white mb-6">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-2xl font-bold" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+            <h2 className="text-2xl font-bold" style={{ fontFamily: 'Cinzel, serif' }}>
               <Trophy className="inline mr-2" size={28} />
               Conquistas
             </h2>
@@ -443,7 +443,7 @@ export const AchievementsList = ({ stats, unlockedIds = [] }) => {
 
               {isUnlocked ? (
                 <div className="text-center">
-                  <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-semibold">
+                  <span className="text-xs bg-[hsl(142,45%,88%)] text-[hsl(28,85%,32%)] px-2 py-1 rounded-full font-semibold">
                     ✓ Desbloqueado
                   </span>
                 </div>

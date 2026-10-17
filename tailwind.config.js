@@ -8,7 +8,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        heading: ['Fredoka', 'sans-serif'],
+        heading: ['Cinzel', 'serif'],
         body: ['Nunito', 'sans-serif'],
       },
       borderRadius: {

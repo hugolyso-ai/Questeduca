@@ -25,10 +25,10 @@ const AccessibilityPanel = ({ isOpen, onClose }) => {
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className={`rounded-3xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl ${settings.darkMode ? 'bg-slate-800' : 'bg-white'}`}>
         {/* Header */}
-        <div className="sticky top-0 bg-gradient-to-r from-purple-500 to-blue-600 p-6 text-white rounded-t-3xl">
+        <div className="sticky top-0 bg-gradient-to-r from-purple-500 to-[hsl(24,70%,42%)] p-6 text-white rounded-t-3xl">
           <div className="flex justify-between items-center">
             <div>
-              <h2 className="text-2xl font-bold" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+              <h2 className="text-2xl font-bold" style={{ fontFamily: 'Cinzel, serif' }}>
                 <Eye className="inline mr-2" size={28} />
                 Acessibilidade
               </h2>
@@ -59,7 +59,7 @@ const AccessibilityPanel = ({ isOpen, onClose }) => {
                   )}
                 </div>
                 <div>
-                  <h3 className={`font-bold ${settings.darkMode ? 'text-white' : 'text-slate-800'}`} style={{ fontFamily: 'Fredoka, sans-serif' }}>
+                  <h3 className={`font-bold ${settings.darkMode ? 'text-white' : 'text-slate-800'}`} style={{ fontFamily: 'Cinzel, serif' }}>
                     Modo Escuro
                   </h3>
                   <p className={`text-sm ${settings.darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
@@ -91,7 +91,7 @@ const AccessibilityPanel = ({ isOpen, onClose }) => {
                   <Type className={settings.darkMode ? 'text-white' : 'text-purple-600'} size={24} />
                 </div>
                 <div>
-                  <h3 className={`font-bold ${settings.darkMode ? 'text-white' : 'text-slate-800'}`} style={{ fontFamily: 'Fredoka, sans-serif' }}>
+                  <h3 className={`font-bold ${settings.darkMode ? 'text-white' : 'text-slate-800'}`} style={{ fontFamily: 'Cinzel, serif' }}>
                     Fonte para Dislexia
                   </h3>
                   <p className={`text-sm ${settings.darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
@@ -130,7 +130,7 @@ const AccessibilityPanel = ({ isOpen, onClose }) => {
                   <Eye className="text-white" size={24} />
                 </div>
                 <div>
-                  <h3 className={`font-bold ${settings.darkMode ? 'text-white' : 'text-slate-800'}`} style={{ fontFamily: 'Fredoka, sans-serif' }}>
+                  <h3 className={`font-bold ${settings.darkMode ? 'text-white' : 'text-slate-800'}`} style={{ fontFamily: 'Cinzel, serif' }}>
                     Alto Contraste
                   </h3>
                   <p className={`text-sm ${settings.darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
@@ -161,7 +161,7 @@ const AccessibilityPanel = ({ isOpen, onClose }) => {
                 <Palette className="text-white" size={24} />
               </div>
               <div>
-                <h3 className={`font-bold ${settings.darkMode ? 'text-white' : 'text-slate-800'}`} style={{ fontFamily: 'Fredoka, sans-serif' }}>
+                <h3 className={`font-bold ${settings.darkMode ? 'text-white' : 'text-slate-800'}`} style={{ fontFamily: 'Cinzel, serif' }}>
                   Modo Daltónico
                 </h3>
                 <p className={`text-sm ${settings.darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
@@ -176,7 +176,7 @@ const AccessibilityPanel = ({ isOpen, onClose }) => {
                   onClick={() => updateSetting('colorblindMode', option.value)}
                   className={`p-3 rounded-xl text-left transition ${
                     settings.colorblindMode === option.value
-                      ? 'bg-blue-500 text-white'
+                      ? 'bg-[hsl(35,92%,50%)] text-white'
                       : settings.darkMode
                         ? 'bg-slate-600 text-slate-200 hover:bg-slate-500'
                         : 'bg-white text-slate-700 hover:bg-slate-100'
@@ -202,11 +202,11 @@ const AccessibilityPanel = ({ isOpen, onClose }) => {
           {/* Text Size */}
           <div className={`rounded-2xl p-5 ${settings.darkMode ? 'bg-slate-700' : 'bg-slate-50'}`}>
             <div className="flex items-center gap-3 mb-4">
-              <div className={`p-3 rounded-xl ${settings.darkMode ? 'bg-blue-600' : 'bg-blue-100'}`}>
-                <Type className={settings.darkMode ? 'text-white' : 'text-blue-600'} size={24} />
+              <div className={`p-3 rounded-xl ${settings.darkMode ? 'bg-[hsl(24,70%,42%)]' : 'bg-[hsl(200,55%,88%)]'}`}>
+                <Type className={settings.darkMode ? 'text-white' : 'text-[hsl(28,85%,40%)]'} size={24} />
               </div>
               <div>
-                <h3 className={`font-bold ${settings.darkMode ? 'text-white' : 'text-slate-800'}`} style={{ fontFamily: 'Fredoka, sans-serif' }}>
+                <h3 className={`font-bold ${settings.darkMode ? 'text-white' : 'text-slate-800'}`} style={{ fontFamily: 'Cinzel, serif' }}>
                   Tamanho do Texto
                 </h3>
                 <p className={`text-sm ${settings.darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
@@ -221,7 +221,7 @@ const AccessibilityPanel = ({ isOpen, onClose }) => {
                   onClick={() => updateSetting('textSize', option.value)}
                   className={`flex-1 p-3 rounded-xl text-center transition ${
                     settings.textSize === option.value
-                      ? 'bg-blue-500 text-white'
+                      ? 'bg-[hsl(35,92%,50%)] text-white'
                       : settings.darkMode
                         ? 'bg-slate-600 text-slate-200 hover:bg-slate-500'
                         : 'bg-white text-slate-700 hover:bg-slate-100'

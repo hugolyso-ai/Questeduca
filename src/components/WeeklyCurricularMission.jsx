@@ -97,14 +97,14 @@ const WeeklyCurricularMission = ({ refreshKey }) => {
 
   return (
     <div className={`rounded-3xl shadow-xl overflow-hidden border-2 ${complete && !claimed ? 'border-yellow-400 animate-pulse' : 'border-transparent'}`}>
-      <div className="bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-600 p-5 text-white">
+      <div className="bg-gradient-to-r from-indigo-600 via-[hsl(28,85%,40%)] to-cyan-600 p-5 text-white">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-3">
             <div className="bg-white/20 p-3 rounded-2xl">
               <Target size={26} />
             </div>
             <div>
-              <h3 className="text-xl font-bold" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+              <h3 className="text-xl font-bold" style={{ fontFamily: 'Cinzel, serif' }}>
                 Missão Curricular da Semana
               </h3>
               <p className="text-white/85 text-sm">
@@ -132,7 +132,7 @@ const WeeklyCurricularMission = ({ refreshKey }) => {
           </div>
         </div>
         {claimed ? (
-          <span className="flex items-center gap-2 text-green-600 font-bold text-sm px-4 py-2 bg-green-50 rounded-xl">
+          <span className="flex items-center gap-2 text-[hsl(28,85%,40%)] font-bold text-sm px-4 py-2 bg-[hsl(38,80%,93%)] rounded-xl">
             <CheckCircle size={18} /> Missão resgatada!
           </span>
         ) : complete ? (

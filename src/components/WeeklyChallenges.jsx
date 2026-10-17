@@ -9,7 +9,7 @@ const CHALLENGE_TYPES = {
   quizzes_completed: {
     name: 'Quizzes Completados',
     icon: Target,
-    color: 'from-blue-500 to-indigo-600',
+    color: 'from-[hsl(35,92%,50%)] to-indigo-600',
     unit: 'quizzes'
   },
   perfect_quizzes: {
@@ -27,7 +27,7 @@ const CHALLENGE_TYPES = {
   buildings_upgraded: {
     name: 'Edifícios Melhorados',
     icon: Trophy,
-    color: 'from-green-500 to-emerald-600',
+    color: 'from-[hsl(35,92%,50%)] to-emerald-600',
     unit: 'upgrades'
   },
   login_streak: {
@@ -61,7 +61,7 @@ const ChallengeCard = ({ challenge, onClaim }) => {
               <Icon size={24} />
             </div>
             <div>
-              <h4 className="font-bold" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+              <h4 className="font-bold" style={{ fontFamily: 'Cinzel, serif' }}>
                 {challenge.title}
               </h4>
               <p className="text-white/80 text-sm">{challenge.description}</p>
@@ -114,7 +114,7 @@ const ChallengeCard = ({ challenge, onClaim }) => {
           )}
 
           {isClaimed && (
-            <span className="px-4 py-2 bg-green-100 text-green-700 font-semibold rounded-xl text-sm">
+            <span className="px-4 py-2 bg-[hsl(142,45%,88%)] text-green-700 font-semibold rounded-xl text-sm">
               ✓ Resgatado
             </span>
           )}
@@ -349,7 +349,7 @@ const WeeklyChallenges = () => {
               <Calendar size={28} />
             </div>
             <div>
-              <h2 className="text-2xl font-bold" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+              <h2 className="text-2xl font-bold" style={{ fontFamily: 'Cinzel, serif' }}>
                 Desafios Semanais
               </h2>
               <p className="text-white/80 text-sm">
@@ -410,7 +410,7 @@ const WeeklyChallenges = () => {
                 <Trophy className="text-yellow-900" size={24} />
               </div>
               <div className="flex-1">
-                <h4 className="font-bold text-yellow-800" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+                <h4 className="font-bold text-yellow-800" style={{ fontFamily: 'Cinzel, serif' }}>
                   Todos os Desafios Completos!
                 </h4>
                 <p className="text-yellow-700 text-sm">

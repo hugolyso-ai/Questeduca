@@ -169,8 +169,8 @@ const SchoolCalendar = ({ isOpen, onClose, userRole = 'student' }) => {
   const getEventTypeColor = (type) => {
     switch(type) {
       case 'holiday': return 'bg-red-100 text-red-700 border-red-300';
-      case 'vacation': return 'bg-green-100 text-green-700 border-green-300';
-      case 'school': return 'bg-blue-100 text-blue-700 border-blue-300';
+      case 'vacation': return 'bg-[hsl(142,45%,88%)] text-green-700 border-green-300';
+      case 'school': return 'bg-[hsl(200,55%,88%)] text-blue-700 border-blue-300';
       case 'challenge': return 'bg-purple-100 text-purple-700 border-purple-300';
       case 'league': return 'bg-amber-100 text-amber-700 border-amber-300';
       default: return 'bg-slate-100 text-slate-700 border-slate-300';
@@ -180,8 +180,8 @@ const SchoolCalendar = ({ isOpen, onClose, userRole = 'student' }) => {
   const getEventDotColor = (type) => {
     switch(type) {
       case 'holiday': return 'bg-red-500';
-      case 'vacation': return 'bg-green-500';
-      case 'school': return 'bg-blue-500';
+      case 'vacation': return 'bg-[hsl(35,92%,50%)]';
+      case 'school': return 'bg-[hsl(35,92%,50%)]';
       case 'challenge': return 'bg-purple-500';
       case 'league': return 'bg-amber-500';
       default: return 'bg-slate-500';
@@ -252,10 +252,10 @@ const SchoolCalendar = ({ isOpen, onClose, userRole = 'student' }) => {
         settings.darkMode ? 'bg-slate-800' : 'bg-white'
       }`}>
         {/* Header */}
-        <div className="sticky top-0 bg-gradient-to-r from-purple-500 to-blue-600 p-6 text-white rounded-t-3xl">
+        <div className="sticky top-0 bg-gradient-to-r from-purple-500 to-[hsl(24,70%,42%)] p-6 text-white rounded-t-3xl">
           <div className="flex justify-between items-center">
             <div>
-              <h2 className="text-2xl font-bold flex items-center gap-2" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+              <h2 className="text-2xl font-bold flex items-center gap-2" style={{ fontFamily: 'Cinzel, serif' }}>
                 <Calendar size={28} />
                 Calendário Escolar
               </h2>
@@ -319,7 +319,7 @@ const SchoolCalendar = ({ isOpen, onClose, userRole = 'student' }) => {
             >
               <ChevronLeft size={24} />
             </button>
-            <h3 className={`text-xl font-bold ${settings.darkMode ? 'text-white' : 'text-slate-800'}`} style={{ fontFamily: 'Fredoka, sans-serif' }}>
+            <h3 className={`text-xl font-bold ${settings.darkMode ? 'text-white' : 'text-slate-800'}`} style={{ fontFamily: 'Cinzel, serif' }}>
               {monthNames[month]} {year}
             </h3>
             <button
@@ -395,11 +395,11 @@ const SchoolCalendar = ({ isOpen, onClose, userRole = 'student' }) => {
                 <span className={`text-xs ${settings.darkMode ? 'text-slate-300' : 'text-slate-600'}`}>Feriado</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                <div className="w-3 h-3 rounded-full bg-[hsl(35,92%,50%)]"></div>
                 <span className={`text-xs ${settings.darkMode ? 'text-slate-300' : 'text-slate-600'}`}>Férias</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                <div className="w-3 h-3 rounded-full bg-[hsl(35,92%,50%)]"></div>
                 <span className={`text-xs ${settings.darkMode ? 'text-slate-300' : 'text-slate-600'}`}>Escola</span>
               </div>
               <div className="flex items-center gap-2">

@@ -177,17 +177,17 @@ const SpeedMathGame = ({ onGameEnd, difficulty = 'medium' }) => {
     
     return (
       <div className="text-center py-8">
-        <div className="w-24 h-24 mx-auto rounded-full flex items-center justify-center mb-6 bg-gradient-to-br from-green-400 to-emerald-600">
+        <div className="w-24 h-24 mx-auto rounded-full flex items-center justify-center mb-6 bg-gradient-to-br from-[hsl(38,95%,60%)] to-emerald-600">
           <Calculator className="text-white" size={48} />
         </div>
         
-        <h2 className="text-3xl font-bold mb-2" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+        <h2 className="text-3xl font-bold mb-2" style={{ fontFamily: 'Cinzel, serif' }}>
           🧮 Tempo Esgotado!
         </h2>
         <p className="text-slate-500 mb-6">Aqui estão os teus resultados:</p>
         
         <div className="grid grid-cols-2 gap-4 max-w-sm mx-auto mb-6">
-          <div className="bg-gradient-to-br from-purple-500 to-blue-600 rounded-xl p-4 text-white">
+          <div className="bg-gradient-to-br from-purple-500 to-[hsl(28,80%,38%)] rounded-xl p-4 text-white">
             <p className="text-3xl font-bold">{score}</p>
             <p className="text-xs text-white/80">Pontuação</p>
           </div>
@@ -205,7 +205,7 @@ const SpeedMathGame = ({ onGameEnd, difficulty = 'medium' }) => {
           </div>
         </div>
         
-        <p className="text-lg text-green-600 font-semibold mb-6">
+        <p className="text-lg text-[hsl(28,85%,40%)] font-semibold mb-6">
           +{coinsWon} moedas ganhas!
         </p>
         
@@ -227,7 +227,7 @@ const SpeedMathGame = ({ onGameEnd, difficulty = 'medium' }) => {
           </button>
           <button
             onClick={() => onGameEnd(coinsWon)}
-            className="px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-xl hover:opacity-90 transition"
+            className="px-8 py-3 bg-gradient-to-r from-[hsl(35,92%,50%)] to-emerald-600 text-white font-bold rounded-xl hover:opacity-90 transition"
           >
             Continuar
           </button>
@@ -261,7 +261,7 @@ const SpeedMathGame = ({ onGameEnd, difficulty = 'medium' }) => {
         
         {/* Tempo total */}
         <div className={`px-6 py-3 rounded-xl font-bold text-lg flex items-center gap-2 ${
-          timeLeft <= 10 ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-blue-100 text-blue-700'
+          timeLeft <= 10 ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-[hsl(200,55%,88%)] text-[hsl(28,85%,32%)]'
         }`}>
           <Clock size={20} />
           {timeLeft}s
@@ -273,7 +273,7 @@ const SpeedMathGame = ({ onGameEnd, difficulty = 'medium' }) => {
         <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
           <div 
             className={`h-full transition-all duration-1000 ${
-              questionTimeLeft <= 3 ? 'bg-red-500' : 'bg-green-500'
+              questionTimeLeft <= 3 ? 'bg-red-500' : 'bg-[hsl(35,92%,50%)]'
             }`}
             style={{ width: `${(questionTimeLeft / problem.timeLimit) * 100}%` }}
           />
@@ -282,7 +282,7 @@ const SpeedMathGame = ({ onGameEnd, difficulty = 'medium' }) => {
 
       {/* Pergunta */}
       <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-3xl p-8 text-white text-center mb-6">
-        <p className="text-5xl font-bold mb-2" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+        <p className="text-5xl font-bold mb-2" style={{ fontFamily: 'Cinzel, serif' }}>
           {problem.question}
         </p>
         {streak >= 3 && (
@@ -300,7 +300,7 @@ const SpeedMathGame = ({ onGameEnd, difficulty = 'medium' }) => {
           
           if (answered) {
             if (option === problem.answer) {
-              buttonClass = 'bg-green-100 border-2 border-green-500 text-green-800';
+              buttonClass = 'bg-[hsl(142,45%,88%)] border-2 border-[hsl(35,92%,50%)] text-[hsl(28,85%,32%)]';
             } else if (option === selectedAnswer) {
               buttonClass = 'bg-red-100 border-2 border-red-500 text-red-800';
             } else {
@@ -317,7 +317,7 @@ const SpeedMathGame = ({ onGameEnd, difficulty = 'medium' }) => {
             >
               {option}
               {answered && option === problem.answer && (
-                <Check className="inline ml-2 text-green-600" size={24} />
+                <Check className="inline ml-2 text-[hsl(28,85%,40%)]" size={24} />
               )}
               {answered && option === selectedAnswer && option !== problem.answer && (
                 <X className="inline ml-2 text-red-600" size={24} />
@@ -330,7 +330,7 @@ const SpeedMathGame = ({ onGameEnd, difficulty = 'medium' }) => {
       {/* Feedback */}
       {answered && (
         <div className={`mt-4 p-3 rounded-xl text-center font-semibold ${
-          isCorrect ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+          isCorrect ? 'bg-[hsl(142,45%,88%)] text-[hsl(28,85%,32%)]' : 'bg-red-100 text-red-700'
         }`}>
           {isCorrect ? (
             <>

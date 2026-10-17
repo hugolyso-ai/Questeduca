@@ -121,8 +121,8 @@ const DailyStreak = ({ onStreakUpdate }) => {
   const getMilestone = (streak) => {
     if (streak >= 30) return { label: 'Lenda', color: 'from-yellow-400 to-amber-500', emoji: '👑' };
     if (streak >= 14) return { label: 'Mestre', color: 'from-purple-400 to-purple-600', emoji: '🏆' };
-    if (streak >= 7) return { label: 'Dedicado', color: 'from-blue-400 to-blue-600', emoji: '⭐' };
-    if (streak >= 3) return { label: 'Consistente', color: 'from-green-400 to-green-600', emoji: '🔥' };
+    if (streak >= 7) return { label: 'Dedicado', color: 'from-[hsl(35,92%,60%)] to-[hsl(28,85%,38%)]', emoji: '⭐' };
+    if (streak >= 3) return { label: 'Consistente', color: 'from-[hsl(38,95%,60%)] to-[hsl(28,80%,38%)]', emoji: '🔥' };
     return { label: 'Iniciante', color: 'from-slate-400 to-slate-500', emoji: '🌱' };
   };
 
@@ -168,7 +168,7 @@ const DailyStreak = ({ onStreakUpdate }) => {
                 <Flame size={28} className="text-white" />
               </div>
               <div>
-                <h3 className="font-bold text-lg" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+                <h3 className="font-bold text-lg" style={{ fontFamily: 'Cinzel, serif' }}>
                   Streak Diário
                 </h3>
                 <p className="text-white/80 text-sm">
@@ -177,7 +177,7 @@ const DailyStreak = ({ onStreakUpdate }) => {
               </div>
             </div>
             <div className="text-right">
-              <div className="text-3xl font-bold" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+              <div className="text-3xl font-bold" style={{ fontFamily: 'Cinzel, serif' }}>
                 {streakData.current_streak}
               </div>
               <div className="text-white/80 text-xs">dias seguidos</div>
@@ -216,7 +216,7 @@ const DailyStreak = ({ onStreakUpdate }) => {
               <div className="text-xs text-slate-500">💎 Bónus</div>
             </div>
             <div className="bg-white rounded-xl p-3 text-center shadow-sm border border-slate-100">
-              <Calendar size={20} className="mx-auto text-blue-500 mb-1" />
+              <Calendar size={20} className="mx-auto text-[hsl(35,92%,45%)] mb-1" />
               <div className="text-lg font-bold text-slate-800">
                 {streakData.streak_active ? '✓' : '—'}
               </div>
@@ -259,7 +259,7 @@ const DailyStreak = ({ onStreakUpdate }) => {
                   : 'bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600'
               }`}
               data-testid="claim-streak-btn"
-              style={{ fontFamily: 'Fredoka, sans-serif' }}
+              style={{ fontFamily: 'Cinzel, serif' }}
             >
               {claiming ? (
                 <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent" />
@@ -272,7 +272,7 @@ const DailyStreak = ({ onStreakUpdate }) => {
               )}
             </button>
           ) : streakData.streak_claimed_today ? (
-            <div className="w-full py-4 rounded-xl bg-green-100 text-green-700 font-semibold text-center flex items-center justify-center gap-2">
+            <div className="w-full py-4 rounded-xl bg-[hsl(142,45%,88%)] text-[hsl(28,85%,32%)] font-semibold text-center flex items-center justify-center gap-2">
               <Check size={20} />
               Bónus reclamado hoje!
             </div>

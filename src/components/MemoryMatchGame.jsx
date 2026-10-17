@@ -65,7 +65,7 @@ const MemoryCard = ({ card, isFlipped, isMatched, onClick }) => {
       >
         {/* Frente (virada para baixo) */}
         <div
-          className="absolute w-full h-full bg-gradient-to-br from-purple-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg"
+          className="absolute w-full h-full bg-gradient-to-br from-purple-500 to-[hsl(24,70%,42%)] rounded-xl flex items-center justify-center shadow-lg"
           style={{ backfaceVisibility: 'hidden' }}
         >
           <span className="text-4xl">❓</span>
@@ -74,7 +74,7 @@ const MemoryCard = ({ card, isFlipped, isMatched, onClick }) => {
         {/* Verso (símbolo ou conceito) */}
         <div
           className={`absolute w-full h-full rounded-xl flex items-center justify-center shadow-lg p-1 text-center ${
-            isMatched ? 'bg-green-100 border-2 border-green-400' : 'bg-white border-2 border-slate-200'
+            isMatched ? 'bg-[hsl(142,45%,88%)] border-2 border-green-400' : 'bg-white border-2 border-slate-200'
           }`}
           style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
         >
@@ -213,7 +213,7 @@ const MemoryMatchGame = ({ onGameEnd, difficulty = 'medium' }) => {
           )}
         </div>
         
-        <h2 className="text-3xl font-bold mb-4" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+        <h2 className="text-3xl font-bold mb-4" style={{ fontFamily: 'Cinzel, serif' }}>
           {gameStatus === 'won' ? '🎉 Parabéns!' : '⏰ Tempo Esgotado!'}
         </h2>
         
@@ -223,16 +223,16 @@ const MemoryMatchGame = ({ onGameEnd, difficulty = 'medium' }) => {
             <p className="text-xs text-slate-500">Jogadas</p>
           </div>
           <div className="bg-slate-100 rounded-xl p-3">
-            <p className="text-2xl font-bold text-blue-600">{matchedPairs.length}</p>
+            <p className="text-2xl font-bold text-[hsl(28,85%,40%)]">{matchedPairs.length}</p>
             <p className="text-xs text-slate-500">Pares</p>
           </div>
           <div className="bg-slate-100 rounded-xl p-3">
-            <p className="text-2xl font-bold text-green-600">{score}</p>
+            <p className="text-2xl font-bold text-[hsl(28,85%,40%)]">{score}</p>
             <p className="text-xs text-slate-500">Pontos</p>
           </div>
         </div>
         
-        <p className="text-lg text-green-600 font-semibold mb-6">
+        <p className="text-lg text-[hsl(28,85%,40%)] font-semibold mb-6">
           +{coinsWon} moedas ganhas!
         </p>
         
@@ -246,7 +246,7 @@ const MemoryMatchGame = ({ onGameEnd, difficulty = 'medium' }) => {
           </button>
           <button
             onClick={() => onGameEnd(coinsWon)}
-            className="px-8 py-3 bg-gradient-to-r from-purple-500 to-blue-600 text-white font-bold rounded-xl hover:opacity-90 transition"
+            className="px-8 py-3 bg-gradient-to-r from-purple-500 to-[hsl(24,70%,42%)] text-white font-bold rounded-xl hover:opacity-90 transition"
           >
             Continuar
           </button>
@@ -277,7 +277,7 @@ const MemoryMatchGame = ({ onGameEnd, difficulty = 'medium' }) => {
               key={s.id}
               onClick={() => setEduSubject(s.id)}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
-                eduSubject === s.id ? 'bg-blue-500 text-white shadow' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                eduSubject === s.id ? 'bg-[hsl(35,92%,50%)] text-white shadow' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
               {s.emoji} {s.name}
@@ -293,8 +293,8 @@ const MemoryMatchGame = ({ onGameEnd, difficulty = 'medium' }) => {
             <span className="text-sm text-purple-600">Jogadas</span>
             <p className="text-xl font-bold text-purple-700">{moves}</p>
           </div>
-          <div className="bg-green-100 px-4 py-2 rounded-xl">
-            <span className="text-sm text-green-600">Pares</span>
+          <div className="bg-[hsl(142,45%,88%)] px-4 py-2 rounded-xl">
+            <span className="text-sm text-[hsl(28,85%,40%)]">Pares</span>
             <p className="text-xl font-bold text-green-700">{matchedPairs.length}/{config.pairs}</p>
           </div>
         </div>

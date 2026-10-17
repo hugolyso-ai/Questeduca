@@ -61,7 +61,7 @@ const SchoolRanking = ({ studentProfile }) => {
             <Trophy size={28} />
           </div>
           <div>
-            <h2 className="text-2xl font-bold" style={{ fontFamily: 'Fredoka, sans-serif' }}>Classificações</h2>
+            <h2 className="text-2xl font-bold" style={{ fontFamily: 'Cinzel, serif' }}>Classificações</h2>
             <p className="text-white/80 text-sm">
               {scope === 'turma' && studentProfile?.class_name ? `Turma ${studentProfile.class_name}` :
                scope === 'escola' && studentProfile?.school_name ? studentProfile.school_name :

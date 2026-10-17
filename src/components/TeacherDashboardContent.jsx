@@ -165,11 +165,11 @@ const TeacherDashboardContent = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-indigo-600 to-blue-600 rounded-3xl p-6 text-white shadow-xl">
+      <div className="bg-gradient-to-r from-indigo-600 to-[hsl(24,70%,42%)] rounded-3xl p-6 text-white shadow-xl">
         <div className="flex items-center gap-4">
           <div className="bg-white/20 p-3 rounded-2xl"><GraduationCap size={30} /></div>
           <div>
-            <h2 className="text-2xl font-bold" style={{ fontFamily: 'Fredoka, sans-serif' }}>Painel do Professor</h2>
+            <h2 className="text-2xl font-bold" style={{ fontFamily: 'Cinzel, serif' }}>Painel do Professor</h2>
             <p className="text-white/80 text-sm">
               {teacherProfile?.teacher_kind === 'explicador' ? 'Explicador / Centro de Estudos' : 'Professor Tutelar'}
               {' · '}{teacherProfile?.disciplines?.join(', ') || 'Sem disciplinas'}
@@ -201,7 +201,7 @@ const TeacherDashboardContent = () => {
         <div className="space-y-4">
           {/* Adicionar por nickname */}
           <div className="bg-white rounded-3xl shadow-lg p-5">
-            <h4 className="font-bold text-slate-800 mb-3" style={{ fontFamily: 'Fredoka, sans-serif' }}>Adicionar Aluno pelo Nickname</h4>
+            <h4 className="font-bold text-slate-800 mb-3" style={{ fontFamily: 'Cinzel, serif' }}>Adicionar Aluno pelo Nickname</h4>
             <form onSubmit={addStudent} className="grid md:grid-cols-[1fr_1fr_auto] gap-3 items-end">
               <div>
                 <label className="flex items-center gap-1.5 text-xs font-bold text-slate-600 mb-1"><Search size={14} /> Nickname do aluno</label>
@@ -226,7 +226,7 @@ const TeacherDashboardContent = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="px-6 py-2.5 bg-gradient-to-r from-indigo-500 to-blue-600 text-white font-bold rounded-xl hover:opacity-90 transition disabled:opacity-50 flex items-center gap-2 whitespace-nowrap"
+                className="px-6 py-2.5 bg-gradient-to-r from-indigo-500 to-[hsl(24,70%,42%)] text-white font-bold rounded-xl hover:opacity-90 transition disabled:opacity-50 flex items-center gap-2 whitespace-nowrap"
               >
                 <UserPlus size={16} /> Adicionar
               </button>
@@ -235,7 +235,7 @@ const TeacherDashboardContent = () => {
 
           {/* Lista de alunos */}
           <div className="bg-white rounded-3xl shadow-lg p-5">
-            <h4 className="font-bold text-slate-800 mb-3" style={{ fontFamily: 'Fredoka, sans-serif' }}>Os Meus Alunos ({myStudents.length})</h4>
+            <h4 className="font-bold text-slate-800 mb-3" style={{ fontFamily: 'Cinzel, serif' }}>Os Meus Alunos ({myStudents.length})</h4>
             {myStudents.length === 0 ? (
               <p className="text-slate-400 text-sm text-center py-4">Ainda não tens alunos. Adiciona-os pelo nickname acima.</p>
             ) : (
@@ -245,7 +245,7 @@ const TeacherDashboardContent = () => {
                   return (
                     <div key={link.id} className="flex items-center justify-between bg-slate-50 rounded-xl p-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-400 to-blue-500 flex items-center justify-center text-white font-bold">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-400 to-[hsl(24,70%,42%)] flex items-center justify-center text-white font-bold">
                           {s?.nickname?.[0]?.toUpperCase() || '?'}
                         </div>
                         <div>
@@ -272,7 +272,7 @@ const TeacherDashboardContent = () => {
             <div className="bg-gradient-to-r from-amber-500 to-orange-600 p-5 text-white flex items-center gap-3">
               <div className="bg-white/20 p-2.5 rounded-xl"><BookPlus size={24} /></div>
               <div>
-                <h4 className="font-bold" style={{ fontFamily: 'Fredoka, sans-serif' }}>Adicionar / Sugerir Livro</h4>
+                <h4 className="font-bold" style={{ fontFamily: 'Cinzel, serif' }}>Adicionar / Sugerir Livro</h4>
                 <p className="text-white/80 text-xs">Alunos e pais são notificados no jogo e por email. Downloads apenas dentro da app.</p>
               </div>
             </div>
@@ -346,7 +346,7 @@ const TeacherDashboardContent = () => {
 
           {/* Lista de livros */}
           <div className="bg-white rounded-3xl shadow-lg p-5">
-            <h4 className="font-bold text-slate-800 mb-3" style={{ fontFamily: 'Fredoka, sans-serif' }}>Livros da Minha Biblioteca ({myBooks.length})</h4>
+            <h4 className="font-bold text-slate-800 mb-3" style={{ fontFamily: 'Cinzel, serif' }}>Livros da Minha Biblioteca ({myBooks.length})</h4>
             {myBooks.length === 0 ? (
               <p className="text-slate-400 text-sm text-center py-4">Ainda sem livros na biblioteca.</p>
             ) : (
@@ -354,8 +354,8 @@ const TeacherDashboardContent = () => {
                 {myBooks.map(b => (
                   <div key={b.id} className="flex items-center justify-between bg-slate-50 rounded-xl p-3">
                     <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg ${b.book_type === 'digital' ? 'bg-blue-100' : 'bg-amber-100'}`}>
-                        <FileText size={18} className={b.book_type === 'digital' ? 'text-blue-600' : 'text-amber-600'} />
+                      <div className={`p-2 rounded-lg ${b.book_type === 'digital' ? 'bg-[hsl(200,55%,88%)]' : 'bg-amber-100'}`}>
+                        <FileText size={18} className={b.book_type === 'digital' ? 'text-[hsl(28,85%,40%)]' : 'text-amber-600'} />
                       </div>
                       <div>
                         <p className="font-semibold text-slate-800 text-sm">{b.title}{b.author ? ` — ${b.author}` : ''}</p>

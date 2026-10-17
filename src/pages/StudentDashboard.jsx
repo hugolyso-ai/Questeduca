@@ -38,8 +38,8 @@ const TABS = [
 ]
 
 const SUBJECTS = [
-  { id: 'matematica', name: 'Matemática', icon: 'math', color: 'from-blue-500 to-cyan-600' },
-  { id: 'portugues', name: 'Português', icon: 'language', color: 'from-green-500 to-emerald-600' },
+  { id: 'matematica', name: 'Matemática', icon: 'math', color: 'from-[hsl(35,92%,50%)] to-cyan-600' },
+  { id: 'portugues', name: 'Português', icon: 'language', color: 'from-[hsl(35,92%,50%)] to-emerald-600' },
   { id: 'estudo_meio', name: 'Estudo do Meio', icon: 'science', color: 'from-amber-500 to-orange-600' },
   { id: 'historia', name: 'História', icon: 'history', color: 'from-red-500 to-rose-600' },
   { id: 'geografia', name: 'Geografia', icon: 'geography', color: 'from-teal-500 to-cyan-600' },
@@ -329,18 +329,18 @@ const QuizView = ({ gameState, setGameState, userId, schoolYear }) => {
     return (
       <div className="bg-white rounded-3xl shadow-xl p-8 text-center">
         <Trophy className="w-20 h-20 text-yellow-500 mx-auto mb-6" />
-        <h2 className="text-3xl font-bold mb-2" style={{ fontFamily: 'Fredoka, sans-serif' }}>
+        <h2 className="text-3xl font-bold mb-2" style={{ fontFamily: 'Cinzel, serif' }}>
           {correctCount === questions.length ? 'PERFEITO! 🌟' : 'Quiz Completo!'}
         </h2>
         {bestStreak >= 3 && <p className="text-amber-600 font-bold mb-2">🔥 Sequência de {bestStreak} acertos!</p>}
         <div className="grid grid-cols-3 gap-4 max-w-md mx-auto mb-6">
-          <div className="bg-blue-50 rounded-xl p-4"><p className="text-3xl font-bold text-blue-600">{correctCount}</p><p className="text-xs text-slate-500">Corretas</p></div>
-          <div className="bg-green-50 rounded-xl p-4"><p className="text-3xl font-bold text-green-600">{score}</p><p className="text-xs text-slate-500">Pontos</p></div>
+          <div className="bg-[hsl(38,80%,93%)] rounded-xl p-4"><p className="text-3xl font-bold text-[hsl(28,85%,40%)]">{correctCount}</p><p className="text-xs text-slate-500">Corretas</p></div>
+          <div className="bg-[hsl(38,80%,93%)] rounded-xl p-4"><p className="text-3xl font-bold text-[hsl(28,85%,40%)]">{score}</p><p className="text-xs text-slate-500">Pontos</p></div>
           <div className="bg-amber-50 rounded-xl p-4"><p className="text-3xl font-bold text-amber-600">{correctCount * 5}</p><p className="text-xs text-slate-500">Moedas</p></div>
         </div>
         <div className="flex gap-3 justify-center">
-          <button onClick={() => { setQuizComplete(false); startQuiz(selectedSubject, mode) }} className="px-6 py-3 bg-blue-500 text-white font-bold rounded-xl hover:bg-blue-600 transition">Jogar Outro</button>
-          <button onClick={() => { setQuizComplete(false); setMode(null); setSelectedSubject(null) }} className="px-6 py-3 bg-green-500 text-white font-bold rounded-xl hover:bg-green-600 transition">Voltar aos Quizzes</button>
+          <button onClick={() => { setQuizComplete(false); startQuiz(selectedSubject, mode) }} className="px-6 py-3 bg-[hsl(35,92%,50%)] text-white font-bold rounded-xl hover:bg-[hsl(24,70%,42%)] transition">Jogar Outro</button>
+          <button onClick={() => { setQuizComplete(false); setMode(null); setSelectedSubject(null) }} className="px-6 py-3 bg-[hsl(35,92%,50%)] text-white font-bold rounded-xl hover:bg-[hsl(33,90%,45%)] transition">Voltar aos Quizzes</button>
         </div>
       </div>
     )
@@ -349,7 +349,7 @@ const QuizView = ({ gameState, setGameState, userId, schoolYear }) => {
   if (loadingQuiz) {
     return (
       <div className="bg-white rounded-3xl shadow-xl p-12 text-center">
-        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto" />
+        <div className="w-12 h-12 border-4 border-[hsl(35,92%,50%)] border-t-transparent rounded-full animate-spin mx-auto" />
         <p className="text-slate-500 mt-4">A preparar as perguntas...</p>
       </div>
     )
@@ -361,8 +361,8 @@ const QuizView = ({ gameState, setGameState, userId, schoolYear }) => {
       <div className="bg-white rounded-3xl shadow-xl p-6">
         <div className="flex justify-between items-center mb-6 flex-wrap gap-2">
           <div className="flex items-center gap-2 flex-wrap">
-            <div className="bg-blue-100 px-4 py-2 rounded-xl"><span className="text-sm text-blue-600">Pergunta</span><p className="text-xl font-bold text-blue-700">{currentQuestion + 1}/{questions.length}</p></div>
-            <div className="bg-green-100 px-4 py-2 rounded-xl"><span className="text-sm text-green-600">Pontos</span><p className="text-xl font-bold text-green-700">{score}</p></div>
+            <div className="bg-[hsl(200,55%,88%)] px-4 py-2 rounded-xl"><span className="text-sm text-[hsl(28,85%,40%)]">Pergunta</span><p className="text-xl font-bold text-blue-700">{currentQuestion + 1}/{questions.length}</p></div>
+            <div className="bg-[hsl(142,45%,88%)] px-4 py-2 rounded-xl"><span className="text-sm text-[hsl(28,85%,40%)]">Pontos</span><p className="text-xl font-bold text-green-700">{score}</p></div>
             {streak >= 2 && <div className="bg-amber-100 px-4 py-2 rounded-xl animate-pulse"><span className="text-sm text-amber-600">Sequência</span><p className="text-xl font-bold text-amber-700">🔥 {streak}</p></div>}
             {mode === 'desafio' && timeLeft !== null && (
               <div className={`px-4 py-2 rounded-xl ${timeLeft <= 30 ? 'bg-red-100 animate-pulse' : 'bg-slate-100'}`}>
@@ -374,13 +374,13 @@ const QuizView = ({ gameState, setGameState, userId, schoolYear }) => {
           <button onClick={() => { setQuizActive(false); setMode(null); setSelectedSubject(null) }} className="p-2 hover:bg-slate-100 rounded-xl transition"><X size={20} /></button>
         </div>
         <div className="flex items-center justify-between gap-3 mb-6">
-          <div className={`flex-1 bg-gradient-to-r rounded-2xl p-8 text-white text-center ${mode === 'desafio' ? 'from-orange-500 to-red-600' : 'from-blue-500 to-cyan-600'}`}>
-            <p className="text-2xl font-bold" style={{ fontFamily: 'Fredoka, sans-serif' }}>{question.question}</p>
+          <div className={`flex-1 bg-gradient-to-r rounded-2xl p-8 text-white text-center ${mode === 'desafio' ? 'from-orange-500 to-red-600' : 'from-[hsl(35,92%,50%)] to-cyan-600'}`}>
+            <p className="text-2xl font-bold" style={{ fontFamily: 'Cinzel, serif' }}>{question.question}</p>
             {(question.difficulty || 1) >= 3 && <span className="inline-block mt-2 px-3 py-1 bg-white/20 rounded-full text-xs font-bold">Difícil · vale mais pontos!</span>}
           </div>
           <button
             onClick={() => setSpeakEnabled(!speakEnabled)}
-            className={`p-3 rounded-xl transition border-2 ${speakEnabled ? 'bg-green-100 border-green-400' : 'bg-slate-50 border-slate-200'}`}
+            className={`p-3 rounded-xl transition border-2 ${speakEnabled ? 'bg-[hsl(142,45%,88%)] border-green-400' : 'bg-slate-50 border-slate-200'}`}
             title="Ler a pergunta em voz alta"
           >
             {speakEnabled ? '🔊' : '🔇'}
@@ -396,9 +396,9 @@ const QuizView = ({ gameState, setGameState, userId, schoolYear }) => {
         )}
         <div className="grid grid-cols-2 gap-3">
           {question.options.map((option, index) => {
-            let buttonClass = 'bg-white border-2 border-slate-200 hover:border-blue-400 hover:bg-blue-50'
+            let buttonClass = 'bg-white border-2 border-slate-200 hover:border-[hsl(35,60%,60%)] hover:bg-[hsl(38,80%,93%)]'
             if (answered) {
-              if (index === question.correct_answer) buttonClass = 'bg-green-100 border-2 border-green-500'
+              if (index === question.correct_answer) buttonClass = 'bg-[hsl(142,45%,88%)] border-2 border-[hsl(35,92%,50%)]'
               else if (index === selectedAnswer) buttonClass = 'bg-red-100 border-2 border-red-500'
               else buttonClass = 'bg-slate-100 border-2 border-slate-200 opacity-50'
             } else if (eliminated.includes(index)) {
@@ -407,7 +407,7 @@ const QuizView = ({ gameState, setGameState, userId, schoolYear }) => {
             return (
               <button key={index} onClick={() => handleAnswer(index)} disabled={answered || eliminated.includes(index)} className={`p-4 rounded-xl font-medium transition ${buttonClass}`}>
                 <span className="text-base">{option}</span>
-                {answered && index === question.correct_answer && <Check className="inline ml-2 text-green-600" size={18} />}
+                {answered && index === question.correct_answer && <Check className="inline ml-2 text-[hsl(28,85%,40%)]" size={18} />}
                 {answered && index === selectedAnswer && index !== question.correct_answer && <X className="inline ml-2 text-red-600" size={18} />}
               </button>
             )
@@ -421,11 +421,11 @@ const QuizView = ({ gameState, setGameState, userId, schoolYear }) => {
     <div className="bg-white rounded-3xl shadow-xl p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <BookOpen className="text-blue-500" size={28} />
-          <h2 className="text-2xl font-bold" style={{ fontFamily: 'Fredoka, sans-serif' }}>Escolhe uma Disciplina</h2>
+          <BookOpen className="text-[hsl(35,92%,45%)]" size={28} />
+          <h2 className="text-2xl font-bold" style={{ fontFamily: 'Cinzel, serif' }}>Escolhe uma Disciplina</h2>
         </div>
         {schoolLevel > 0 && (
-          <div className="hidden md:flex items-center gap-2 bg-green-100 px-4 py-2 rounded-xl">
+          <div className="hidden md:flex items-center gap-2 bg-[hsl(142,45%,88%)] px-4 py-2 rounded-xl">
             <span className="text-green-700 font-bold text-sm">🏫 Escola Nv.{schoolLevel}: +{schoolLevel * 10}% XP e moedas</span>
           </div>
         )}
@@ -434,7 +434,7 @@ const QuizView = ({ gameState, setGameState, userId, schoolYear }) => {
         {SUBJECTS.map(subject => (
           <div key={subject.id} className={`bg-gradient-to-br ${subject.color} rounded-2xl p-5 text-white shadow-lg hover:shadow-xl transition-all`}>
             <BookOpen className="mx-auto mb-2" size={28} />
-            <h3 className="font-bold text-lg text-center" style={{ fontFamily: 'Fredoka, sans-serif' }}>{subject.name}</h3>
+            <h3 className="font-bold text-lg text-center" style={{ fontFamily: 'Cinzel, serif' }}>{subject.name}</h3>
             <p className="text-white/80 text-xs text-center mb-3">10 perguntas · {schoolYear ? `${schoolYear}º ano` : 'todos os níveis'}</p>
             <div className="grid grid-cols-2 gap-2">
               <button onClick={() => startQuiz(subject.id, 'treino')} className="px-2 py-2 bg-white/25 hover:bg-white/40 rounded-lg font-bold text-sm transition">
@@ -519,9 +519,9 @@ const StudentDashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[hsl(40,33%,96%)] to-blue-50">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <div className="w-16 h-16 border-4 border-[hsl(35,92%,50%)] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-slate-600 font-semibold">A carregar a tua aventura...</p>
         </div>
       </div>
@@ -529,14 +529,14 @@ const StudentDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-slate-50">
+    <div className="min-h-screen bg-gradient-to-br from-[hsl(40,33%,96%)] via-[hsl(40,33%,96%)] to-slate-50">
       {/* Top Bar */}
       <nav className="backdrop-blur-xl bg-white/80 border-b border-slate-200/50 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-3">
-              <Castle className="h-8 w-8 text-green-500" strokeWidth={2.5} />
-              <span className="text-xl font-bold text-slate-900" style={{ fontFamily: 'Fredoka, sans-serif' }}>QUESTEDUCA</span>
+              <Castle className="h-8 w-8 text-[hsl(35,92%,45%)]" strokeWidth={2.5} />
+              <span className="text-xl font-bold text-slate-900" style={{ fontFamily: 'Cinzel, serif' }}>QUESTEDUCA</span>
             </div>
             <div className="flex items-center gap-2 md:gap-4">
               {gameState && (
@@ -566,7 +566,7 @@ const StudentDashboard = () => {
             {TABS.map(tab => {
               const Icon = tab.icon
               return (
-                <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center gap-2 px-4 py-3 font-semibold text-sm whitespace-nowrap border-b-2 transition ${activeTab === tab.id ? 'border-green-500 text-green-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}>
+                <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center gap-2 px-4 py-3 font-semibold text-sm whitespace-nowrap border-b-2 transition ${activeTab === tab.id ? 'border-[hsl(35,92%,50%)] text-[hsl(28,85%,40%)]' : 'border-transparent text-slate-500 hover:text-slate-700'}`}>
                   <Icon size={16} />{tab.name}
                 </button>
               )

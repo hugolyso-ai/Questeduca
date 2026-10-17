@@ -19,7 +19,7 @@ const MINIGAMES = {
     name: 'Duelo de Conhecimento',
     description: 'Responde mais rápido que o teu adversário!',
     icon: Brain,
-    color: 'from-blue-500 to-cyan-600',
+    color: 'from-[hsl(35,92%,50%)] to-cyan-600',
     players: 2,
     duration: '5 min',
     rewards: { winner: 50, loser: 10 }
@@ -39,7 +39,7 @@ const MINIGAMES = {
     name: 'Matemática Rápida',
     description: 'Resolve operações contra o tempo!',
     icon: Calculator,
-    color: 'from-green-500 to-teal-600',
+    color: 'from-[hsl(35,92%,50%)] to-teal-600',
     players: 1,
     duration: '1 min',
     rewards: { winner: 35, loser: 10 }
@@ -50,13 +50,13 @@ const MiniGameCard = ({ game, onSelect, disabled }) => {
   const Icon = game.icon
   return (
     <div
-      className={`bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all border-2 border-transparent hover:border-blue-200 ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+      className={`bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all border-2 border-transparent hover:border-[hsl(200,40%,85%)] ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
       onClick={() => !disabled && onSelect(game)}
     >
       <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${game.color} flex items-center justify-center mb-4 mx-auto`}>
         <Icon className="text-white" size={32} />
       </div>
-      <h3 className="font-bold text-lg text-slate-800 text-center mb-2" style={{ fontFamily: 'Fredoka, sans-serif' }}>{game.name}</h3>
+      <h3 className="font-bold text-lg text-slate-800 text-center mb-2" style={{ fontFamily: 'Cinzel, serif' }}>{game.name}</h3>
       <p className="text-sm text-slate-500 text-center mb-4" style={{ fontFamily: 'Nunito, sans-serif' }}>{game.description}</p>
       <div className="flex items-center justify-center gap-4 text-xs text-slate-400">
         <span className="flex items-center gap-1"><Users size={14} />{game.players} jogadores</span>
@@ -64,7 +64,7 @@ const MiniGameCard = ({ game, onSelect, disabled }) => {
       </div>
       <div className="mt-4 pt-4 border-t border-slate-100">
         <div className="flex justify-between text-sm">
-          <span className="text-green-600 font-semibold"><Trophy size={14} className="inline mr-1" />+{game.rewards.winner} moedas</span>
+          <span className="text-[hsl(28,85%,40%)] font-semibold"><Trophy size={14} className="inline mr-1" />+{game.rewards.winner} moedas</span>
           <span className="text-slate-400">Participação: +{game.rewards.loser}</span>
         </div>
       </div>
@@ -118,17 +118,17 @@ const QuizDuelGame = ({ opponent, onEnd, questions }) => {
     const tie = playerScore === opponentScore
     return (
       <div className="text-center py-12">
-        <div className={`w-24 h-24 mx-auto rounded-full flex items-center justify-center mb-6 ${won ? 'bg-gradient-to-br from-yellow-400 to-amber-500' : tie ? 'bg-gradient-to-br from-blue-400 to-blue-600' : 'bg-gradient-to-br from-slate-400 to-slate-600'}`}>
+        <div className={`w-24 h-24 mx-auto rounded-full flex items-center justify-center mb-6 ${won ? 'bg-gradient-to-br from-yellow-400 to-amber-500' : tie ? 'bg-gradient-to-br from-[hsl(200,55%,88%)] to-[hsl(24,70%,42%)]' : 'bg-gradient-to-br from-slate-400 to-slate-600'}`}>
           {won ? <Crown className="text-white" size={48} /> : <Trophy className="text-white" size={48} />}
         </div>
-        <h2 className="text-3xl font-bold mb-4" style={{ fontFamily: 'Fredoka, sans-serif' }}>{won ? 'Vitória!' : tie ? 'Empate!' : 'Boa Tentativa!'}</h2>
+        <h2 className="text-3xl font-bold mb-4" style={{ fontFamily: 'Cinzel, serif' }}>{won ? 'Vitória!' : tie ? 'Empate!' : 'Boa Tentativa!'}</h2>
         <div className="flex justify-center gap-8 mb-6">
-          <div className="text-center"><p className="text-sm text-slate-500">Tu</p><p className="text-4xl font-bold text-blue-600">{playerScore}</p></div>
+          <div className="text-center"><p className="text-sm text-slate-500">Tu</p><p className="text-4xl font-bold text-[hsl(28,85%,40%)]">{playerScore}</p></div>
           <div className="text-2xl font-bold text-slate-300 self-center">VS</div>
           <div className="text-center"><p className="text-sm text-slate-500">{opponent}</p><p className="text-4xl font-bold text-slate-600">{opponentScore}</p></div>
         </div>
-        <p className="text-lg text-green-600 font-semibold mb-6">+{won ? 50 : tie ? 25 : 10} moedas ganhas!</p>
-        <button onClick={() => onEnd(won ? 50 : tie ? 25 : 10)} className="px-8 py-3 bg-gradient-to-r from-blue-500 to-cyan-600 text-white font-bold rounded-xl hover:opacity-90 transition">Continuar</button>
+        <p className="text-lg text-[hsl(28,85%,40%)] font-semibold mb-6">+{won ? 50 : tie ? 25 : 10} moedas ganhas!</p>
+        <button onClick={() => onEnd(won ? 50 : tie ? 25 : 10)} className="px-8 py-3 bg-gradient-to-r from-[hsl(35,92%,50%)] to-cyan-600 text-white font-bold rounded-xl hover:opacity-90 transition">Continuar</button>
       </div>
     )
   }
@@ -137,28 +137,28 @@ const QuizDuelGame = ({ opponent, onEnd, questions }) => {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <div className="text-center"><p className="text-xs text-slate-500">Tu</p><p className="text-2xl font-bold text-blue-600">{playerScore}</p></div>
+        <div className="text-center"><p className="text-xs text-slate-500">Tu</p><p className="text-2xl font-bold text-[hsl(28,85%,40%)]">{playerScore}</p></div>
         <div className="text-center">
           <div className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold ${timeLeft <= 3 ? 'bg-red-500 text-white animate-pulse' : 'bg-slate-100 text-slate-700'}`}>{timeLeft}</div>
           <p className="text-xs text-slate-500 mt-1">{currentQuestion + 1}/{questions.length}</p>
         </div>
         <div className="text-center"><p className="text-xs text-slate-500">{opponent}</p><p className="text-2xl font-bold text-slate-600">{opponentScore}</p></div>
       </div>
-      <div className="bg-gradient-to-r from-blue-500 to-cyan-600 rounded-2xl p-6 text-white mb-6">
+      <div className="bg-gradient-to-r from-[hsl(35,92%,50%)] to-cyan-600 rounded-2xl p-6 text-white mb-6">
         <p className="text-lg font-semibold" style={{ fontFamily: 'Nunito, sans-serif' }}>{question.question_text}</p>
       </div>
       <div className="grid grid-cols-2 gap-3">
         {question.options.map((option, index) => {
-          let buttonClass = 'bg-white border-2 border-slate-200 hover:border-blue-400 hover:bg-blue-50'
+          let buttonClass = 'bg-white border-2 border-slate-200 hover:border-[hsl(35,60%,60%)] hover:bg-[hsl(38,80%,93%)]'
           if (answered) {
-            if (index === question.correct_answer) buttonClass = 'bg-green-100 border-2 border-green-500'
+            if (index === question.correct_answer) buttonClass = 'bg-[hsl(142,45%,88%)] border-2 border-[hsl(35,92%,50%)]'
             else if (index === selectedAnswer) buttonClass = 'bg-red-100 border-2 border-red-500'
             else buttonClass = 'bg-slate-100 border-2 border-slate-200 opacity-50'
           }
           return (
             <button key={index} onClick={() => handleAnswer(index)} disabled={answered} className={`p-4 rounded-xl font-medium transition ${buttonClass}`}>
               <span className="text-sm">{option}</span>
-              {answered && index === question.correct_answer && <Check className="inline ml-2 text-green-600" size={18} />}
+              {answered && index === question.correct_answer && <Check className="inline ml-2 text-[hsl(28,85%,40%)]" size={18} />}
               {answered && index === selectedAnswer && index !== question.correct_answer && <X className="inline ml-2 text-red-600" size={18} />}
             </button>
           )
@@ -232,7 +232,7 @@ const MiniGamesHub = ({ childId, childName, onClose }) => {
     return (
       <div className="bg-white rounded-3xl shadow-xl p-6">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold" style={{ fontFamily: 'Fredoka, sans-serif' }}>{selectedGame.name}</h2>
+          <h2 className="text-2xl font-bold" style={{ fontFamily: 'Cinzel, serif' }}>{selectedGame.name}</h2>
           <button onClick={() => { setGameStarted(false); setSelectedGame(null) }} className="p-2 hover:bg-slate-100 rounded-xl transition"><X size={20} /></button>
         </div>
         {selectedGame.id === 'quiz_duel' && <QuizDuelGame opponent={opponent} onEnd={handleGameEnd} questions={questions} />}
@@ -246,8 +246,8 @@ const MiniGamesHub = ({ childId, childName, onClose }) => {
     <div className="bg-white rounded-3xl shadow-xl p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <Gamepad2 className="text-blue-500" size={28} />
-          <h2 className="text-2xl font-bold" style={{ fontFamily: 'Fredoka, sans-serif' }}>Mini-Jogos</h2>
+          <Gamepad2 className="text-[hsl(35,92%,45%)]" size={28} />
+          <h2 className="text-2xl font-bold" style={{ fontFamily: 'Cinzel, serif' }}>Mini-Jogos</h2>
         </div>
         <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-xl transition"><X size={20} /></button>
       </div>

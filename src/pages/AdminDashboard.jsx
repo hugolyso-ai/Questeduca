@@ -89,7 +89,7 @@ const AdminDashboard = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800">
-        <div className="w-16 h-16 border-4 border-green-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-16 h-16 border-4 border-[hsl(35,92%,50%)] border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -100,8 +100,8 @@ const AdminDashboard = () => {
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-3">
-              <Castle className="h-8 w-8 text-green-500" strokeWidth={2.5} />
-              <span className="text-xl font-bold text-white" style={{ fontFamily: 'Fredoka, sans-serif' }}>QUESTEDUCA Admin</span>
+              <Castle className="h-8 w-8 text-[hsl(35,92%,45%)]" strokeWidth={2.5} />
+              <span className="text-xl font-bold text-white" style={{ fontFamily: 'Cinzel, serif' }}>QUESTEDUCA Admin</span>
             </div>
             <button onClick={logout} className="p-2 hover:bg-red-900/50 text-red-400 rounded-xl transition"><LogOut size={20} /></button>
           </div>
@@ -111,19 +111,19 @@ const AdminDashboard = () => {
       <div className="max-w-7xl mx-auto px-4 py-6">
         {/* Tabs */}
         <div className="flex gap-1 mb-6 bg-slate-800 rounded-xl p-1">
-          <button onClick={() => setActiveTab('overview')} className={`px-6 py-2 rounded-lg font-semibold transition ${activeTab === 'overview' ? 'bg-green-500 text-white' : 'text-slate-400 hover:text-white'}`}>Visão Geral</button>
-          <button onClick={() => setActiveTab('associations')} className={`px-6 py-2 rounded-lg font-semibold transition ${activeTab === 'associations' ? 'bg-green-500 text-white' : 'text-slate-400 hover:text-white'}`}>Associações</button>
-          <button onClick={() => setActiveTab('pending')} className={`px-6 py-2 rounded-lg font-semibold transition ${activeTab === 'pending' ? 'bg-green-500 text-white' : 'text-slate-400 hover:text-white'}`}>
+          <button onClick={() => setActiveTab('overview')} className={`px-6 py-2 rounded-lg font-semibold transition ${activeTab === 'overview' ? 'bg-[hsl(35,92%,50%)] text-white' : 'text-slate-400 hover:text-white'}`}>Visão Geral</button>
+          <button onClick={() => setActiveTab('associations')} className={`px-6 py-2 rounded-lg font-semibold transition ${activeTab === 'associations' ? 'bg-[hsl(35,92%,50%)] text-white' : 'text-slate-400 hover:text-white'}`}>Associações</button>
+          <button onClick={() => setActiveTab('pending')} className={`px-6 py-2 rounded-lg font-semibold transition ${activeTab === 'pending' ? 'bg-[hsl(35,92%,50%)] text-white' : 'text-slate-400 hover:text-white'}`}>
             Pendentes{pendingTeachers.length > 0 ? ` (${pendingTeachers.length})` : ''}
           </button>
-          <button onClick={() => setActiveTab('users')} className={`px-6 py-2 rounded-lg font-semibold transition ${activeTab === 'users' ? 'bg-green-500 text-white' : 'text-slate-400 hover:text-white'}`}>Utilizadores</button>
-          <button onClick={() => setActiveTab('class')} className={`px-6 py-2 rounded-lg font-semibold transition ${activeTab === 'class' ? 'bg-green-500 text-white' : 'text-slate-400 hover:text-white'}`}>Turma</button>
+          <button onClick={() => setActiveTab('users')} className={`px-6 py-2 rounded-lg font-semibold transition ${activeTab === 'users' ? 'bg-[hsl(35,92%,50%)] text-white' : 'text-slate-400 hover:text-white'}`}>Utilizadores</button>
+          <button onClick={() => setActiveTab('class')} className={`px-6 py-2 rounded-lg font-semibold transition ${activeTab === 'class' ? 'bg-[hsl(35,92%,50%)] text-white' : 'text-slate-400 hover:text-white'}`}>Turma</button>
         </div>
 
         {activeTab === 'overview' && (
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <div className="bg-slate-800 rounded-2xl p-6 border border-slate-700">
-              <Users className="text-green-400 mb-3" size={28} />
+              <Users className="text-[hsl(38,95%,60%)] mb-3" size={28} />
               <p className="text-3xl font-bold text-white">{stats.users}</p>
               <p className="text-slate-400 text-sm">Total Utilizadores</p>
             </div>
@@ -138,7 +138,7 @@ const AdminDashboard = () => {
               <p className="text-slate-400 text-sm">Associações</p>
             </div>
             <div className="bg-slate-800 rounded-2xl p-6 border border-slate-700">
-              <DollarSign className="text-green-400 mb-3" size={28} />
+              <DollarSign className="text-[hsl(38,95%,60%)] mb-3" size={28} />
               <p className="text-3xl font-bold text-white">{stats.revenue}€</p>
               <p className="text-slate-400 text-sm">Receita Total</p>
             </div>
@@ -147,7 +147,7 @@ const AdminDashboard = () => {
 
         {activeTab === 'associations' && (
           <div className="bg-slate-800 rounded-2xl p-6 border border-slate-700">
-            <h2 className="text-xl font-bold text-white mb-4" style={{ fontFamily: 'Fredoka, sans-serif' }}>Associações Pendentes</h2>
+            <h2 className="text-xl font-bold text-white mb-4" style={{ fontFamily: 'Cinzel, serif' }}>Associações Pendentes</h2>
             {pendingAssociations.length === 0 ? (
               <p className="text-slate-400 text-center py-8">Nenhuma associação pendente</p>
             ) : (
@@ -159,7 +159,7 @@ const AdminDashboard = () => {
                       <p className="text-sm text-slate-400">{assoc.school_name} - {assoc.municipality}</p>
                       <p className="text-xs text-slate-500">Código: {assoc.association_code}</p>
                     </div>
-                    <button onClick={() => approveAssociation(assoc.id)} className="px-4 py-2 bg-green-500 text-white font-semibold rounded-xl hover:bg-green-600 transition flex items-center gap-2"><Check size={18} /> Aprovar</button>
+                    <button onClick={() => approveAssociation(assoc.id)} className="px-4 py-2 bg-[hsl(35,92%,50%)] text-white font-semibold rounded-xl hover:bg-[hsl(33,90%,45%)] transition flex items-center gap-2"><Check size={18} /> Aprovar</button>
                   </div>
                 ))}
               </div>
@@ -169,7 +169,7 @@ const AdminDashboard = () => {
 
         {activeTab === 'pending' && (
           <div className="bg-slate-800 rounded-2xl p-6 border border-slate-700">
-            <h2 className="text-xl font-bold text-white mb-4" style={{ fontFamily: 'Fredoka, sans-serif' }}>Pedidos Pendentes (Professores)</h2>
+            <h2 className="text-xl font-bold text-white mb-4" style={{ fontFamily: 'Cinzel, serif' }}>Pedidos Pendentes (Professores)</h2>
             {pendingTeachers.length === 0 ? (
               <p className="text-slate-400 text-center py-8">Nenhum pedido pendente</p>
             ) : (
@@ -197,7 +197,7 @@ const AdminDashboard = () => {
                             className="px-4 py-2 bg-slate-600 text-white font-semibold rounded-xl hover:bg-slate-500 transition flex items-center gap-2"
                           ><Eye size={18} /> Ver</button>
                         )}
-                        <button onClick={() => reviewRoleRequest(req.user_id, true)} className="px-4 py-2 bg-green-500 text-white font-semibold rounded-xl hover:bg-green-600 transition flex items-center gap-2"><Check size={18} /> Aprovar</button>
+                        <button onClick={() => reviewRoleRequest(req.user_id, true)} className="px-4 py-2 bg-[hsl(35,92%,50%)] text-white font-semibold rounded-xl hover:bg-[hsl(33,90%,45%)] transition flex items-center gap-2"><Check size={18} /> Aprovar</button>
                         <button onClick={() => reviewRoleRequest(req.user_id, false)} className="px-4 py-2 bg-red-500 text-white font-semibold rounded-xl hover:bg-red-600 transition flex items-center gap-2"><X size={18} /> Rejeitar</button>
                       </div>
                     </div>
@@ -210,7 +210,7 @@ const AdminDashboard = () => {
 
         {activeTab === 'users' && (
           <div className="bg-slate-800 rounded-2xl p-6 border border-slate-700">
-            <h2 className="text-xl font-bold text-white mb-4" style={{ fontFamily: 'Fredoka, sans-serif' }}>Utilizadores Recentes</h2>
+            <h2 className="text-xl font-bold text-white mb-4" style={{ fontFamily: 'Cinzel, serif' }}>Utilizadores Recentes</h2>
             <div className="space-y-2">
               {recentUsers.map(u => (
                 <div key={u.id} className="bg-slate-700/50 rounded-xl p-3 flex items-center justify-between">
@@ -218,7 +218,7 @@ const AdminDashboard = () => {
                     <p className="font-semibold text-white">{u.name}</p>
                     <p className="text-sm text-slate-400">{u.email}</p>
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${u.role === 'admin' ? 'bg-red-500/20 text-red-400' : u.role === 'association' ? 'bg-amber-500/20 text-amber-400' : u.role === 'parent' ? 'bg-blue-500/20 text-blue-400' : 'bg-green-500/20 text-green-400'}`}>{u.role}</span>
+                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${u.role === 'admin' ? 'bg-red-500/20 text-red-400' : u.role === 'association' ? 'bg-amber-500/20 text-amber-400' : u.role === 'parent' ? 'bg-[hsl(35,92%,50%)]/20 text-blue-400' : 'bg-[hsl(35,92%,50%)]/20 text-[hsl(38,95%,60%)]'}`}>{u.role}</span>
                 </div>
               ))}
             </div>
@@ -229,7 +229,7 @@ const AdminDashboard = () => {
           <div className="space-y-6">
             <div className="bg-slate-800 rounded-2xl p-6 border border-slate-700 flex flex-wrap items-center justify-between gap-4">
               <div>
-                <h2 className="text-xl font-bold text-white" style={{ fontFamily: 'Fredoka, sans-serif' }}>Relatórios dos Alunos</h2>
+                <h2 className="text-xl font-bold text-white" style={{ fontFamily: 'Cinzel, serif' }}>Relatórios dos Alunos</h2>
                 <p className="text-slate-400 text-sm mt-1">Gera relatórios em PDF do progresso de cada aluno ou da turma inteira.</p>
               </div>
               <button
@@ -241,14 +241,14 @@ const AdminDashboard = () => {
                   setTimeout(() => w.print(), 500)
                   toast.success('Relatório de turma gerado! Use "Guardar como PDF".')
                 }}
-                className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold rounded-xl hover:opacity-90 transition"
+                className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-[hsl(35,92%,50%)] to-indigo-600 text-white font-bold rounded-xl hover:opacity-90 transition"
               >
                 <Printer size={18} /> Relatório da Turma (PDF)
               </button>
             </div>
 
             <div className="bg-slate-800 rounded-2xl p-6 border border-slate-700">
-              <h3 className="text-lg font-bold text-white mb-4" style={{ fontFamily: 'Fredoka, sans-serif' }}>Alunos ({classStudents.length})</h3>
+              <h3 className="text-lg font-bold text-white mb-4" style={{ fontFamily: 'Cinzel, serif' }}>Alunos ({classStudents.length})</h3>
               {classStudents.length === 0 ? (
                 <p className="text-slate-400 text-center py-8">Sem alunos registados ainda.</p>
               ) : (
@@ -256,7 +256,7 @@ const AdminDashboard = () => {
                   {classStudents.map(s => (
                     <div key={s.user_id} className="bg-slate-700/50 rounded-xl p-4 flex flex-wrap items-center justify-between gap-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center text-white font-bold">{s.nickname?.[0]?.toUpperCase() || '?'}</div>
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-[hsl(24,70%,42%)] flex items-center justify-center text-white font-bold">{s.nickname?.[0]?.toUpperCase() || '?'}</div>
                         <div>
                           <p className="font-semibold text-white">{s.nickname || 'Sem nome'}</p>
                           <p className="text-xs text-slate-400">{s.school_year ? `${s.school_year}º ano` : ''}{s.class_name ? ` · ${s.class_name}` : ''}{s.school_name ? ` · ${s.school_name}` : ''}</p>

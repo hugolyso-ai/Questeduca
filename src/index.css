@@ -1,35 +1,35 @@
-@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Nunito:wght@400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --background: 210 40% 98%;
-  --foreground: 222 47% 11%;
-  --card: 0 0% 100%;
-  --card-foreground: 222 47% 11%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 222 47% 11%;
-  --primary: 142 71% 45%;
+  --background: 40 33% 96%;
+  --foreground: 24 10% 18%;
+  --card: 45 50% 99%;
+  --card-foreground: 24 10% 18%;
+  --popover: 45 50% 99%;
+  --popover-foreground: 24 10% 18%;
+  --primary: 35 92% 50%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 210 40% 96%;
-  --secondary-foreground: 222 47% 11%;
-  --muted: 210 40% 96%;
-  --muted-foreground: 215 16% 47%;
-  --accent: 199 89% 48%;
+  --secondary: 36 33% 91%;
+  --secondary-foreground: 24 10% 22%;
+  --muted: 36 33% 91%;
+  --muted-foreground: 25 10% 40%;
+  --accent: 24 70% 40%;
   --accent-foreground: 0 0% 100%;
-  --destructive: 0 84% 60%;
+  --destructive: 0 72% 45%;
   --destructive-foreground: 0 0% 98%;
-  --border: 214 32% 91%;
-  --input: 214 32% 91%;
-  --ring: 142 71% 45%;
+  --border: 35 25% 85%;
+  --input: 35 25% 85%;
+  --ring: 35 92% 50%;
   --radius: 0.75rem;
-  --chart-1: 142 71% 45%;
-  --chart-2: 199 89% 48%;
-  --chart-3: 38 92% 50%;
-  --chart-4: 280 65% 60%;
-  --chart-5: 340 75% 55%;
+  --chart-1: 35 92% 50%;
+  --chart-2: 24 70% 45%;
+  --chart-3: 142 60% 42%;
+  --chart-4: 200 70% 42%;
+  --chart-5: 340 65% 50%;
 }
 
 @layer base {
@@ -42,7 +42,8 @@
     -webkit-font-smoothing: antialiased;
   }
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Fredoka', sans-serif;
+    font-family: 'Cinzel', serif;
+    letter-spacing: 0.01em;
   }
 }
 
@@ -72,6 +73,22 @@
 ::-webkit-scrollbar-track { background: hsl(var(--muted)); }
 ::-webkit-scrollbar-thumb { background: hsl(var(--primary) / 0.5); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: hsl(var(--primary)); }
+
+/* Parchment surfaces for game panels */
+.parchment {
+  background-color: hsl(45 55% 97%);
+  background-image: linear-gradient(180deg, hsl(45 60% 99%) 0%, hsl(43 45% 95%) 100%);
+  border: 1px solid hsl(35 25% 85%);
+}
+
+/* Gold gradient buttons used across the game */
+.btn-gold {
+  background-image: linear-gradient(180deg, hsl(38 95% 58%) 0%, hsl(33 90% 48%) 100%);
+  color: #fff;
+  box-shadow: 0 4px 0 hsl(28 85% 38%), 0 6px 14px rgba(120, 60, 0, 0.25);
+}
+.btn-gold:hover { filter: brightness(1.05); }
+.btn-gold:active { transform: translateY(2px); box-shadow: 0 2px 0 hsl(28 85% 38%); }
 
 /* Isometric grid */
 .iso-grid {
@@ -103,7 +120,7 @@
 .animate-float-up { animation: float-up 1s ease-out forwards; }
 
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 5px rgba(74, 222, 128, 0.3); }
-  50% { box-shadow: 0 0 20px rgba(74, 222, 128, 0.6); }
+  0%, 100% { box-shadow: 0 0 5px rgba(245, 158, 11, 0.3); }
+  50% { box-shadow: 0 0 20px rgba(245, 158, 11, 0.55); }
 }
 .animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }

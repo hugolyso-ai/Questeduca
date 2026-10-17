@@ -54,10 +54,10 @@ const BuildingCard = ({ id, gameState, buildings, placingId, onStartPlace }) => 
 
   if (isBuilt) {
     return (
-      <div className="relative flex flex-col items-center gap-1 p-2 rounded-xl bg-green-50 border-2 border-green-300 w-28 shrink-0" data-testid={`build-item-${id}`}>
+      <div className="relative flex flex-col items-center gap-1 p-2 rounded-xl bg-[hsl(38,80%,93%)] border-2 border-green-300 w-28 shrink-0" data-testid={`build-item-${id}`}>
         <img src={ASSETS[id]} alt={config.name} className="h-12 object-contain" draggable={false} />
         <span className="text-[11px] font-bold text-stone-700 text-center leading-tight">{config.name}</span>
-        <span className="flex items-center gap-1 text-[10px] font-black text-green-600">
+        <span className="flex items-center gap-1 text-[10px] font-black text-[hsl(28,85%,40%)]">
           <Check size={11} /> Construído Nv.{level}
         </span>
       </div>
