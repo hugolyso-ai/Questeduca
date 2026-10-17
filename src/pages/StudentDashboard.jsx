@@ -11,6 +11,8 @@ import IsometricCity from '../components/IsometricCity'
 import BattleAndSocial from '../components/BattleAndSocial'
 import SchoolRanking from '../components/SchoolRanking'
 import WeeklyCurricularMission from '../components/WeeklyCurricularMission'
+import ProfileSettingsPanel from '../components/ProfileSettingsPanel'
+import QuizDuels from '../components/QuizDuels'
 import DailyStreak from '../components/DailyStreak'
 import WeeklyChallenges from '../components/WeeklyChallenges'
 import MonthlyLeagues from '../components/MonthlyLeagues'
@@ -582,7 +584,10 @@ const StudentDashboard = () => {
           </div>
         )}
         {activeTab === 'social' && (
-          <BattleAndSocial gameState={gameState} userId={user.id} onRefresh={fetchGameData} />
+          <div className="space-y-6">
+            <QuizDuels onRefresh={fetchGameData} />
+            <BattleAndSocial gameState={gameState} userId={user.id} onRefresh={fetchGameData} />
+          </div>
         )}
         {activeTab === 'ranking' && (
           <SchoolRanking studentProfile={studentProfile} />
@@ -597,7 +602,10 @@ const StudentDashboard = () => {
           <SchoolCalendar schoolYear={studentProfile?.school_year} />
         )}
         {activeTab === 'settings' && (
-          <AccessibilityPanel />
+          <div className="space-y-6">
+            <ProfileSettingsPanel studentProfile={studentProfile} onRefresh={fetchGameData} />
+            <AccessibilityPanel />
+          </div>
         )}
       </div>
 

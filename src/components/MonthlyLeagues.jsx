@@ -91,8 +91,8 @@ const MonthlyLeagues = () => {
                 const { data: school } = await supabase
                   .from('schools')
                   .select('name')
-                  .eq('id', studentProfile.school_id)
-                  .single();
+                  .eq('school_id', studentProfile.school_id)
+                  .maybeSingle();
                 if (school?.name) schoolName = school.name;
               }
             }
@@ -300,17 +300,18 @@ const MonthlyLeagues = () => {
           Recompensas da Liga
         </h3>
 
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
-            { pos: '🥇 1º', diamonds: 100, badge: '🏆 Campeão' },
-            { pos: '🥈 2º', diamonds: 50, badge: '🥈 Prata' },
-            { pos: '🥉 3º', diamonds: 25, badge: '🥉 Bronze' },
-            { pos: '4º-10º', diamonds: 10, badge: '-' },
+            { pos: '🥇 1º', diamonds: 100, badge: '🏆 Campeão', cosmetic: 'Título "Campeão Nacional" + bandeira dourada na cidade' },
+            { pos: '🥈 2º', diamonds: 50, badge: '🥈 Prata', cosmetic: 'Título "Veterano de Prata" + bandeira prateada' },
+            { pos: '🥉 3º', diamonds: 25, badge: '🥉 Bronze', cosmetic: 'Título "Desafiante de Bronze" + bandeira de bronze' },
+            { pos: '4º-10º', diamonds: 10, badge: '-', cosmetic: 'Título "Top 10" visível no perfil' },
           ].map((reward, i) => (
             <div key={i} className="bg-white rounded-xl p-3 text-center shadow-sm">
               <p className="font-bold text-amber-700 text-sm">{reward.pos}</p>
               <p className="text-cyan-600 font-bold">{reward.diamonds} 💎</p>
               <p className="text-xs text-slate-500">{reward.badge}</p>
+              <p className="text-xs text-purple-600 mt-1 font-medium">{reward.cosmetic}</p>
             </div>
           ))}
         </div>
