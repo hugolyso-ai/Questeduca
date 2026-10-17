@@ -16,6 +16,7 @@ import PaymentSuccess from './pages/PaymentSuccess'
 import PaymentCancel from './pages/PaymentCancel'
 import PrivacyPolicy from './pages/PrivacyPolicy'
 import TermsOfService from './pages/TermsOfService'
+import { RoleChoicePage, PendingApprovalPage } from './pages/RoleChoicePage'
 
 function App() {
   return (
@@ -27,6 +28,8 @@ function App() {
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/role-choice" element={<RoleChoicePage />} />
+            <Route path="/pending-approval" element={<PendingApprovalPage />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<TermsOfService />} />

@@ -20,6 +20,16 @@ function ProtectedRoute({ allowedRoles, children }) {
     return <Navigate to="/login" replace />
   }
 
+  // Conta rejeitada ou pendente de aprovação → ecrã de espera
+  if (profile && (profile.approval_status === 'pending' || profile.approval_status === 'rejected')) {
+    return <Navigate to="/pending-approval" replace />
+  }
+
+  // Papel ainda não escolhido (login Google) → escolher papel
+  if (profile && profile.role === 'pending_role') {
+    return <Navigate to="/role-choice" replace />
+  }
+
   if (allowedRoles && profile && !allowedRoles.includes(profile.role)) {
     const dashboardMap = {
       student: '/student/dashboard',

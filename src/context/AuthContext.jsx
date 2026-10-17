@@ -59,7 +59,11 @@ export const AuthProvider = ({ children }) => {
             if (event === 'SIGNED_IN' && session.user.app_metadata?.provider === 'google') {
               await ensureGoogleProfile(session.user)
             }
-            await fetchProfile(session.user.id)
+            const prof = await fetchProfile(session.user.id)
+            // Google novo sem email de aluno autorizado → perfil temporário 'pending_role' → escolher papel
+            if (prof && prof.role === 'pending_role' && !window.location.pathname.startsWith('/role-choice')) {
+              window.location.assign('/role-choice')
+            }
           } else {
             setUser(null)
             setProfile(null)
@@ -152,13 +156,19 @@ export const AuthProvider = ({ children }) => {
       .maybeSingle()
     if (existing) return existing
     const name = authUser.user_metadata?.full_name || authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'Utilizador'
+
+    // Verifica se o email Google já está autorizado por um pai (aluno)
+    try {
+      await supabase.rpc('is_authorized_student_email')
+    } catch { /* função em falta → segue para escolha de papel */ }
+
     const { data: created, error } = await supabase
       .from('user_profiles')
       .insert({
         id: authUser.id,
         email: authUser.email,
         name,
-        role: 'student',
+        role: 'pending_role',
         picture: authUser.user_metadata?.avatar_url || authUser.user_metadata?.picture || null,
       })
       .select()
@@ -178,7 +188,6 @@ export const AuthProvider = ({ children }) => {
       password: newPassword,
     })
     if (error) throw error
-
     if (user) {
       await supabase
         .from('user_profiles')

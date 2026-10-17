@@ -38,6 +38,14 @@ const LoginPage = () => {
       }
 
       toast.success('Login bem-sucedido!')
+      if (prof?.approval_status === 'pending' || prof?.approval_status === 'rejected') {
+        navigate('/pending-approval')
+        return
+      }
+      if (role === 'pending_role') {
+        navigate('/role-choice')
+        return
+      }
       if (role === 'student') navigate('/student/dashboard')
       else if (role === 'parent') navigate('/parent/dashboard')
       else if (role === 'association') navigate('/association/dashboard')

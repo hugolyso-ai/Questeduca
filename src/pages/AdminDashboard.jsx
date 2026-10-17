@@ -12,6 +12,7 @@ const AdminDashboard = () => {
   const { user, profile, logout } = useAuth()
   const [stats, setStats] = useState({ users: 0, students: 0, parents: 0, associations: 0, revenue: 0 })
   const [pendingAssociations, setPendingAssociations] = useState([])
+  const [pendingTeachers, setPendingTeachers] = useState([])
   const [recentUsers, setRecentUsers] = useState([])
   const [classStudents, setClassStudents] = useState([])
   const [loading, setLoading] = useState(true)
@@ -24,9 +25,15 @@ const AdminDashboard = () => {
       const { count: parentsCount } = await supabase.from('parent_profiles').select('*', { count: 'exact', head: true })
       const { count: assocCount } = await supabase.from('association_profiles').select('*', { count: 'exact', head: true })
       const { data: pending } = await supabase.from('association_profiles').select('*').eq('approved', false)
+      const { data: pendingRoles } = await supabase
+        .from('role_selection_requests')
+        .select('*')
+        .in('chosen_role', ['teacher', 'association'])
+        .is('reviewed_at', null)
       const { data: users } = await supabase.from('user_profiles').select('*').order('created_at', { ascending: false }).limit(20)
       setStats({ users: usersCount || 0, students: studentsCount || 0, parents: parentsCount || 0, associations: assocCount || 0, revenue: 0 })
       setPendingAssociations(pending || [])
+      setPendingTeachers((pendingRoles || []).filter(r => r.chosen_role === 'teacher'))
       setRecentUsers(users || [])
 
       // Alunos com resumo de jogo, para o relatório de turma
@@ -60,6 +67,25 @@ const AdminDashboard = () => {
     }
   }
 
+  const reviewRoleRequest = async (userId, approve) => {
+    try {
+      let reason = null
+      if (!approve) {
+        reason = window.prompt('Motivo da rejeição (opcional):')
+      }
+      const { data, error } = await supabase.rpc('approve_role_request', {
+        p_user_id: userId,
+        p_approve: approve,
+        p_reason: reason,
+      })
+      if (error) throw error
+      toast.success(approve ? 'Aprovado! O utilizador já pode entrar.' : 'Pedido rejeitado.')
+      fetchAdminData()
+    } catch (error) {
+      toast.error(error.message || 'Erro ao processar o pedido')
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800">
@@ -87,6 +113,9 @@ const AdminDashboard = () => {
         <div className="flex gap-1 mb-6 bg-slate-800 rounded-xl p-1">
           <button onClick={() => setActiveTab('overview')} className={`px-6 py-2 rounded-lg font-semibold transition ${activeTab === 'overview' ? 'bg-green-500 text-white' : 'text-slate-400 hover:text-white'}`}>Visão Geral</button>
           <button onClick={() => setActiveTab('associations')} className={`px-6 py-2 rounded-lg font-semibold transition ${activeTab === 'associations' ? 'bg-green-500 text-white' : 'text-slate-400 hover:text-white'}`}>Associações</button>
+          <button onClick={() => setActiveTab('pending')} className={`px-6 py-2 rounded-lg font-semibold transition ${activeTab === 'pending' ? 'bg-green-500 text-white' : 'text-slate-400 hover:text-white'}`}>
+            Pendentes{pendingTeachers.length > 0 ? ` (${pendingTeachers.length})` : ''}
+          </button>
           <button onClick={() => setActiveTab('users')} className={`px-6 py-2 rounded-lg font-semibold transition ${activeTab === 'users' ? 'bg-green-500 text-white' : 'text-slate-400 hover:text-white'}`}>Utilizadores</button>
           <button onClick={() => setActiveTab('class')} className={`px-6 py-2 rounded-lg font-semibold transition ${activeTab === 'class' ? 'bg-green-500 text-white' : 'text-slate-400 hover:text-white'}`}>Turma</button>
         </div>
@@ -131,6 +160,47 @@ const AdminDashboard = () => {
                       <p className="text-xs text-slate-500">Código: {assoc.association_code}</p>
                     </div>
                     <button onClick={() => approveAssociation(assoc.id)} className="px-4 py-2 bg-green-500 text-white font-semibold rounded-xl hover:bg-green-600 transition flex items-center gap-2"><Check size={18} /> Aprovar</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'pending' && (
+          <div className="bg-slate-800 rounded-2xl p-6 border border-slate-700">
+            <h2 className="text-xl font-bold text-white mb-4" style={{ fontFamily: 'Fredoka, sans-serif' }}>Pedidos Pendentes (Professores)</h2>
+            {pendingTeachers.length === 0 ? (
+              <p className="text-slate-400 text-center py-8">Nenhum pedido pendente</p>
+            ) : (
+              <div className="space-y-3">
+                {pendingTeachers.map(req => (
+                  <div key={req.user_id} className="bg-slate-700/50 rounded-xl p-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <p className="font-bold text-white">{req.email}</p>
+                        <p className="text-sm text-slate-400">
+                          {req.teacher_kind === 'explicador' ? 'Explicador' : 'Tutelar'}
+                          {req.disciplines?.length ? ` · ${req.disciplines.join(', ')}` : ''}
+                        </p>
+                        <p className="text-xs text-slate-500">Móvel: {req.mobile_phone || '—'} · Escola: {req.school_name || '—'}</p>
+                        <p className="text-xs text-slate-500">Comprovativo: {req.proof_document_name || '—'}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        {req.proof_document_url && (
+                          <button
+                            onClick={async () => {
+                              const { data, error } = await supabase.storage.from('proofs').createSignedUrl(req.proof_document_url, 300)
+                              if (!error && data) window.open(data.signedUrl, '_blank')
+                              else toast.error('Não foi possível abrir o comprovativo')
+                            }}
+                            className="px-4 py-2 bg-slate-600 text-white font-semibold rounded-xl hover:bg-slate-500 transition flex items-center gap-2"
+                          ><Eye size={18} /> Ver</button>
+                        )}
+                        <button onClick={() => reviewRoleRequest(req.user_id, true)} className="px-4 py-2 bg-green-500 text-white font-semibold rounded-xl hover:bg-green-600 transition flex items-center gap-2"><Check size={18} /> Aprovar</button>
+                        <button onClick={() => reviewRoleRequest(req.user_id, false)} className="px-4 py-2 bg-red-500 text-white font-semibold rounded-xl hover:bg-red-600 transition flex items-center gap-2"><X size={18} /> Rejeitar</button>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>

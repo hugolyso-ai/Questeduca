@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { Castle, Mail, Lock, User, Building2, MapPin, School, Users, Plus, Trash2 } from 'lucide-react'
+import { Castle, Mail, Lock, User, Building2, MapPin, School, Users, Plus, Trash2, Paperclip, Phone } from 'lucide-react'
 import { toast } from 'sonner'
 import { supabase } from '../lib/supabase'
 
@@ -23,7 +23,9 @@ const RegisterPage = () => {
     school_id: '',
     school_name: '',
     class_name: '',
-    teacher_kind: 'tutelar'
+    teacher_kind: 'tutelar',
+    mobile_phone: '',
+    proof_file: null
   })
 
   const [associationData, setAssociationData] = useState({
@@ -34,7 +36,9 @@ const RegisterPage = () => {
     school_id: '',
     school_name: '',
     iban: '',
-    responsible_names: ['']
+    responsible_names: [''],
+    mobile_phone: '',
+    proof_file: null
   })
 
   const [loading, setLoading] = useState(false)
@@ -144,32 +148,58 @@ const RegisterPage = () => {
     }))
   }
 
+  const uploadProof = async (userId, file) => {
+    const path = `${userId}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`
+    const { error } = await supabase.storage.from('proofs').upload(path, file)
+    if (error) throw error
+    return path
+  }
+
   const handleTeacherRegister = async () => {
     if (teacherData.disciplines.length === 0) {
       toast.error('Selecione pelo menos uma disciplina')
       return
     }
+    if (!teacherData.mobile_phone.trim()) {
+      toast.error('Indique o contacto móvel')
+      return
+    }
+    if (!teacherData.proof_file) {
+      toast.error('Anexe o comprovativo (cédula profissional ou declaração da escola)')
+      return
+    }
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: formData.email,
       password: formData.password,
-      options: { data: { name: formData.name, role: 'teacher' } }
+      options: { data: { name: formData.name, role: 'pending_teacher' } }
     })
     if (authError) throw authError
 
     const userId = authData.user.id
+    const proofPath = await uploadProof(userId, teacherData.proof_file)
+
     await supabase.from('user_profiles').insert({
       id: userId,
       email: formData.email,
       name: formData.name,
-      role: 'teacher',
+      role: 'pending_teacher',
+      mobile_phone: teacherData.mobile_phone.trim(),
+      proof_document_name: teacherData.proof_file.name,
+      proof_document_url: proofPath,
+      approval_status: 'pending',
     })
-    await supabase.from('teacher_profiles').insert({
+    await supabase.from('role_selection_requests').insert({
       user_id: userId,
-      disciplines: teacherData.disciplines,
+      email: formData.email,
+      chosen_role: 'teacher',
+      mobile_phone: teacherData.mobile_phone.trim(),
+      proof_document_name: teacherData.proof_file.name,
+      proof_document_url: proofPath,
       school_id: teacherData.school_id || null,
       school_name: teacherData.school_name || null,
       class_name: teacherData.class_name || null,
       teacher_kind: teacherData.teacher_kind,
+      disciplines: teacherData.disciplines,
     })
   }
 
@@ -190,6 +220,16 @@ const RegisterPage = () => {
           setLoading(false)
           return
         }
+        if (!associationData.mobile_phone.trim()) {
+          toast.error('Indique o contacto móvel')
+          setLoading(false)
+          return
+        }
+        if (!associationData.proof_file) {
+          toast.error('Anexe o comprovativo da atividade da associação (estatutos ou recibo de constituição)')
+          setLoading(false)
+          return
+        }
 
         const responsibleNames = associationData.responsible_names.filter(n => n.trim())
         if (responsibleNames.length === 0) {
@@ -201,22 +241,32 @@ const RegisterPage = () => {
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email: formData.email,
           password: formData.password,
-          options: { data: { name: formData.name, role: 'association' } }
+          options: { data: { name: formData.name, role: 'pending_association' } }
         })
         if (authError) throw authError
 
         const userId = authData.user.id
         const associationCode = generateAssociationCode()
+        const proofPath = await uploadProof(userId, associationData.proof_file)
 
         await supabase.from('user_profiles').insert({
           id: userId,
           email: formData.email,
           name: formData.name,
-          role: 'association',
+          role: 'pending_association',
+          mobile_phone: associationData.mobile_phone.trim(),
+          proof_document_name: associationData.proof_file.name,
+          proof_document_url: proofPath,
+          approval_status: 'pending',
         })
 
-        const { data: assocData, error: assocError } = await supabase.from('association_profiles').insert({
+        await supabase.from('role_selection_requests').insert({
           user_id: userId,
+          email: formData.email,
+          chosen_role: 'association',
+          mobile_phone: associationData.mobile_phone.trim(),
+          proof_document_name: associationData.proof_file.name,
+          proof_document_url: proofPath,
           association_name: associationData.association_name,
           district: associationData.district,
           municipality: associationData.municipality,
@@ -226,19 +276,16 @@ const RegisterPage = () => {
           iban: associationData.iban,
           responsible_names: responsibleNames,
           association_code: associationCode,
-          approved: false,
-        }).select().single()
-
-        if (assocError) throw assocError
+        })
 
         toast.success(
-          `Associação registada! Código: ${associationCode}. Partilhe este código com os pais da escola!`,
+          `Registo submetido! A conta fica pendente de aprovação do administrador. Código da associação: ${associationCode}`,
           { duration: 15000 }
         )
         navigate('/login')
       } else if (formData.role === 'teacher') {
         await handleTeacherRegister()
-        toast.success('Registo de professor bem-sucedido! Por favor, faça login.')
+        toast.success('Registo submetido! A conta fica pendente de aprovação do administrador. Será notificado por email.', { duration: 10000 })
         navigate('/login')
       } else {
         await register(formData.email, formData.password, formData.name, formData.role, formData.nickname)
@@ -465,6 +512,43 @@ const RegisterPage = () => {
                     />
                   </div>
                 </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2" style={{ fontFamily: 'Nunito, sans-serif' }}>
+                    Contacto Móvel
+                  </label>
+                  <div className="relative">
+                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+                    <input
+                      type="tel"
+                      value={teacherData.mobile_phone}
+                      onChange={(e) => setTeacherData({ ...teacherData, mobile_phone: e.target.value })}
+                      required
+                      className="w-full pl-12 pr-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all"
+                      style={{ fontFamily: 'Nunito, sans-serif' }}
+                      placeholder="9XXXXXXXX"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2" style={{ fontFamily: 'Nunito, sans-serif' }}>
+                    Comprovativo (cédula profissional ou declaração da escola)
+                  </label>
+                  <label className="flex items-center gap-3 px-4 py-3 bg-slate-50 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:border-blue-400 transition">
+                    <Paperclip className="text-slate-400" size={20} />
+                    <span className="text-sm text-slate-600 truncate" style={{ fontFamily: 'Nunito, sans-serif' }}>
+                      {teacherData.proof_file ? teacherData.proof_file.name : 'Anexar ficheiro (PDF ou imagem)'}
+                    </span>
+                    <input
+                      type="file"
+                      accept=".pdf,image/*"
+                      className="hidden"
+                      onChange={(e) => setTeacherData({ ...teacherData, proof_file: e.target.files[0] || null })}
+                    />
+                  </label>
+                </div>
+                <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-xl p-3">
+                  O seu registo fica pendente até ser aprovado pelo administrador. Será notificado por email após a análise.
+                </p>
               </div>
             )}
 
@@ -613,6 +697,46 @@ const RegisterPage = () => {
                     <Plus size={16} /> Adicionar responsável
                   </button>
                 </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2" style={{ fontFamily: 'Nunito, sans-serif' }}>
+                    Contacto Móvel
+                  </label>
+                  <div className="relative">
+                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+                    <input
+                      type="tel"
+                      value={associationData.mobile_phone}
+                      onChange={(e) => setAssociationData({ ...associationData, mobile_phone: e.target.value })}
+                      required
+                      className="w-full pl-12 pr-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all"
+                      style={{ fontFamily: 'Nunito, sans-serif' }}
+                      placeholder="9XXXXXXXX"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2" style={{ fontFamily: 'Nunito, sans-serif' }}>
+                    Comprovativo da atividade (estatutos ou comprovativo de constituição)
+                  </label>
+                  <label className="flex items-center gap-3 px-4 py-3 bg-slate-50 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:border-blue-400 transition">
+                    <Paperclip className="text-slate-400" size={20} />
+                    <span className="text-sm text-slate-600 truncate" style={{ fontFamily: 'Nunito, sans-serif' }}>
+                      {associationData.proof_file ? associationData.proof_file.name : 'Anexar ficheiro (PDF ou imagem)'}
+                    </span>
+                    <input
+                      type="file"
+                      accept=".pdf,image/*"
+                      className="hidden"
+                      onChange={(e) => setAssociationData({ ...associationData, proof_file: e.target.files[0] || null })}
+                    />
+                  </label>
+                </div>
+
+                <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-xl p-3">
+                  O seu registo fica pendente até ser aprovado pelo administrador. Será notificado por email após a análise.
+                </p>
               </div>
             )}
 
