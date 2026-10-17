@@ -108,7 +108,7 @@ const LandingPage = () => {
           <p className="text-center text-xs text-[hsl(25,10%,45%)] mb-4">{installHint}</p>
           <div className="grid sm:grid-cols-2 gap-4">
             <button
-              onClick={() => navigate('/register')}
+              onClick={() => navigate('/login')}
               className={`flex items-center gap-4 p-5 rounded-xl hover:-translate-y-0.5 transition-all shadow-md ${
                 isMobile
                   ? 'bg-[hsl(24,10%,18%)] text-[hsl(45,55%,97%)]'
