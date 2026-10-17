@@ -1,6 +1,5 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { Castle } from 'lucide-react'
 
 const Section = ({ title, children }) => (
   <>
@@ -13,7 +12,7 @@ const PrivacyPolicy = () => (
   <div className="min-h-screen bg-gradient-to-br from-[hsl(40,33%,96%)] to-[hsl(38,80%,93%)] py-12 px-4">
     <div className="max-w-3xl mx-auto">
       <Link to="/" className="inline-flex items-center gap-3 mb-8">
-        <Castle className="h-8 w-8 text-[hsl(35,92%,45%)]" strokeWidth={2.5} />
+        <img src="/logo.png" alt="QUESTEDUCA" className="h-10 w-auto" />
         <span className="text-2xl font-bold text-slate-900" style={{ fontFamily: 'Cinzel, serif' }}>QUESTEDUCA</span>
       </Link>
       <div className="bg-white rounded-3xl shadow-xl p-8 md:p-12 text-slate-700" style={{ fontFamily: 'Nunito, sans-serif' }}>
@@ -25,7 +24,7 @@ const PrivacyPolicy = () => (
         </div>
 
         <Section title="1. Responsável pelo tratamento">
-          <p>O responsável pelo tratamento dos dados pessoais é <strong>Hugo Martins</strong>, marca <strong>QUESTEDUCA</strong> (questeduca.pt), doravante "QUESTEDUCA", contactável em <strong>info@questeduca.pt</strong>.</p>
+          <p>O responsável pelo tratamento dos dados pessoais é a <strong>QUESTEDUCA</strong>, doravante "QUESTEDUCA", contactável em <strong>info@questeduca.pt</strong>.</p>
         </Section>
 
         <Section title="2. Que dados recolhemos">
@@ -117,7 +116,7 @@ const PrivacyPolicy = () => (
 
         <Section title="12. Contacto">
           <p>Dúvidas ou pedidos relacionados com privacidade: <strong>info@questeduca.pt</strong></p>
-          <p>QUESTEDUCA (questeduca.pt) — marca de Hugo Martins.</p>
+          <p>QUESTEDUCA — Todos os direitos reservados.</p>
         </Section>
       </div>
     </div>

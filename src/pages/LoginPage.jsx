@@ -30,7 +30,7 @@ const LoginPage = () => {
     setLoading(true)
     setError('')
     const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-      redirectTo: `${window.location.origin}/login`,
+      redirectTo: `${window.location.origin}/#/login`,
     })
     setLoading(false)
     if (error) {

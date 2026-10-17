@@ -211,11 +211,11 @@ const LandingPage = () => {
 
       <footer className="bg-[hsl(24,14%,12%)] text-[hsl(45,20%,75%)] py-12">
         <div className="max-w-7xl mx-auto px-4 text-center">
-          <p>© 2026 QUESTEDUCA (questeduca.pt) — marca de Hugo Martins</p>
+          <p>© 2026 QUESTEDUCA — Todos os direitos reservados</p>
           <p className="mt-1 text-sm">info@questeduca.pt</p>
           <div className="mt-4 flex justify-center gap-6 text-sm">
-            <a href="/privacy" className="hover:text-[hsl(38,95%,65%)]">Política de Privacidade</a>
-            <a href="/terms" className="hover:text-[hsl(38,95%,65%)]">Termos e Condições</a>
+            <a href="/#/privacy" className="hover:text-[hsl(38,95%,65%)]">Política de Privacidade</a>
+            <a href="/#/terms" className="hover:text-[hsl(38,95%,65%)]">Termos e Condições</a>
           </div>
         </div>
       </footer>

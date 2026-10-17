@@ -1,6 +1,5 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { Castle } from 'lucide-react'
 
 const Section = ({ title, children }) => (
   <>
@@ -13,7 +12,7 @@ const TermsOfService = () => (
   <div className="min-h-screen bg-gradient-to-br from-[hsl(40,33%,96%)] to-[hsl(38,80%,93%)] py-12 px-4">
     <div className="max-w-3xl mx-auto">
       <Link to="/" className="inline-flex items-center gap-3 mb-8">
-        <Castle className="h-8 w-8 text-[hsl(35,92%,45%)]" strokeWidth={2.5} />
+        <img src="/logo.png" alt="QUESTEDUCA" className="h-10 w-auto" />
         <span className="text-2xl font-bold text-slate-900" style={{ fontFamily: 'Cinzel, serif' }}>QUESTEDUCA</span>
       </Link>
       <div className="bg-white rounded-3xl shadow-xl p-8 md:p-12 text-slate-700" style={{ fontFamily: 'Nunito, sans-serif' }}>
@@ -21,7 +20,7 @@ const TermsOfService = () => (
         <p className="text-sm text-slate-500 mb-6">Última atualização: 17 de outubro de 2026</p>
 
         <Section title="1. Identificação do prestador">
-          <p>A QUESTEDUCA (questeduca.pt) é uma plataforma educativa digital explorada por <strong>Hugo Martins</strong>, marca QUESTEDUCA. Contacto: <strong>info@questeduca.pt</strong>. Estes termos regem a utilização da plataforma, nos termos da lei portuguesa, nomeadamente o Decreto-Lei n.º 7/2004 (comércio eletrónico), o Regulamento (UE) 2016/679 (RGPD) e a Lei n.º 58/2019.</p>
+          <p>A QUESTEDUCA é uma plataforma educativa digital. Contacto: <strong>info@questeduca.pt</strong>. Estes termos regem a utilização da plataforma, nos termos da lei portuguesa, nomeadamente o Decreto-Lei n.º 7/2004 (comércio eletrónico), o Regulamento (UE) 2016/679 (RGPD) e a Lei n.º 58/2019.</p>
         </Section>
 
         <Section title="2. Aceitação">
@@ -103,7 +102,7 @@ const TermsOfService = () => (
 
         <Section title="16. Contacto">
           <p>Dúvidas sobre estes termos: <strong>info@questeduca.pt</strong></p>
-          <p>QUESTEDUCA (questeduca.pt) — marca de Hugo Martins.</p>
+          <p>QUESTEDUCA — Todos os direitos reservados.</p>
         </Section>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import React from 'react'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { HashRouter, Routes, Route } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import { AuthProvider } from './context/AuthContext'
 import { AccessibilityProvider } from './context/AccessibilityContext'
@@ -21,7 +21,7 @@ import { RoleChoicePage, PendingApprovalPage } from './pages/RoleChoicePage'
 
 function App() {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <AccessibilityProvider>
         <AuthProvider>
           <Toaster position="top-right" richColors />
@@ -50,7 +50,7 @@ function App() {
           <CookieConsent />
         </AuthProvider>
       </AccessibilityProvider>
-    </BrowserRouter>
+    </HashRouter>
   )
 }
 
