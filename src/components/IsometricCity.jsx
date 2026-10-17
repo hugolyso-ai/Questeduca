@@ -15,6 +15,7 @@ import BuildingPanel from './city/BuildingPanel';
 import ResourceBar from './city/ResourceBar';
 import Snowfall from './city/Snowfall';
 import SkinSelector from './city/SkinSelector';
+import LibraryPopup from './city/LibraryPopup';
 
 const AMBIENT_SOUND_URL = 'https://cdn.pixabay.com/audio/2024/11/04/audio_aff31d7b67.mp3';
 const GRID_SIZE = 14;
@@ -128,16 +129,18 @@ const IsometricCity = ({ gameState, onRefresh }) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [currentSkin, setCurrentSkin] = useState(() => localStorage.getItem('questeduca_city_skin') || 'normal');
   const [soundEnabled, setSoundEnabled] = useState(() => localStorage.getItem('questeduca_ambient_sound') === 'true');
+  const [showLibrary, setShowLibrary] = useState(false);
   const audioRef = useRef(null);
   const mapRef = useRef(null);
 
   // Layout is derived from gameState (buildings/roads are jsonb columns on game_states)
+  // Toda aldeia começa com Câmara e Biblioteca no centro
   const buildings = useMemo(() => {
     const b = gameState?.buildings || {};
-    if (!b.town_hall) {
-      return { ...b, town_hall: { x: 6, y: 6, level: 1, placed: true, producing: false } };
-    }
-    return b;
+    const base = { ...b };
+    if (!base.town_hall) base.town_hall = { x: 6, y: 6, level: 1, placed: true, producing: false };
+    if (!base.library) base.library = { x: 7, y: 7, level: 1, placed: true, producing: false };
+    return base;
   }, [gameState?.buildings]);
 
   const roads = useMemo(() => gameState?.roads || [], [gameState?.roads]);
@@ -644,8 +647,11 @@ const IsometricCity = ({ gameState, onRefresh }) => {
           onStartMove={handleStartMove}
           onDemolish={handleDemolish}
           loading={loading}
+          onOpenLibrary={() => setShowLibrary(true)}
         />
       )}
+
+      {showLibrary && <LibraryPopup onClose={() => setShowLibrary(false)} />}
     </div>
   );
 };

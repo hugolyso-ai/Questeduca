@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import {
-  Coins, TreePine, Mountain, Pickaxe, Clock, Check, Play, ChevronUp, X, Move, Trash2,
+  Coins, TreePine, Mountain, Pickaxe, Clock, Check, Play, ChevronUp, X, Move, Trash2, BookOpen,
 } from 'lucide-react';
 import { ASSETS, BUILDING_CONFIG, getBuildingCost } from './cityConfig';
 
 const BuildingPanel = ({
   building, gameState, onClose, onUpgrade, onStartProduction, onCollect,
-  onStartMove, onDemolish, loading,
+  onStartMove, onDemolish, loading, onOpenLibrary,
 }) => {
   const [confirmDemolish, setConfirmDemolish] = useState(false);
 
@@ -54,6 +54,15 @@ const BuildingPanel = ({
         </div>
 
         <div className="p-5 space-y-4">
+          {building.id === 'library' && level > 0 && (
+            <button
+              onClick={onOpenLibrary}
+              className="w-full py-4 bg-gradient-to-r from-[hsl(28,60%,25%)] to-[hsl(28,70%,40%)] text-white font-black rounded-2xl flex items-center justify-center gap-2 shadow-xl hover:from-[hsl(28,70%,32%)] hover:to-[hsl(28,80%,48%)] transition-all"
+              data-testid="open-library-btn"
+            >
+              <BookOpen size={22} /> ENTRAR NA BIBLIOTECA
+            </button>
+          )}
           <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl p-3 border border-amber-200">
             <p className="text-gray-700 font-medium text-sm">{config.description}</p>
           </div>

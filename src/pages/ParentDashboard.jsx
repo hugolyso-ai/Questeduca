@@ -95,7 +95,10 @@ const ParentDashboard = () => {
         xp: 0,
         level: 1,
         resources: { wood: 50, stone: 50, food: 50, gold: 20 },
-        buildings: [],
+        buildings: {
+          town_hall: { x: 6, y: 6, level: 1, placed: true, producing: false },
+          library: { x: 7, y: 7, level: 1, placed: true, producing: false },
+        },
         roads: [],
         population: 0,
         max_population: 10,
