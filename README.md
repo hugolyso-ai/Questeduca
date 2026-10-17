@@ -1,39 +1,37 @@
-# 🏰 QUESTEDUCA - Jogo Educativo RTS
+# QUESTEDUCA
 
-O jogo educativo #1 em Portugal para alunos do 1º ao 9º ano. Aprende jogando, constrói o teu império e torna-te no melhor estudante de Portugal!
+Jogo educativo português para alunos do 1.º ao 9.º ano — aprender jogando.
 
-## 🎮 Sobre o Projeto
+## Stack
 
-QUESTEDUCA é um jogo educativo tipo RTS (Real-Time Strategy) que combina aprendizagem com diversão. Os alunos respondem a perguntas baseadas no currículo português oficial e ganham recursos para construir e evoluir suas cidades virtuais.
+- **Frontend**: React 18 + Vite (diretório `src/`)
+- **Base de dados / autenticação / armazenamento**: Supabase (sem backend próprio)
 
-### Principais Características
+## Desenvolvimento
 
-- 🎯 **Perguntas Educativas**: 100+ perguntas por disciplina e ano escolar (geradas por IA GPT-5.2)
-- 🏗️ **Construção e Evolução**: Aldeia → Vila → Cidade → Concelho → Distrito
-- 👨‍👩‍👧‍👦 **Controlo Parental Total**: Pais monitorizam tudo e aprovam amizades
-- 💎 **Sistema Premium**: Ganhos aumentados e mini-jogos exclusivos
-- 🗺️ **Mapa de Portugal**: Pesquisa amigos por distrito e escola
-- 🤝 **Social**: Trading, chat e batalhas com amigos
-- ♿ **Acessível**: Suporte para dislexia, daltonismo e dificuldade visual
+```bash
+npm install
+npm run dev
+```
 
-## 🚀 Acesso à Aplicação
+## Publicação (Vercel)
 
-👉 **URL**: https://edu-empire-1.preview.emergentagent.com
+A publicação usa o `vercel.json` na raiz, com um único serviço Vite público.
 
-## 💳 Planos Premium
+Variáveis de ambiente obrigatórias no projeto Vercel:
 
-| Plano | Preço Mensal | Preço Anual | Benefícios |
-|-------|--------------|-------------|------------|
-| **Individual** | €1,99 | €21,49 (10% off) | 1 aluno, +15% ganhos |
-| **Familiar** | €4,99 | €53,89 (10% off) | 3 alunos, +15% ganhos |
+| Variável | Descrição |
+|---|---|
+| `VITE_SUPABASE_URL` | URL do projeto Supabase |
+| `VITE_SUPABASE_ANON_KEY` | Chave pública (anon) do Supabase |
 
-## 📞 Contactos
+## Autenticação Google
 
-**Empresa**: Serv2all.pt  
-**Email**: info@serv2all.pt  
+Configurar no Google Cloud Console (credenciais OAuth):
 
----
+- **Authorized JavaScript origins**: `https://questeduca.pt`, `https://www.questeduca.pt`
+- **Authorized redirect URI**: `https://<PROJETO>.supabase.co/auth/v1/callback`
 
-**Documentação técnica completa**: [IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md)
+## Base de dados
 
-**© 2026 QUESTEDUCA - Serv2all.pt**
+Migrações em `supabase/migrations/`, aplicadas via ferramenta Supabase (não por CLI).
