@@ -203,9 +203,16 @@ const RegisterPage = () => {
     })
   }
 
+  const isStrongPassword = (pwd) =>
+    pwd.length >= 8 && /[A-Z]/.test(pwd) && /[a-z]/.test(pwd) && /[^A-Za-z0-9]/.test(pwd)
+
   const handleSubmit = async (e) => {
     e.preventDefault()
 
+    if (!isStrongPassword(formData.password)) {
+      toast.error('A password deve ter pelo menos 8 caracteres, incluindo maiúscula, minúscula e um caractere especial (ex.: ! ? #)')
+      return
+    }
     if (formData.password !== formData.confirmPassword) {
       toast.error('As passwords não coincidem')
       return
@@ -388,11 +395,15 @@ const RegisterPage = () => {
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     required
+                    minLength={8}
                     className="w-full pl-12 pr-4 py-3 bg-[hsl(36,33%,93%)] border-2 border-[hsl(35,25%,85%)] rounded-xl focus:border-[hsl(35,92%,50%)] focus:ring-4 focus:ring-[hsl(35,92%,50%)]/20 transition-all"
                     style={{ fontFamily: 'Nunito, sans-serif' }}
                     placeholder="••••••••"
                   />
                 </div>
+                <p className="text-xs text-slate-500 mt-1 pl-1" style={{ fontFamily: 'Nunito, sans-serif' }}>
+                  Mínimo 8 caracteres, com maiúscula, minúscula e caractere especial (ex.: Aa1!)
+                </p>
               </div>
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-2" style={{ fontFamily: 'Nunito, sans-serif' }}>

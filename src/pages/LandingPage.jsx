@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Sparkles, Trophy, Users, Swords } from 'lucide-react'
+import { Sparkles, Trophy, Users, Swords, Smartphone, Monitor } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
 const roleDashboard = {
@@ -22,6 +22,15 @@ const LandingPage = () => {
     }
   }, [loading, user, profile, navigate])
 
+  const isMobile = useMemo(
+    () => /Android|iPhone|iPad|iPod/i.test(navigator.userAgent),
+    []
+  )
+
+  const installHint = isMobile
+    ? 'Estás no telemóvel/tablet — instala a app aqui'
+    : 'Estás no PC — joga diretamente no browser'
+
   return (
     <div className="min-h-screen bg-[hsl(40,33%,96%)] text-[hsl(24,10%,18%)]">
       {/* Cabeçalho */}
@@ -39,7 +48,7 @@ const LandingPage = () => {
                 onClick={() => navigate('/login')}
                 className="px-6 py-3 rounded-xl font-bold text-[hsl(24,10%,25%)] hover:bg-[hsl(36,33%,91%)] transition"
               >
-                Entrar
+                Regressar à Aventura
               </button>
               <button
                 onClick={() => navigate('/register')}
@@ -76,12 +85,14 @@ const LandingPage = () => {
                 className="px-10 py-4 rounded-xl font-bold text-lg btn-gold hover:-translate-y-0.5 transition-all"
               >
                 Começar Aventura <Sparkles className="inline ml-2" size={20} />
+                <span className="block text-xs font-normal opacity-80">cria a tua conta grátis</span>
               </button>
               <button
                 onClick={() => navigate('/login')}
                 className="px-10 py-4 rounded-xl font-bold text-lg bg-[hsl(45,50%,99%)] border-2 border-[hsl(35,25%,85%)] hover:border-[hsl(35,60%,60%)] hover:-translate-y-0.5 transition-all"
               >
-                <Swords className="inline mr-2" size={20} /> Entrar
+                <Swords className="inline mr-2" size={20} /> Regressar à Aventura
+                <span className="block text-xs font-normal text-[hsl(25,10%,45%)]">já tenho conta — entrar</span>
               </button>
             </div>
           </div>
@@ -94,29 +105,44 @@ const LandingPage = () => {
           <p className="text-center text-sm font-bold tracking-[0.2em] uppercase text-[hsl(25,10%,40%)] mb-6">
             Disponível em todas as plataformas
           </p>
+          <p className="text-center text-xs text-[hsl(25,10%,45%)] mb-4">{installHint}</p>
           <div className="grid sm:grid-cols-2 gap-4">
             <button
               onClick={() => navigate('/register')}
-              className="flex items-center gap-4 p-5 rounded-xl bg-[hsl(24,10%,18%)] text-[hsl(45,55%,97%)] hover:-translate-y-0.5 transition-all shadow-md"
+              className={`flex items-center gap-4 p-5 rounded-xl hover:-translate-y-0.5 transition-all shadow-md ${
+                isMobile
+                  ? 'bg-[hsl(24,10%,18%)] text-[hsl(45,55%,97%)]'
+                  : 'bg-[hsl(24,10%,18%)]/60 text-[hsl(45,55%,97%)]/70'
+              }`}
             >
               <span className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center">
-                <Swords size={24} />
+                <Smartphone size={24} />
               </span>
               <span className="text-left">
                 <span className="block text-xs opacity-70">Instalar no</span>
                 <span className="block font-bold text-lg">Telemóvel / Tablet</span>
+                {!isMobile && (
+                  <span className="block text-xs text-[hsl(38,95%,65%)]">não é o teu equipamento — muda para telemóvel</span>
+                )}
               </span>
             </button>
             <button
               onClick={() => navigate('/login')}
-              className="flex items-center gap-4 p-5 rounded-xl bg-[hsl(45,55%,99%)] border-2 border-[hsl(35,25%,85%)] hover:border-[hsl(35,60%,60%)] hover:-translate-y-0.5 transition-all shadow-sm"
+              className={`flex items-center gap-4 p-5 rounded-xl hover:-translate-y-0.5 transition-all shadow-sm ${
+                !isMobile
+                  ? 'bg-[hsl(45,55%,99%)] border-2 border-[hsl(35,60%,60%)]'
+                  : 'bg-[hsl(45,55%,99%)]/70 border-2 border-[hsl(35,25%,85%)]'
+              }`}
             >
               <span className="w-12 h-12 rounded-xl bg-[hsl(36,33%,91%)] flex items-center justify-center text-[hsl(24,10%,25%)]">
-                <Swords size={24} />
+                <Monitor size={24} />
               </span>
               <span className="text-left">
                 <span className="block text-xs text-[hsl(25,10%,40%)]">Jogar no</span>
                 <span className="block font-bold text-lg text-[hsl(24,10%,18%)]">PC / Browser</span>
+                {isMobile && (
+                  <span className="block text-xs text-[hsl(28,85%,40%)]">não é o teu equipamento — abre no PC</span>
+                )}
               </span>
             </button>
           </div>
@@ -185,7 +211,8 @@ const LandingPage = () => {
 
       <footer className="bg-[hsl(24,14%,12%)] text-[hsl(45,20%,75%)] py-12">
         <div className="max-w-7xl mx-auto px-4 text-center">
-          <p>© 2026 QUESTEDUCA - Serv2all.pt | info@serv2all.pt</p>
+          <p>© 2026 QUESTEDUCA (questeduca.pt) — marca de Hugo Martins</p>
+          <p className="mt-1 text-sm">info@questeduca.pt</p>
           <div className="mt-4 flex justify-center gap-6 text-sm">
             <a href="/privacy" className="hover:text-[hsl(38,95%,65%)]">Política de Privacidade</a>
             <a href="/terms" className="hover:text-[hsl(38,95%,65%)]">Termos e Condições</a>

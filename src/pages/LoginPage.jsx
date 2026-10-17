@@ -1,8 +1,9 @@
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { Swords, Mail, Lock, AlertCircle } from 'lucide-react'
+import { Swords, Mail, Lock, AlertCircle, KeyRound } from 'lucide-react'
 import { toast } from 'sonner'
+import { supabase } from '../lib/supabase'
 
 const GoogleIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24">
@@ -20,6 +21,24 @@ const LoginPage = () => {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [showReset, setShowReset] = useState(false)
+  const [resetEmail, setResetEmail] = useState('')
+  const [resetSent, setResetSent] = useState(false)
+
+  const handlePasswordReset = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+    const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+      redirectTo: `${window.location.origin}/login`,
+    })
+    setLoading(false)
+    if (error) {
+      setError(error.message)
+      return
+    }
+    setResetSent(true)
+  }
 
   const handleLogin = async (e) => {
     e.preventDefault()
@@ -98,6 +117,42 @@ const LoginPage = () => {
             </div>
           )}
 
+          {showReset ? (
+            resetSent ? (
+              <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4 mb-6 text-sm text-green-800" style={{ fontFamily: 'Nunito, sans-serif' }}>
+                Enviámos um link de recuperação para <strong>{resetEmail}</strong>. Verifica a caixa de entrada (e o spam) e segue as instruções para definir uma nova password.
+              </div>
+            ) : (
+              <form onSubmit={handlePasswordReset} className="space-y-5 mb-6">
+                <p className="text-sm text-slate-600" style={{ fontFamily: 'Nunito, sans-serif' }}>
+                  Indica o teu email e enviamos-te um link para criares uma nova password.
+                </p>
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2" style={{ fontFamily: 'Nunito, sans-serif' }}>Email</label>
+                  <div className="relative">
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+                    <input
+                      type="email"
+                      value={resetEmail}
+                      onChange={(e) => setResetEmail(e.target.value)}
+                      required
+                      className="w-full pl-12 pr-4 py-3 bg-[hsl(36,33%,93%)] border-2 border-[hsl(35,25%,85%)] rounded-xl focus:border-[hsl(35,92%,50%)] focus:ring-4 focus:ring-[hsl(35,92%,50%)]/20 transition-all"
+                      style={{ fontFamily: 'Nunito, sans-serif' }}
+                      placeholder="seu@email.com"
+                    />
+                  </div>
+                </div>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full px-8 py-3 rounded-xl font-bold text-white btn-gold hover:-translate-y-0.5 transition-all disabled:opacity-50"
+                  style={{ fontFamily: 'Nunito, sans-serif' }}
+                >
+                  {loading ? 'A enviar...' : 'Enviar link de recuperação'}
+                </button>
+              </form>
+            )
+          ) : (
           <form onSubmit={handleLogin} className="space-y-5">
             <div>
               <label className="block text-sm font-bold text-slate-700 mb-2" style={{ fontFamily: 'Nunito, sans-serif' }}>
@@ -135,6 +190,17 @@ const LoginPage = () => {
               </div>
             </div>
 
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => { setShowReset(true); setResetEmail(email); setResetSent(false); setError('') }}
+                className="text-sm font-bold text-[hsl(28,85%,40%)] hover:text-[hsl(28,85%,32%)] flex items-center gap-1"
+                style={{ fontFamily: 'Nunito, sans-serif' }}
+              >
+                <KeyRound size={14} /> Esqueci-me da password
+              </button>
+            </div>
+
             <button
               type="submit"
               disabled={loading}
@@ -144,6 +210,7 @@ const LoginPage = () => {
               {loading ? 'A entrar...' : 'Entrar'}
             </button>
           </form>
+          )}
 
           <div className="my-6 flex items-center gap-4">
             <div className="flex-1 h-px bg-slate-200" />
@@ -161,6 +228,18 @@ const LoginPage = () => {
             <GoogleIcon />
             Continuar com Google
           </button>
+
+          {showReset && (
+            <p className="text-center mt-4">
+              <button
+                onClick={() => { setShowReset(false); setError(''); setResetSent(false) }}
+                className="text-sm font-bold text-slate-500 hover:text-slate-700"
+                style={{ fontFamily: 'Nunito, sans-serif' }}
+              >
+                Voltar ao início de sessão
+              </button>
+            </p>
+          )}
 
           <p className="text-center mt-6 text-slate-600" style={{ fontFamily: 'Nunito, sans-serif' }}>
             Não tens conta?{' '}
