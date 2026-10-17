@@ -13,9 +13,14 @@ export const ASSETS = {
   mine: '/assets/buildings/mine.png',
   garden: '/assets/buildings/garden.png',
   wall: '/assets/buildings/wall.png',
+  villager: '/assets/units/villager.png',
+  soldier: '/assets/units/soldier.png',
   grassTexture: '/assets/grass_texture.jpg',
   roadTexture: '/assets/road_texture.jpg',
 };
+
+// Moradores: cada casa gera 2 aldeões; cada quartel, 1 soldado
+export const VILLAGER_NAMES = ['Ana','Bruno','Carla','Diogo','Elsa','Fernando','Gina','Hugo','Inês','João','Kika','Luís','Marta','Nuno','Olga','Pedro','Rita','Sofia','Tiago','Vera'];
 
 export const TILE_W = 110;
 export const TILE_H = 55;

@@ -1,9 +1,25 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Sparkles, Trophy, Users, Castle } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
+
+const roleDashboard = {
+  student: '/student/dashboard',
+  parent: '/parent/dashboard',
+  association: '/association/dashboard',
+  admin: '/admin',
+}
 
 const LandingPage = () => {
   const navigate = useNavigate()
+  const { user, profile, loading } = useAuth()
+
+  // Utilizador já autenticado (ex: regresso do Google OAuth) vai direto ao dashboard
+  useEffect(() => {
+    if (!loading && user && profile && roleDashboard[profile.role]) {
+      navigate(roleDashboard[profile.role], { replace: true })
+    }
+  }, [loading, user, profile, navigate])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-green-50">

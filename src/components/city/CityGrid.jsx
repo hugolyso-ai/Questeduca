@@ -1,7 +1,78 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
-  ASSETS, BUILDING_CONFIG, TILE_W, TILE_H, DIAMOND_CLIP, gridToScreen, worldSize,
+  ASSETS, BUILDING_CONFIG, TILE_W, TILE_H, DIAMOND_CLIP, gridToScreen, worldSize, VILLAGER_NAMES,
 } from './cityConfig';
+
+// Morador animado que vagueia perto de um edifício (aldeão ou soldado)
+const VillagerSprite = ({ tile, kind, name, gridSize, seed }) => {
+  const { left, top } = gridToScreen(tile.x, tile.y, gridSize);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [flipped, setFlipped] = useState(false);
+  const [bob, setBob] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    let timeout;
+    const wander = () => {
+      if (cancelled) return;
+      const nx = (Math.random() - 0.5) * 46;
+      const ny = (Math.random() - 0.5) * 18;
+      setOffset({ x: nx, y: ny });
+      setFlipped(nx < 0);
+      setBob(true);
+      setTimeout(() => !cancelled && setBob(false), 500);
+      timeout = setTimeout(wander, 2200 + ((seed * 137) % 2600));
+    };
+    timeout = setTimeout(wander, 800 + ((seed * 61) % 1800));
+    return () => { cancelled = true; clearTimeout(timeout); };
+  }, [seed]);
+
+  const size = kind === 'soldier' ? 34 : 28;
+  const cx = left + TILE_W / 2 + offset.x;
+  const cy = top + TILE_H / 2 + offset.y;
+
+  return (
+    <div
+      className="absolute pointer-events-none"
+      style={{ left: cx, top: cy, transform: 'translate(-50%, -100%)', zIndex: 200 + (tile.x + tile.y) * 2, transition: 'left 1.8s ease-in-out, top 1.8s ease-in-out' }}
+      data-testid={`villager-${kind}-${seed}`}
+    >
+      <img
+        src={kind === 'soldier' ? ASSETS.soldier : ASSETS.villager}
+        alt={name}
+        style={{
+          width: size,
+          transform: `${flipped ? 'scaleX(-1)' : ''} ${bob ? 'translateY(-2px)' : ''}`,
+          filter: 'drop-shadow(0 3px 5px rgba(0,0,0,0.4))',
+          transition: 'transform 0.3s',
+        }}
+        draggable={false}
+      />
+      <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-1.5 py-0.5 bg-black/55 rounded text-white font-bold" style={{ fontSize: 8, whiteSpace: 'nowrap' }}>
+        {name}
+      </div>
+    </div>
+  );
+};
+
+// Gera a lista de moradores a partir dos edifícios colocados
+const buildVillagers = (buildings) => {
+  const list = [];
+  Object.entries(buildings).forEach(([id, b]) => {
+    if (!b || typeof b !== 'object' || (b.level || 0) <= 0 || !b.placed) return;
+    if (id === 'house') {
+      list.push({ tile: b, kind: 'villager', seed: list.length + 1, name: VILLAGER_NAMES[(list.length * 3) % VILLAGER_NAMES.length] });
+      list.push({ tile: b, kind: 'villager', seed: list.length + 2, name: VILLAGER_NAMES[(list.length * 5 + 1) % VILLAGER_NAMES.length] });
+    } else if (id === 'barracks') {
+      list.push({ tile: b, kind: 'soldier', seed: list.length + 3, name: 'Guarda' });
+    } else if (id === 'farm' || id === 'market') {
+      list.push({ tile: b, kind: 'villager', seed: list.length + 4, name: VILLAGER_NAMES[(list.length * 7 + 2) % VILLAGER_NAMES.length] });
+    } else if (id === 'town_hall') {
+      list.push({ tile: b, kind: 'villager', seed: list.length + 5, name: 'Alcaide' });
+    }
+  });
+  return list;
+};
 
 // Single isometric terrain/road tile (purely visual)
 const Tile = ({ x, y, gridSize, isRoad, showGrid, overlayColor }) => {
@@ -223,6 +294,7 @@ const CityGrid = ({
   const placedBuildings = Object.entries(buildings).filter(
     ([, b]) => b && typeof b === 'object' && (b.level || 0) > 0 && b.placed
   );
+  const villagers = useMemo(() => buildVillagers(buildings), [buildings]);
 
   const hoverValid = hoverTile ? isTileValid(hoverTile.x, hoverTile.y) : false;
 
@@ -260,6 +332,11 @@ const CityGrid = ({
           dimmed={mode === 'move' && ghostBuildingId === id}
           interactive={interactive}
         />
+      ))}
+
+      {/* Moradores animados (só em modo de visualização) */}
+      {mode === 'view' && !interactive && villagers.map(v => (
+        <VillagerSprite key={`v-${v.seed}-${v.tile.x}-${v.tile.y}`} tile={v.tile} kind={v.kind} name={v.name} gridSize={gridSize} seed={v.seed} />
       ))}
 
       {/* Ghost preview for placement / move */}

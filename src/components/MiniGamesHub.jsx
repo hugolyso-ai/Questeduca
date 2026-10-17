@@ -180,14 +180,15 @@ const MiniGamesHub = ({ childId, childName, onClose }) => {
     setLoading(true)
     try {
       if (game.id === 'quiz_duel') {
-        const { data } = await supabase.from('quiz_questions').select('*').limit(5)
+        // Tenta buscar perguntas do banco (aleatórias, por ano se possível)
+        const { data } = await supabase.from('quiz_questions').select('*').limit(50)
         if (data && data.length >= 3) {
-          const formatted = data.map(q => ({
+          const shuffled = [...data].sort(() => Math.random() - 0.5).slice(0, 5)
+          setQuestions(shuffled.map(q => ({
             question_text: q.question,
             options: q.options,
-            correct_answer: q.correct_answer
-          }))
-          setQuestions(formatted)
+            correct_answer: q.correct_answer,
+          })))
         } else {
           setQuestions(FALLBACK_QUESTIONS)
         }
@@ -204,14 +205,19 @@ const MiniGamesHub = ({ childId, childName, onClose }) => {
   const handleGameEnd = async (coinsWon) => {
     if (childId) {
       try {
-        const { data: gameState } = await supabase.from('game_states').select('coins').eq('user_id', childId).single()
+        const { data: gameState } = await supabase.from('game_states').select('coins, diamonds').eq('user_id', childId).single()
         if (gameState) {
-          await supabase.from('game_states').update({ coins: gameState.coins + coinsWon }).eq('user_id', childId)
+          await supabase.from('game_states').update({
+            coins: gameState.coins + coinsWon,
+            diamonds: gameState.diamonds + 1,
+          }).eq('user_id', childId)
         }
         await supabase.from('mini_game_scores').insert({
           user_id: childId,
-          game_type: selectedGame.id,
+          game_id: selectedGame.id,
           score: coinsWon,
+          coins_won: coinsWon,
+          diamonds_won: 1,
         })
       } catch (error) {
         // Ignore - still show success to user

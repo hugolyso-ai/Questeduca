@@ -115,18 +115,57 @@ const QuizView = ({ gameState, setGameState, userId, schoolYear }) => {
   const [quizActive, setQuizActive] = useState(false)
   const [quizComplete, setQuizComplete] = useState(false)
   const [correctCount, setCorrectCount] = useState(0)
+  const [loadingQuiz, setLoadingQuiz] = useState(false)
 
-  const startQuiz = (subjectId) => {
+  const startQuiz = async (subjectId) => {
     setSelectedSubject(subjectId)
-    const generated = generateQuizQuestions(subjectId, schoolYear || 5, 10)
-    setQuestions(generated)
-    setCurrentQuestion(0)
-    setScore(0)
-    setCorrectCount(0)
-    setAnswered(false)
-    setSelectedAnswer(null)
-    setQuizActive(true)
-    setQuizComplete(false)
+    setLoadingQuiz(true)
+    const year = schoolYear ? parseInt(schoolYear) : 5
+    try {
+      // Tenta buscar perguntas do banco por disciplina + ano escolar
+      const { data, error } = await supabase
+        .from('quiz_questions')
+        .select('*')
+        .eq('subject', subjectId)
+        .eq('school_year', year)
+        .order('id', { ascending: false })
+        .limit(30)
+      let pool = data || []
+      if (error || pool.length === 0) {
+        // Sem perguntas para este ano: usa qualquer ano da disciplina
+        const { data: fallback } = await supabase
+          .from('quiz_questions')
+          .select('*')
+          .eq('subject', subjectId)
+          .limit(30)
+        pool = fallback || []
+      }
+      // Baralha e escolhe 10
+      const shuffled = [...pool].sort(() => Math.random() - 0.5).slice(0, 10)
+      if (shuffled.length === 0) {
+        // Última alternativa: gera localmente (matemática sempre funciona)
+        setQuestions(generateQuizQuestions(subjectId, year, 10))
+      } else {
+        setQuestions(shuffled.map(q => ({
+          id: q.id,
+          question: q.question,
+          options: q.options,
+          correct_answer: q.correct_answer,
+          subject: q.subject,
+        })))
+      }
+    } catch (e) {
+      setQuestions(generateQuizQuestions(subjectId, year, 10))
+    } finally {
+      setCurrentQuestion(0)
+      setScore(0)
+      setCorrectCount(0)
+      setAnswered(false)
+      setSelectedAnswer(null)
+      setQuizActive(true)
+      setQuizComplete(false)
+      setLoadingQuiz(false)
+    }
   }
 
   const handleAnswer = (index) => {
@@ -168,13 +207,19 @@ const QuizView = ({ gameState, setGameState, userId, schoolYear }) => {
             last_quiz_date: today,
           }).eq('user_id', userId)
         }
-        await supabase.from('quiz_answers').insert({
-          user_id: userId,
-          subject: selectedSubject,
-          total_questions: questions.length,
-          correct_answers: correctCount,
-          score: score,
-        })
+        // Regista o resultado do quiz (uma linha por pergunta respondida)
+        if (questions.length > 0) {
+          const rows = questions.map((q, idx) => ({
+            user_id: userId,
+            quiz_id: `${selectedSubject}_${Date.now()}`,
+            question_id: q.id ? String(q.id) : `gen_${idx}`,
+            answer_index: idx,
+            correct: idx < correctCount,
+            subject: selectedSubject,
+            school_year: String(schoolYear || 5),
+          }))
+          await supabase.from('quiz_answers').insert(rows)
+        }
       } catch (error) { /* ignore */ }
     }
     toast.success(`Quiz completo! ${correctCount}/${questions.length} corretas. +${coinsEarned} moedas!`)
@@ -191,6 +236,15 @@ const QuizView = ({ gameState, setGameState, userId, schoolYear }) => {
           <div className="bg-amber-50 rounded-xl p-4"><p className="text-3xl font-bold text-amber-600">{correctCount * 5}</p><p className="text-xs text-slate-500">Moedas</p></div>
         </div>
         <button onClick={() => { setQuizComplete(false); setSelectedSubject(null) }} className="px-8 py-3 bg-green-500 text-white font-bold rounded-xl hover:bg-green-600 transition">Voltar aos Quizzes</button>
+      </div>
+    )
+  }
+
+  if (loadingQuiz) {
+    return (
+      <div className="bg-white rounded-3xl shadow-xl p-12 text-center">
+        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto" />
+        <p className="text-slate-500 mt-4">A preparar as perguntas...</p>
       </div>
     )
   }
@@ -241,7 +295,7 @@ const QuizView = ({ gameState, setGameState, userId, schoolYear }) => {
           <button key={subject.id} onClick={() => startQuiz(subject.id)} className={`bg-gradient-to-br ${subject.color} rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all`}>
             <BookOpen className="mx-auto mb-3" size={32} />
             <h3 className="font-bold text-lg" style={{ fontFamily: 'Fredoka, sans-serif' }}>{subject.name}</h3>
-            <p className="text-white/80 text-sm mt-1">10 perguntas</p>
+            <p className="text-white/80 text-sm mt-1">10 perguntas · {schoolYear ? `${schoolYear}º ano` : 'todos os níveis'}</p>
           </button>
         ))}
       </div>
@@ -371,7 +425,7 @@ const StudentDashboard = () => {
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 py-6">
         {activeTab === 'city' && gameState && (
-          <IsometricCity gameState={gameState} updateGameState={updateGameState} userId={user.id} />
+          <IsometricCity gameState={gameState} onRefresh={fetchGameData} />
         )}
         {activeTab === 'quiz' && (
           <QuizView gameState={gameState} setGameState={setGameState} userId={user.id} schoolYear={studentProfile?.school_year} />
