@@ -73,9 +73,7 @@ const RoleChoicePage = () => {
       <div className="w-full max-w-lg">
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-3 mb-4">
-            <span className="w-12 h-12 rounded-2xl btn-gold flex items-center justify-center shadow-md">
-              <Swords className="h-6 w-6 text-white" />
-            </span>
+            <img src="/logo.svg" alt="QUESTEDUCA" className="h-16 w-16 drop-shadow-md" />
             <span className="text-3xl font-bold text-[hsl(24,10%,18%)] tracking-wide" style={{ fontFamily: 'Cinzel, serif' }}>
               QUESTEDUCA
             </span>

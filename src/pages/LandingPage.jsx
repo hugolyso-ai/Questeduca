@@ -29,9 +29,7 @@ const LandingPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             <div className="flex items-center gap-3">
-              <span className="w-11 h-11 rounded-2xl btn-gold flex items-center justify-center shadow-md">
-                <Swords className="h-6 w-6" />
-              </span>
+              <img src="/logo.svg" alt="QUESTEDUCA" className="h-14 w-14 drop-shadow-md" />
               <span className="text-2xl sm:text-3xl font-bold tracking-wide text-[hsl(24,10%,18%)]" style={{ fontFamily: 'Cinzel, serif' }}>
                 QUESTEDUCA
               </span>
