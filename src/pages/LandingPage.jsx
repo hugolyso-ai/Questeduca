@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Sparkles, Trophy, Users, Swords, Smartphone, Monitor, Download, X } from 'lucide-react'
+import { Sparkles, Trophy, Users, Swords, Smartphone, Monitor, Download, X, AlertCircle } from 'lucide-react'
+import { toast } from 'sonner'
 import { useAuth } from '../context/AuthContext'
 
 const roleDashboard = {
@@ -21,6 +22,18 @@ const LandingPage = () => {
       navigate(roleDashboard[profile.role], { replace: true })
     }
   }, [loading, user, profile, navigate])
+
+  useEffect(() => {
+    // Surface OAuth errors returned by Google/Supabase (ex: provider mal configurado)
+    const hash = window.location.hash || ''
+    const query = window.location.search || ''
+    const params = new URLSearchParams(hash.includes('?') ? hash.split('?')[1] : query)
+    const oauthError = params.get('error_description') || params.get('error')
+    if (oauthError) {
+      toast.error(`Erro na autenticação com Google: ${decodeURIComponent(oauthError).replace(/\+/g, ' ')}`, { duration: 12000 })
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+  }, [])
 
   const isMobile = useMemo(
     () => /Android|iPhone|iPad|iPod/i.test(navigator.userAgent),
