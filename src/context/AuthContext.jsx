@@ -56,13 +56,25 @@ export const AuthProvider = ({ children }) => {
         (async () => {
           if (session?.user) {
             setUser(session.user)
-            if (event === 'SIGNED_IN' && session.user.app_metadata?.provider === 'google') {
-              await ensureGoogleProfile(session.user)
-            }
-            const prof = await fetchProfile(session.user.id)
-            // Google novo sem email de aluno autorizado → perfil temporário 'pending_role' → escolher papel
-            if (prof && prof.role === 'pending_role' && !window.location.pathname.startsWith('/role-choice')) {
-              window.location.assign('/role-choice')
+            const isGoogleUser = session.user.identities?.some(identity => identity.provider === 'google')
+            let prof = isGoogleUser ? await ensureGoogleProfile(session.user) : null
+            if (!prof) prof = await fetchProfile(session.user.id)
+            setProfile(prof)
+
+            if (prof?.role === 'pending_role') {
+              if (!window.location.pathname.startsWith('/role-choice')) window.location.assign('/role-choice')
+            } else if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+              const dashboardByRole = {
+                student: '/student/dashboard',
+                parent: '/parent/dashboard',
+                association: '/association/dashboard',
+                admin: '/admin',
+                teacher: '/teacher/dashboard',
+              }
+              const destination = dashboardByRole[prof?.role]
+              if (destination && ['/login', '/'].includes(window.location.pathname)) {
+                window.location.assign(destination)
+              }
             }
           } else {
             setUser(null)
@@ -141,7 +153,7 @@ export const AuthProvider = ({ children }) => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: window.location.origin,
+        redirectTo: `${window.location.origin}/login`,
       },
     })
     if (error) throw error
