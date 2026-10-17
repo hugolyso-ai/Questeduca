@@ -314,6 +314,53 @@ const BattleAndSocial = ({ friends, currentUserId, gameState, onRefresh }) => {
   const [loading, setLoading] = useState(false);
   const [battleResult, setBattleResult] = useState(null);
   const [giftModal, setGiftModal] = useState({ open: false, friendId: null, friendName: '' });
+  const [myFriends, setMyFriends] = useState(friends || []);
+
+  // Carrega amigos reais da tabela friendships (user1_id / user2_id)
+  useEffect(() => {
+    const fetchFriends = async () => {
+      if (!user) return;
+      try {
+        const { data, error } = await supabase
+          .from('friendships')
+          .select('id, user1_id, user2_id, created_at')
+          .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`);
+        if (error) throw error;
+        const rows = data || [];
+        if (rows.length === 0) {
+          setMyFriends([]);
+          return;
+        }
+        // Descobre o ID do "outro" em cada amizade
+        const otherIds = rows.map(r => (r.user1_id === user.id ? r.user2_id : r.user1_id));
+        // Busca nomes e distritos dos perfis
+        const { data: profiles } = await supabase
+          .from('user_profiles')
+          .select('id, name')
+          .in('id', otherIds);
+        const { data: students } = await supabase
+          .from('student_profiles')
+          .select('user_id, district')
+          .in('user_id', otherIds);
+        const nameMap = {};
+        (profiles || []).forEach(p => { nameMap[p.id] = p.name; });
+        const districtMap = {};
+        (students || []).forEach(s => { districtMap[s.user_id] = s.district; });
+        setMyFriends(rows.map(r => {
+          const otherId = r.user1_id === user.id ? r.user2_id : r.user1_id;
+          return {
+            friend_id: otherId,
+            name: nameMap[otherId] || 'Aventureiro',
+            district: districtMap[otherId] || 'Portugal',
+          };
+        }));
+      } catch (e) {
+        console.error('Error fetching friends:', e);
+        setMyFriends([]);
+      }
+    };
+    fetchFriends();
+  }, [user?.id]);
 
   // Fetch raid history
   const fetchRaids = async () => {
@@ -509,6 +556,7 @@ const BattleAndSocial = ({ friends, currentUserId, gameState, onRefresh }) => {
     }
   };
 
+  const effectiveFriends = myFriends && myFriends.length > 0 ? myFriends : (friends || []);
   const attackPower = gameState?.attack_power || 0;
   const defensePower = gameState?.defense_power || 0;
 
@@ -597,9 +645,9 @@ const BattleAndSocial = ({ friends, currentUserId, gameState, onRefresh }) => {
                 Escolhe um jogador para atacar e saquear recursos!
               </p>
 
-              {friends && friends.length > 0 ? (
+              {effectiveFriends && effectiveFriends.length > 0 ? (
                 <div className="space-y-3">
-                  {friends.map(friend => (
+                  {effectiveFriends.map(friend => (
                     <div
                       key={friend.friend_id}
                       className="flex items-center justify-between p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition"
@@ -673,9 +721,9 @@ const BattleAndSocial = ({ friends, currentUserId, gameState, onRefresh }) => {
               {/* Request visit from friends */}
               <div>
                 <h3 className="font-bold text-slate-800 mb-3">Pedir Visita</h3>
-                {friends && friends.length > 0 ? (
+                {effectiveFriends && effectiveFriends.length > 0 ? (
                   <div className="space-y-2">
-                    {friends.map(friend => {
+                    {effectiveFriends.map(friend => {
                       const permission = visitPermissions.sent.find(p => p.owner_id === friend.friend_id);
                       const status = permission?.status;
 
@@ -710,9 +758,9 @@ const BattleAndSocial = ({ friends, currentUserId, gameState, onRefresh }) => {
             <div className="space-y-4">
               <p className="text-slate-600">Envia presentes aos teus amigos para os ajudar!</p>
 
-              {friends && friends.length > 0 ? (
+              {effectiveFriends && effectiveFriends.length > 0 ? (
                 <div className="space-y-2">
-                  {friends.map(friend => (
+                  {effectiveFriends.map(friend => (
                     <div key={friend.friend_id} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-gradient-to-br from-pink-400 to-rose-500 rounded-full flex items-center justify-center text-white font-bold">

@@ -1,0 +1,197 @@
+const QuizView = ({ gameState, setGameState, userId, schoolYear }) => {
+  const [selectedSubject, setSelectedSubject] = useState(null)
+  const [questions, setQuestions] = useState([])
+  const [currentQuestion, setCurrentQuestion] = useState(0)
+  const [score, setScore] = useState(0)
+  const [answered, setAnswered] = useState(false)
+  const [selectedAnswer, setSelectedAnswer] = useState(null)
+  const [quizActive, setQuizActive] = useState(false)
+  const [quizComplete, setQuizComplete] = useState(false)
+  const [correctCount, setCorrectCount] = useState(0)
+  const [loadingQuiz, setLoadingQuiz] = useState(false)
+
+  const startQuiz = async (subjectId) => {
+    setSelectedSubject(subjectId)
+    setLoadingQuiz(true)
+    const year = schoolYear ? parseInt(schoolYear) : 5
+    try {
+      // Tenta buscar perguntas do banco por disciplina + ano escolar
+      const { data, error } = await supabase
+        .from('quiz_questions')
+        .select('*')
+        .eq('subject', subjectId)
+        .eq('school_year', year)
+        .order('id', { ascending: false })
+        .limit(30)
+      let pool = data || []
+      if (error || pool.length === 0) {
+        // Sem perguntas para este ano: usa qualquer ano da disciplina
+        const { data: fallback } = await supabase
+          .from('quiz_questions')
+          .select('*')
+          .eq('subject', subjectId)
+          .limit(30)
+        pool = fallback || []
+      }
+      // Baralha e escolhe 10
+      const shuffled = [...pool].sort(() => Math.random() - 0.5).slice(0, 10)
+      if (shuffled.length === 0) {
+        // Última alternativa: gera localmente (matemática sempre funciona)
+        setQuestions(generateQuizQuestions(subjectId, year, 10))
+      } else {
+        setQuestions(shuffled.map(q => ({
+          id: q.id,
+          question: q.question,
+          options: q.options,
+          correct_answer: q.correct_answer,
+          subject: q.subject,
+        })))
+      }
+    } catch (e) {
+      setQuestions(generateQuizQuestions(subjectId, year, 10))
+    } finally {
+      setCurrentQuestion(0)
+      setScore(0)
+      setCorrectCount(0)
+      setAnswered(false)
+      setSelectedAnswer(null)
+      setQuizActive(true)
+      setQuizComplete(false)
+      setLoadingQuiz(false)
+    }
+  }
+
+  const handleAnswer = (index) => {
+    if (answered) return
+    setSelectedAnswer(index)
+    setAnswered(true)
+    const question = questions[currentQuestion]
+    const isCorrect = index === question.correct_answer
+    if (isCorrect) {
+      setScore(s => s + 10)
+      setCorrectCount(c => c + 1)
+    }
+    setTimeout(() => {
+      if (currentQuestion < questions.length - 1) {
+        setCurrentQuestion(prev => prev + 1)
+        setAnswered(false)
+        setSelectedAnswer(null)
+      } else {
+        finishQuiz()
+      }
+    }, 1500)
+  }
+
+  const finishQuiz = async () => {
+    const coinsEarned = correctCount * 5
+    const xpEarned = correctCount * 10
+    setQuizActive(false)
+    setQuizComplete(true)
+    if (userId) {
+      try {
+        const { data: gs } = await supabase.from('game_states').select('*').eq('user_id', userId).single()
+        if (gs) {
+          const today = new Date().toISOString().split('T')[0]
+          const isNewDay = gs.last_quiz_date !== today
+          await supabase.from('game_states').update({
+            coins: gs.coins + coinsEarned,
+            xp: gs.xp + xpEarned,
+            quizzes_today: isNewDay ? 1 : (gs.quizzes_today || 0) + 1,
+            last_quiz_date: today,
+          }).eq('user_id', userId)
+        }
+        // Regista o resultado do quiz (uma linha por pergunta respondida)
+        if (questions.length > 0) {
+          const rows = questions.map((q, idx) => ({
+            user_id: userId,
+            quiz_id: `${selectedSubject}_${Date.now()}`,
+            question_id: q.id ? String(q.id) : `gen_${idx}`,
+            answer_index: idx,
+            correct: idx < correctCount,
+            subject: selectedSubject,
+            school_year: String(schoolYear || 5),
+          }))
+          await supabase.from('quiz_answers').insert(rows)
+        }
+      } catch (error) { /* ignore */ }
+    }
+    toast.success(`Quiz completo! ${correctCount}/${questions.length} corretas. +${coinsEarned} moedas!`)
+  }
+
+  if (quizComplete) {
+    return (
+      <div className="bg-white rounded-3xl shadow-xl p-8 text-center">
+        <Trophy className="w-20 h-20 text-yellow-500 mx-auto mb-6" />
+        <h2 className="text-3xl font-bold mb-4" style={{ fontFamily: 'Fredoka, sans-serif' }}>Quiz Completo!</h2>
+        <div className="grid grid-cols-3 gap-4 max-w-md mx-auto mb-6">
+          <div className="bg-blue-50 rounded-xl p-4"><p className="text-3xl font-bold text-blue-600">{correctCount}</p><p className="text-xs text-slate-500">Corretas</p></div>
+          <div className="bg-green-50 rounded-xl p-4"><p className="text-3xl font-bold text-green-600">{score}</p><p className="text-xs text-slate-500">Pontos</p></div>
+          <div className="bg-amber-50 rounded-xl p-4"><p className="text-3xl font-bold text-amber-600">{correctCount * 5}</p><p className="text-xs text-slate-500">Moedas</p></div>
+        </div>
+        <button onClick={() => { setQuizComplete(false); setSelectedSubject(null) }} className="px-8 py-3 bg-green-500 text-white font-bold rounded-xl hover:bg-green-600 transition">Voltar aos Quizzes</button>
+      </div>
+    )
+  }
+
+  if (loadingQuiz) {
+    return (
+      <div className="bg-white rounded-3xl shadow-xl p-12 text-center">
+        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto" />
+        <p className="text-slate-500 mt-4">A preparar as perguntas...</p>
+      </div>
+    )
+  }
+
+  if (quizActive && questions.length > 0) {
+    const question = questions[currentQuestion]
+    return (
+      <div className="bg-white rounded-3xl shadow-xl p-6">
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center gap-3">
+            <div className="bg-blue-100 px-4 py-2 rounded-xl"><span className="text-sm text-blue-600">Pergunta</span><p className="text-xl font-bold text-blue-700">{currentQuestion + 1}/{questions.length}</p></div>
+            <div className="bg-green-100 px-4 py-2 rounded-xl"><span className="text-sm text-green-600">Pontos</span><p className="text-xl font-bold text-green-700">{score}</p></div>
+          </div>
+          <button onClick={() => { setQuizActive(false); setSelectedSubject(null) }} className="p-2 hover:bg-slate-100 rounded-xl transition"><X size={20} /></button>
+        </div>
+        <div className="bg-gradient-to-r from-blue-500 to-cyan-600 rounded-2xl p-8 text-white text-center mb-6">
+          <p className="text-2xl font-bold" style={{ fontFamily: 'Fredoka, sans-serif' }}>{question.question}</p>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {question.options.map((option, index) => {
+            let buttonClass = 'bg-white border-2 border-slate-200 hover:border-blue-400 hover:bg-blue-50'
+            if (answered) {
+              if (index === question.correct_answer) buttonClass = 'bg-green-100 border-2 border-green-500'
+              else if (index === selectedAnswer) buttonClass = 'bg-red-100 border-2 border-red-500'
+              else buttonClass = 'bg-slate-100 border-2 border-slate-200 opacity-50'
+            }
+            return (
+              <button key={index} onClick={() => handleAnswer(index)} disabled={answered} className={`p-4 rounded-xl font-medium transition ${buttonClass}`}>
+                <span className="text-base">{option}</span>
+                {answered && index === question.correct_answer && <Check className="inline ml-2 text-green-600" size={18} />}
+                {answered && index === selectedAnswer && index !== question.correct_answer && <X className="inline ml-2 text-red-600" size={18} />}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="bg-white rounded-3xl shadow-xl p-6">
+      <div className="flex items-center gap-3 mb-6">
+        <BookOpen className="text-blue-500" size={28} />
+        <h2 className="text-2xl font-bold" style={{ fontFamily: 'Fredoka, sans-serif' }}>Escolhe uma Disciplina</h2>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        {SUBJECTS.map(subject => (
+          <button key={subject.id} onClick={() => startQuiz(subject.id)} className={`bg-gradient-to-br ${subject.color} rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all`}>
+            <BookOpen className="mx-auto mb-3" size={32} />
+            <h3 className="font-bold text-lg" style={{ fontFamily: 'Fredoka, sans-serif' }}>{subject.name}</h3>
+            <p className="text-white/80 text-sm mt-1">10 perguntas · {schoolYear ? `${schoolYear}º ano` : 'todos os níveis'}</p>
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
