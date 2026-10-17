@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Sparkles, Trophy, Users, Swords, Smartphone, Monitor } from 'lucide-react'
+import { Sparkles, Trophy, Users, Swords, Smartphone, Monitor, Download, X } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
 const roleDashboard = {
@@ -26,6 +26,66 @@ const LandingPage = () => {
     () => /Android|iPhone|iPad|iPod/i.test(navigator.userAgent),
     []
   )
+
+  const isIos = useMemo(
+    () => /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1),
+    []
+  )
+
+  const [deferredPrompt, setDeferredPrompt] = useState(null)
+  const [installed, setInstalled] = useState(
+    () => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true
+  )
+  const [instructions, setInstructions] = useState(null) // 'android' | 'ios' | 'desktop'
+
+  useEffect(() => {
+    const onBeforeInstall = (e) => {
+      e.preventDefault()
+      setDeferredPrompt(e)
+    }
+    const onInstalled = () => {
+      setInstalled(true)
+      setDeferredPrompt(null)
+      setInstructions(null)
+    }
+    window.addEventListener('beforeinstallprompt', onBeforeInstall)
+    window.addEventListener('appinstalled', onInstalled)
+    return () => {
+      window.removeEventListener('beforeinstallprompt', onBeforeInstall)
+      window.removeEventListener('appinstalled', onInstalled)
+    }
+  }, [])
+
+  const handleInstallClick = async (platform) => {
+    if (installed) {
+      setInstructions('already')
+      return
+    }
+    if (platform === 'mobile') {
+      if (isIos) {
+        setInstructions('ios')
+        return
+      }
+      if (deferredPrompt) {
+        deferredPrompt.prompt()
+        const { outcome } = await deferredPrompt.userChoice
+        if (outcome === 'accepted') setInstalled(true)
+        setDeferredPrompt(null)
+        return
+      }
+      setInstructions('android')
+      return
+    }
+    // desktop
+    if (deferredPrompt) {
+      deferredPrompt.prompt()
+      const { outcome } = await deferredPrompt.userChoice
+      if (outcome === 'accepted') setInstalled(true)
+      setDeferredPrompt(null)
+      return
+    }
+    setInstructions('desktop')
+  }
 
   const installHint = isMobile
     ? 'Estás no telemóvel/tablet — instala a app aqui'
@@ -108,7 +168,7 @@ const LandingPage = () => {
           <p className="text-center text-xs text-[hsl(25,10%,45%)] mb-4">{installHint}</p>
           <div className="grid sm:grid-cols-2 gap-4">
             <button
-              onClick={() => navigate('/login')}
+              onClick={() => handleInstallClick('mobile')}
               className={`flex items-center gap-4 p-5 rounded-xl hover:-translate-y-0.5 transition-all shadow-md ${
                 isMobile
                   ? 'bg-[hsl(24,10%,18%)] text-[hsl(45,55%,97%)]'
@@ -127,7 +187,7 @@ const LandingPage = () => {
               </span>
             </button>
             <button
-              onClick={() => navigate('/login')}
+              onClick={() => handleInstallClick('desktop')}
               className={`flex items-center gap-4 p-5 rounded-xl hover:-translate-y-0.5 transition-all shadow-sm ${
                 !isMobile
                   ? 'bg-[hsl(45,55%,99%)] border-2 border-[hsl(35,60%,60%)]'
@@ -148,6 +208,59 @@ const LandingPage = () => {
           </div>
         </div>
       </section>
+
+      {/* Instruções de instalação (quando o navegador não permite instalação automática) */}
+      {instructions && (
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/50 p-4" onClick={() => setInstructions(null)}>
+          <div
+            className="parchment rounded-3xl shadow-2xl p-8 w-full max-w-md relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setInstructions(null)}
+              className="absolute top-4 right-4 p-2 rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"
+              aria-label="Fechar"
+            >
+              <X size={20} />
+            </button>
+
+            {instructions === 'already' ? (
+              <>
+                <h3 className="text-xl font-bold mb-3" style={{ fontFamily: 'Cinzel, serif' }}>A app já está instalada</h3>
+                <p className="text-[hsl(25,10%,35%)]" style={{ fontFamily: 'Nunito, sans-serif' }}>
+                  Estás a usar a QUESTEDUCA instalada. Abra-a a partir do ícone no teu ecrã principal ou navegador.
+                </p>
+              </>
+            ) : instructions === 'ios' ? (
+              <>
+                <h3 className="text-xl font-bold mb-4" style={{ fontFamily: 'Cinzel, serif' }}>Instalar no iPhone / iPad</h3>
+                <ol className="space-y-3 text-[hsl(25,10%,30%)]" style={{ fontFamily: 'Nunito, sans-serif' }}>
+                  <li className="flex gap-3"><span className="font-bold text-[hsl(28,85%,40%)]">1.</span> Toque no ícone <strong>Partilhar</strong> (o quadrado com uma seta para cima) no fundo do Safari.</li>
+                  <li className="flex gap-3"><span className="font-bold text-[hsl(28,85%,40%)]">2.</span> Escolha <strong>Adicionar ao Ecrã Início</strong>.</li>
+                  <li className="flex gap-3"><span className="font-bold text-[hsl(28,85%,40%)]">3.</span> Toque em <strong>Adicionar</strong>. O ícone da QUESTEDUCA aparece no teu ecrã principal.</li>
+                </ol>
+              </>
+            ) : instructions === 'android' ? (
+              <>
+                <h3 className="text-xl font-bold mb-4" style={{ fontFamily: 'Cinzel, serif' }}>Instalar no Telemóvel / Tablet</h3>
+                <ol className="space-y-3 text-[hsl(25,10%,30%)]" style={{ fontFamily: 'Nunito, sans-serif' }}>
+                  <li className="flex gap-3"><span className="font-bold text-[hsl(28,85%,40%)]">1.</span> Abra o menu do navegador (os três pontos ⋮ no canto superior).</li>
+                  <li className="flex gap-3"><span className="font-bold text-[hsl(28,85%,40%)]">2.</span> Toque em <strong>Instalar aplicação</strong> (ou <strong>Adicionar ao ecrã principal</strong>).</li>
+                  <li className="flex gap-3"><span className="font-bold text-[hsl(28,85%,40%)]">3.</span> Confirme. A app fica instalada no telemóvel, como uma aplicação normal.</li>
+                </ol>
+              </>
+            ) : (
+              <>
+                <h3 className="text-xl font-bold mb-4" style={{ fontFamily: 'Cinzel, serif' }}>Instalar no PC</h3>
+                <ol className="space-y-3 text-[hsl(25,10%,30%)]" style={{ fontFamily: 'Nunito, sans-serif' }}>
+                  <li className="flex gap-3"><span className="font-bold text-[hsl(28,85%,40%)]">1.</span> Clique no ícone <Download size={14} className="inline" /> de instalação na barra de endereço do navegador (ao lado do endereço).</li>
+                  <li className="flex gap-3"><span className="font-bold text-[hsl(28,85%,40%)]">2.</span> Confirme <strong>Instalar</strong>. A QUESTEDUCA abre na própria janela, como um programa.</li>
+                </ol>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Porque escolher */}
       <section className="py-24 px-4">
