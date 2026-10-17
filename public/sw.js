@@ -1,6 +1,6 @@
 // Service worker mínimo: permite a instalação da app (PWA) sem interferir com o funcionamento do site.
 // Estratégia network-first: tenta a rede e, se falhar, serve o HTML principal para navegações offline.
-const CACHE_NAME = 'questeduca-v1'
+const CACHE_NAME = 'questeduca-v2'
 const APP_SHELL = ['/', '/index.html']
 
 self.addEventListener('install', (event) => {
