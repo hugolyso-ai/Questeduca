@@ -76,7 +76,7 @@ const LoginPage = () => {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-3 mb-4">
-            <img src="/logo.svg" alt="QUESTEDUCA" className="h-16 w-16 drop-shadow-md" />
+            <img src="/logo.png" alt="QUESTEDUCA" className="h-16 w-auto drop-shadow-md" />
             <span className="text-3xl font-bold text-[hsl(24,10%,18%)] tracking-wide" style={{ fontFamily: 'Cinzel, serif' }}>
               QUESTEDUCA
             </span>
