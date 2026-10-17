@@ -533,11 +533,11 @@ const IsometricCity = ({ gameState, onRefresh }) => {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <SkinSelector currentSkin={currentSkin} onSkinChange={handleSkinChange} />
-          <div className="px-6 py-3 bg-gradient-to-r from-amber-600 via-orange-500 to-red-500 text-white rounded-2xl font-black text-lg shadow-xl flex items-center gap-3">
-            <span className="text-2xl">🏰</span>
-            <span className="hidden sm:inline">Reino de</span> {gameState?.city_name || 'Aventureiro'}
+          <div className="px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-amber-600 via-orange-500 to-red-500 text-white rounded-2xl font-black text-base sm:text-lg shadow-xl flex items-center gap-2 sm:gap-3 min-w-0">
+            <span className="text-xl sm:text-2xl flex-shrink-0">🏰</span>
+            <span className="hidden sm:inline">Reino de</span> <span className="truncate">{gameState?.city_name || 'Aventureiro'}</span>
           </div>
         </div>
       </div>
@@ -546,7 +546,7 @@ const IsometricCity = ({ gameState, onRefresh }) => {
       <div
         ref={mapRef}
         className={`relative rounded-3xl shadow-2xl overflow-hidden border-4 border-stone-700 select-none ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
-        style={{ height: isFullscreen ? '100vh' : '600px' }}
+        style={{ height: isFullscreen ? '100vh' : 'min(70vh, 600px)' }}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
