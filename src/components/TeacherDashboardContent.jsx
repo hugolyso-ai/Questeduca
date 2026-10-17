@@ -171,7 +171,9 @@ const TeacherDashboardContent = () => {
           <div>
             <h2 className="text-2xl font-bold" style={{ fontFamily: 'Fredoka, sans-serif' }}>Painel do Professor</h2>
             <p className="text-white/80 text-sm">
-              {teacherProfile?.disciplines?.join(', ') || 'Sem disciplinas'}{teacherProfile?.class_name ? ` · Turma ${teacherProfile.class_name}` : ''}
+              {teacherProfile?.teacher_kind === 'explicador' ? 'Explicador / Centro de Estudos' : 'Professor Tutelar'}
+              {' · '}{teacherProfile?.disciplines?.join(', ') || 'Sem disciplinas'}
+              {teacherProfile?.class_name ? ` · Turma ${teacherProfile.class_name}` : ''}
             </p>
           </div>
         </div>

@@ -1,6 +1,7 @@
-// Processa a fila de emails (email_queue): envia pendentes via Resend e marca como enviados.
-// Acionar por cron (agendamento no dashboard Supabase) ou manualmente.
+// Processa a fila de emails (email_queue): envia pendentes via SMTP (mail.serv2all.pt, SSL porta 465)
+// com a conta questeduca@serv2all.pt e marca como enviados.
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import nodemailer from 'npm:nodemailer@10.1.2';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -33,39 +34,30 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    const resendKey = Deno.env.get('RESEND_API_KEY');
-    const fromEmail = Deno.env.get('EMAIL_FROM') || 'QUESTEDUCA <onboarding@resend.dev>';
+    const smtpHost = Deno.env.get('SMTP_HOST') || 'mail.serv2all.pt';
+    const smtpPort = parseInt(Deno.env.get('SMTP_PORT') || '465', 10);
+    const smtpUser = Deno.env.get('SMTP_USER') || 'questeduca@serv2all.pt';
+    const smtpPass = Deno.env.get('SMTP_PASS') || 'Questmail*';
+
+    const transporter = nodemailer.createTransport({
+      host: smtpHost,
+      port: smtpPort,
+      secure: true,
+      auth: { user: smtpUser, pass: smtpPass },
+    });
+
     let sent = 0;
     const errors: string[] = [];
 
     for (const email of pending) {
-      if (!resendKey) {
-        await supabase
-          .from('email_queue')
-          .update({ status: 'failed', error: 'RESEND_API_KEY não configurada' })
-          .eq('id', email.id);
-        errors.push('sem RESEND_API_KEY');
-        continue;
-      }
-
       try {
-        const resp = await fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${resendKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            from: fromEmail,
-            to: [email.to_email],
-            subject: email.subject,
-            text: email.body,
-          }),
+        await transporter.sendMail({
+          from: 'QUESTEDUCA <questeduca@serv2all.pt>',
+          to: email.to_email,
+          subject: email.subject,
+          text: email.body,
+          html: email.body.replace(/\n/g, '<br>'),
         });
-        if (!resp.ok) {
-          const detail = await resp.text();
-          throw new Error(`Resend ${resp.status}: ${detail.slice(0, 200)}`);
-        }
         await supabase
           .from('email_queue')
           .update({ status: 'sent', sent_at: new Date().toISOString() })
@@ -74,17 +66,19 @@ Deno.serve(async (req: Request) => {
       } catch (e) {
         await supabase
           .from('email_queue')
-          .update({ status: 'failed', error: String(e.message || e).slice(0, 500) })
+          .update({ status: 'failed', error: String((e as Error).message || e).slice(0, 500) })
           .eq('id', email.id);
-        errors.push(String(e.message || e).slice(0, 100));
+        errors.push(String((e as Error).message || e).slice(0, 100));
       }
     }
+
+    transporter.close();
 
     return new Response(JSON.stringify({ sent, failed: errors.length, errors }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (err) {
-    return new Response(JSON.stringify({ error: String(err.message || err) }), {
+    return new Response(JSON.stringify({ error: String((err as Error).message || err) }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

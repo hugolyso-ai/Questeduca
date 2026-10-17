@@ -22,7 +22,8 @@ const RegisterPage = () => {
     disciplines: [],
     school_id: '',
     school_name: '',
-    class_name: ''
+    class_name: '',
+    teacher_kind: 'tutelar'
   })
 
   const [associationData, setAssociationData] = useState({
@@ -168,6 +169,7 @@ const RegisterPage = () => {
       school_id: teacherData.school_id || null,
       school_name: teacherData.school_name || null,
       class_name: teacherData.class_name || null,
+      teacher_kind: teacherData.teacher_kind,
     })
   }
 
@@ -286,7 +288,7 @@ const RegisterPage = () => {
               >
                 <option value="parent">Pai/Encarregado de Educação</option>
                 <option value="student">Aluno</option>
-                <option value="teacher">Professor Titular</option>
+                <option value="teacher">Professor</option>
                 <option value="association">Associação de Pais</option>
               </select>
             </div>
@@ -367,12 +369,12 @@ const RegisterPage = () => {
                   O teu nickname no jogo
                 </label>
                 <p className="text-xs text-slate-500 mb-2" style={{ fontFamily: 'Nunito, sans-serif' }}>
-                  Tem de ser exatamente o nickname que o teu pai/encarregado autorizou no painel de pais.
+                  Escolhe o teu nickname (sem espaços). Os teus pais podem alterá-lo depois no painel de pais.
                 </p>
                 <input
                   type="text"
                   value={formData.nickname}
-                  onChange={(e) => setFormData({ ...formData, nickname: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, nickname: e.target.value.replace(/\s/g, '') })}
                   required
                   className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all"
                   style={{ fontFamily: 'Nunito, sans-serif' }}
@@ -383,6 +385,38 @@ const RegisterPage = () => {
 
             {isTeacher && (
               <div className="space-y-5 pt-4 border-t-2 border-slate-100">                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2" style={{ fontFamily: 'Nunito, sans-serif' }}>
+                    Tipo de Professor
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setTeacherData({ ...teacherData, teacher_kind: 'tutelar' })}
+                      className={`p-4 rounded-xl border-2 text-left transition ${
+                        teacherData.teacher_kind === 'tutelar'
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-slate-200 hover:border-slate-300'
+                      }`}
+                    >
+                      <p className="font-bold text-slate-800 text-sm">Professor Tutelar</p>
+                      <p className="text-xs text-slate-500 mt-1">Titular da turma, acompanha o progresso completo.</p>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTeacherData({ ...teacherData, teacher_kind: 'explicador' })}
+                      className={`p-4 rounded-xl border-2 text-left transition ${
+                        teacherData.teacher_kind === 'explicador'
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-slate-200 hover:border-slate-300'
+                      }`}
+                    >
+                      <p className="font-bold text-slate-800 text-sm">Explicador / Centro de Estudos</p>
+                      <p className="text-xs text-slate-500 mt-1">Apoio em disciplinas específicas.</p>
+                    </button>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-2">Cada disciplina pode ter um professor tutelar e um explicador.</p>
+                </div>
+                <div>
                   <label className="block text-sm font-bold text-slate-700 mb-2" style={{ fontFamily: 'Nunito, sans-serif' }}>
                     Disciplinas que leciona
                   </label>

@@ -11,6 +11,7 @@ import ReportExport, { ExportReportButton } from '../components/ReportExport'
 import DiagnosisPanel from '../components/DiagnosisPanel'
 import ParentAuthorizations from '../components/ParentAuthorizations'
 import { OnlineStatusIndicator } from '../components/OfflineComponents'
+import { Pencil } from 'lucide-react'
 
 const ParentDashboard = () => {
   const { user, profile, logout } = useAuth()
@@ -22,6 +23,8 @@ const ParentDashboard = () => {
   const [showReport, setShowReport] = useState(false)
   const [subscription, setSubscription] = useState(null)
   const [newChild, setNewChild] = useState({ nickname: '', school_year: 1, school_id: '' })
+  const [renameChild, setRenameChild] = useState(null)
+  const [newNickname, setNewNickname] = useState('')
 
   const fetchChildren = useCallback(async () => {
     if (!user?.id) return
@@ -175,12 +178,21 @@ const ParentDashboard = () => {
               ) : (
                 <div className="space-y-3">
                   {children.map(child => (
-                    <button key={child.user_id} onClick={() => setSelectedChild(child)} className={`w-full flex items-center gap-3 p-3 rounded-xl transition text-left ${selectedChild?.user_id === child.user_id ? 'bg-green-50 border-2 border-green-200' : 'hover:bg-slate-50'}`}>
+                    <button onClick={() => setSelectedChild(child)} className={`w-full flex items-center gap-3 p-3 rounded-xl transition text-left ${selectedChild?.user_id === child.user_id ? 'bg-green-50 border-2 border-green-200' : 'hover:bg-slate-50'}`}>
                       <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center text-white font-bold text-lg">{child.nickname?.[0]?.toUpperCase() || '?'}</div>
                       <div className="flex-1">
                         <p className="font-bold text-slate-800">{child.nickname}</p>
                         <p className="text-sm text-slate-500">{child.school_year}º Ano</p>
                       </div>
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => { e.stopPropagation(); setRenameChild(child); setNewNickname(child.nickname || '') }}
+                        className="p-2 text-slate-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition"
+                        title="Alterar nickname"
+                      >
+                        <Pencil size={16} />
+                      </span>
                     </button>
                   ))}
                 </div>
@@ -273,6 +285,43 @@ const ParentDashboard = () => {
                 </select>
               </div>
               <button type="submit" className="w-full py-4 bg-green-500 text-white font-bold rounded-xl hover:bg-green-600 transition">Adicionar</button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Rename Nickname Modal */}
+      {renameChild && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setRenameChild(null)}>
+          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl p-6" onClick={e => e.stopPropagation()}>
+            <h2 className="text-2xl font-bold mb-2" style={{ fontFamily: 'Fredoka, sans-serif' }}>Alterar Nickname</h2>
+            <p className="text-sm text-slate-500 mb-4">
+              O novo nickname atualiza automaticamente a listagem de professores e associações de pais onde {renameChild.nickname} já estiver inscrito.
+            </p>
+            <form onSubmit={async (e) => {
+              e.preventDefault()
+              try {
+                const { data, error } = await supabase.rpc('set_child_nickname', {
+                  p_student_user_id: renameChild.user_id,
+                  p_new_nickname: newNickname.trim(),
+                })
+                if (error) throw error
+                toast.success(`Nickname alterado para "${data}"!`)
+                setRenameChild(null)
+                fetchChildren()
+              } catch (err) {
+                toast.error(err.message || 'Erro ao alterar nickname')
+              }
+            }} className="space-y-4">
+              <input
+                type="text"
+                value={newNickname}
+                onChange={e => setNewNickname(e.target.value.replace(/\s/g, ''))}
+                required
+                className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-green-500 focus:ring-4 focus:ring-green-500/20 transition"
+                placeholder="Novo nickname (sem espaços)"
+              />
+              <button type="submit" className="w-full py-4 bg-green-500 text-white font-bold rounded-xl hover:bg-green-600 transition">Guardar</button>
             </form>
           </div>
         </div>
