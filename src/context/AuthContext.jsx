@@ -90,7 +90,7 @@ export const AuthProvider = ({ children }) => {
     return data
   }
 
-  const register = async (email, password, name, role) => {
+  const register = async (email, password, name, role, nickname) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -115,6 +115,18 @@ export const AuthProvider = ({ children }) => {
         await supabase.from('parent_profiles').insert({
           user_id: data.user.id,
         })
+      }
+
+      if (role === 'student') {
+        // Valida a autorização parental (email + nickname) e cria o perfil de aluno
+        const { error: authErr } = await supabase.rpc('start_student_signup', {
+          p_nickname: nickname || name,
+        })
+        if (authErr) {
+          await supabase.from('user_profiles').delete().eq('id', data.user.id)
+          throw authErr
+        }
+        await supabase.rpc('complete_student_auth')
       }
     }
 

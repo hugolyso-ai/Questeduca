@@ -8,6 +8,7 @@ const roleDashboard = {
   parent: '/parent/dashboard',
   association: '/association/dashboard',
   admin: '/admin',
+  teacher: '/teacher/dashboard',
 }
 
 const LandingPage = () => {

@@ -14,7 +14,15 @@ const RegisterPage = () => {
     password: '',
     confirmPassword: '',
     name: '',
-    role: 'parent'
+    role: 'parent',
+    nickname: ''
+  })
+
+  const [teacherData, setTeacherData] = useState({
+    disciplines: [],
+    school_id: '',
+    school_name: '',
+    class_name: ''
   })
 
   const [associationData, setAssociationData] = useState({
@@ -124,6 +132,45 @@ const RegisterPage = () => {
     return code
   }
 
+  const TEACHER_SUBJECTS = ['Matemática', 'Português', 'Estudo do Meio', 'História', 'Geografia', 'Ciências', 'Inglês', 'Educação Física', 'Educação Musical', 'Educação Visual']
+
+  const toggleDiscipline = (d) => {
+    setTeacherData(prev => ({
+      ...prev,
+      disciplines: prev.disciplines.includes(d)
+        ? prev.disciplines.filter(x => x !== d)
+        : [...prev.disciplines, d]
+    }))
+  }
+
+  const handleTeacherRegister = async () => {
+    if (teacherData.disciplines.length === 0) {
+      toast.error('Selecione pelo menos uma disciplina')
+      return
+    }
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: formData.email,
+      password: formData.password,
+      options: { data: { name: formData.name, role: 'teacher' } }
+    })
+    if (authError) throw authError
+
+    const userId = authData.user.id
+    await supabase.from('user_profiles').insert({
+      id: userId,
+      email: formData.email,
+      name: formData.name,
+      role: 'teacher',
+    })
+    await supabase.from('teacher_profiles').insert({
+      user_id: userId,
+      disciplines: teacherData.disciplines,
+      school_id: teacherData.school_id || null,
+      school_name: teacherData.school_name || null,
+      class_name: teacherData.class_name || null,
+    })
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
 
@@ -187,8 +234,12 @@ const RegisterPage = () => {
           { duration: 15000 }
         )
         navigate('/login')
+      } else if (formData.role === 'teacher') {
+        await handleTeacherRegister()
+        toast.success('Registo de professor bem-sucedido! Por favor, faça login.')
+        navigate('/login')
       } else {
-        await register(formData.email, formData.password, formData.name, formData.role)
+        await register(formData.email, formData.password, formData.name, formData.role, formData.nickname)
         toast.success('Registo bem-sucedido! Por favor, faça login.')
         navigate('/login')
       }
@@ -200,7 +251,8 @@ const RegisterPage = () => {
   }
 
   const isAssociation = formData.role === 'association'
-
+  const isTeacher = formData.role === 'teacher'
+  const isStudent = formData.role === 'student'
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-slate-50 to-green-50 flex items-center justify-center p-4 py-8">
       <div className="w-full max-w-lg">
@@ -233,6 +285,8 @@ const RegisterPage = () => {
                 style={{ fontFamily: 'Nunito, sans-serif' }}
               >
                 <option value="parent">Pai/Encarregado de Educação</option>
+                <option value="student">Aluno</option>
+                <option value="teacher">Professor Titular</option>
                 <option value="association">Associação de Pais</option>
               </select>
             </div>
@@ -306,6 +360,79 @@ const RegisterPage = () => {
                 />
               </div>
             </div>
+
+            {isStudent && (
+              <div className="pt-4 border-t-2 border-slate-100">
+                <label className="block text-sm font-bold text-slate-700 mb-1" style={{ fontFamily: 'Nunito, sans-serif' }}>
+                  O teu nickname no jogo
+                </label>
+                <p className="text-xs text-slate-500 mb-2" style={{ fontFamily: 'Nunito, sans-serif' }}>
+                  Tem de ser exatamente o nickname que o teu pai/encarregado autorizou no painel de pais.
+                </p>
+                <input
+                  type="text"
+                  value={formData.nickname}
+                  onChange={(e) => setFormData({ ...formData, nickname: e.target.value })}
+                  required
+                  className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all"
+                  style={{ fontFamily: 'Nunito, sans-serif' }}
+                  placeholder="Ex.: SuperAna"
+                />
+              </div>
+            )}
+
+            {isTeacher && (
+              <div className="space-y-5 pt-4 border-t-2 border-slate-100">                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2" style={{ fontFamily: 'Nunito, sans-serif' }}>
+                    Disciplinas que leciona
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {TEACHER_SUBJECTS.map(d => (
+                      <button
+                        key={d}
+                        type="button"
+                        onClick={() => toggleDiscipline(d)}
+                        className={`px-3 py-1.5 rounded-full text-sm font-semibold transition ${
+                          teacherData.disciplines.includes(d)
+                            ? 'bg-blue-500 text-white shadow'
+                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        }`}
+                      >
+                        {d}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-2" style={{ fontFamily: 'Nunito, sans-serif' }}>
+                      Escola (opcional)
+                    </label>
+                    <input
+                      type="text"
+                      value={teacherData.school_name}
+                      onChange={(e) => setTeacherData({ ...teacherData, school_name: e.target.value })}
+                      className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all"
+                      style={{ fontFamily: 'Nunito, sans-serif' }}
+                      placeholder="Nome da escola"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-2" style={{ fontFamily: 'Nunito, sans-serif' }}>
+                      Turma (opcional)
+                    </label>
+                    <input
+                      type="text"
+                      value={teacherData.class_name}
+                      onChange={(e) => setTeacherData({ ...teacherData, class_name: e.target.value })}
+                      className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all"
+                      style={{ fontFamily: 'Nunito, sans-serif' }}
+                      placeholder="Ex: 5ºA"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
 
             {isAssociation && (
               <div className="space-y-5 pt-4 border-t-2 border-slate-100">

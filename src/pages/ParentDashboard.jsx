@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import ReportExport, { ExportReportButton } from '../components/ReportExport'
 import DiagnosisPanel from '../components/DiagnosisPanel'
+import ParentAuthorizations from '../components/ParentAuthorizations'
 import { OnlineStatusIndicator } from '../components/OfflineComponents'
 
 const ParentDashboard = () => {
@@ -152,6 +153,10 @@ const ParentDashboard = () => {
             <button onClick={() => toast.info('Pagamentos em breve!')} className="px-6 py-3 bg-white text-orange-600 font-bold rounded-xl hover:bg-slate-50 transition">Upgrade</button>
           </div>
         )}
+
+        <div className="mb-6">
+          <ParentAuthorizations />
+        </div>
 
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Children List */}

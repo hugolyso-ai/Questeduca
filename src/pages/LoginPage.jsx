@@ -42,6 +42,7 @@ const LoginPage = () => {
       else if (role === 'parent') navigate('/parent/dashboard')
       else if (role === 'association') navigate('/association/dashboard')
       else if (role === 'admin') navigate('/admin')
+      else if (role === 'teacher') navigate('/teacher/dashboard')
       else navigate('/')
     } catch (err) {
       setError(err.message || 'Erro ao fazer login')

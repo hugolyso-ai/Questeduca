@@ -1,0 +1,5 @@
+# Supabase configuration
+project_id = "questeduca"
+
+[functions.email-queue-processor]
+verify_jwt = false

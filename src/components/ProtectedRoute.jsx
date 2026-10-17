@@ -26,6 +26,7 @@ function ProtectedRoute({ allowedRoles, children }) {
       parent: '/parent/dashboard',
       association: '/association/dashboard',
       admin: '/admin/dashboard',
+      teacher: '/teacher/dashboard',
     }
     const target = dashboardMap[profile.role] || '/'
     return <Navigate to={target} replace />

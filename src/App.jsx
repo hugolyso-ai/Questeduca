@@ -11,6 +11,7 @@ import StudentDashboard from './pages/StudentDashboard'
 import ParentDashboard from './pages/ParentDashboard'
 import AssociationDashboard from './pages/AssociationDashboard'
 import AdminDashboard from './pages/AdminDashboard'
+import TeacherDashboard from './pages/TeacherDashboard'
 import PaymentSuccess from './pages/PaymentSuccess'
 import PaymentCancel from './pages/PaymentCancel'
 import PrivacyPolicy from './pages/PrivacyPolicy'
@@ -36,6 +37,8 @@ function App() {
             <Route path="/parent/dashboard" element={<ProtectedRoute allowedRoles={['parent']}><ParentDashboard /></ProtectedRoute>} />
             <Route path="/parent" element={<ProtectedRoute allowedRoles={['parent']}><ParentDashboard /></ProtectedRoute>} />
             <Route path="/association/dashboard" element={<ProtectedRoute allowedRoles={['association']}><AssociationDashboard /></ProtectedRoute>} />
+            <Route path="/teacher/dashboard" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherDashboard /></ProtectedRoute>} />
+            <Route path="/teacher" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherDashboard /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
             <Route path="/admin/dashboard" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
             <Route path="*" element={<LandingPage />} />

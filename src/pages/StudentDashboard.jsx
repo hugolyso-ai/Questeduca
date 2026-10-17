@@ -5,10 +5,11 @@ import { toast } from 'sonner'
 import {
   Castle, Coins, Gem, Trophy, LogOut, BookOpen, Home, Users, Gamepad2,
   Calendar, Award, Zap, Brain, ChevronRight, Star, TrendingUp, Settings,
-  Plus, Check, X, Timer, Flame, Shield, Sword, Wrench
+  Plus, Check, X, Timer, Flame, Shield, Sword, Wrench, LibraryBig
 } from 'lucide-react'
 import IsometricCity from '../components/IsometricCity'
 import BattleAndSocial from '../components/BattleAndSocial'
+import { PortugalFriendMap } from '../components/PortugalMap'
 import SchoolRanking from '../components/SchoolRanking'
 import WeeklyCurricularMission from '../components/WeeklyCurricularMission'
 import ProfileSettingsPanel from '../components/ProfileSettingsPanel'
@@ -22,6 +23,7 @@ import SchoolCalendar from '../components/SchoolCalendar'
 import AccessibilityPanel from '../components/AccessibilityPanel'
 import InteractiveTutorial from '../components/InteractiveTutorial'
 import { OnlineStatusIndicator } from '../components/OfflineComponents'
+import LibraryPanel from '../components/LibraryPanel'
 
 const TABS = [
   { id: 'city', name: 'A Minha Cidade', icon: Castle },
@@ -30,6 +32,7 @@ const TABS = [
   { id: 'ranking', name: 'Classificações', icon: Trophy },
   { id: 'minigames', name: 'Mini-Jogos', icon: Gamepad2 },
   { id: 'achievements', name: 'Conquistas', icon: Award },
+  { id: 'library', name: 'Biblioteca', icon: LibraryBig },
   { id: 'calendar', name: 'Calendário', icon: Calendar },
   { id: 'settings', name: 'Definições', icon: Settings },
 ]
@@ -585,6 +588,7 @@ const StudentDashboard = () => {
         )}
         {activeTab === 'social' && (
           <div className="space-y-6">
+            <PortugalFriendMap />
             <QuizDuels onRefresh={fetchGameData} />
             <BattleAndSocial gameState={gameState} userId={user.id} onRefresh={fetchGameData} />
           </div>
@@ -597,6 +601,9 @@ const StudentDashboard = () => {
         )}
         {activeTab === 'achievements' && (
           <AchievementsSystem gameState={gameState} userId={user.id} />
+        )}
+        {activeTab === 'library' && (
+          <LibraryPanel />
         )}
         {activeTab === 'calendar' && (
           <SchoolCalendar schoolYear={studentProfile?.school_year} />
