@@ -62,18 +62,18 @@ export const AuthProvider = ({ children }) => {
             setProfile(prof)
 
             if (prof?.role === 'pending_role') {
-              if (!window.location.hash.startsWith('#/role-choice')) window.location.assign('/#/role-choice')
+              if (!window.location.hash.startsWith('#/role-choice')) window.location.hash = '#/role-choice'
             } else if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
               const dashboardByRole = {
-                student: '/#/student/dashboard',
-                parent: '/#/parent/dashboard',
-                association: '/#/association/dashboard',
-                admin: '/#/admin',
-                teacher: '/#/teacher/dashboard',
+                student: '#/student/dashboard',
+                parent: '#/parent/dashboard',
+                association: '#/association/dashboard',
+                admin: '#/admin',
+                teacher: '#/teacher/dashboard',
               }
               const destination = dashboardByRole[prof?.role]
               if (destination && ['#/login', '#/', '#'].includes(window.location.hash || '#')) {
-                window.location.assign(destination)
+                window.location.hash = destination
               }
             }
           } else {

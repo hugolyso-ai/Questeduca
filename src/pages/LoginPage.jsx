@@ -47,8 +47,7 @@ const LoginPage = () => {
 
     try {
       const result = await login(email, password)
-      const prof = await fetchProfile(result.user.id)
-      const role = prof?.role
+      let prof = await fetchProfile(result.user.id)
 
       if (result.mustChangePassword) {
         toast.info('Por favor altere a sua password')
@@ -56,21 +55,33 @@ const LoginPage = () => {
         return
       }
 
+      if (!prof) {
+        // Perfil ainda não criado/visível — tenta uma vez mais antes de desistir
+        await new Promise(r => setTimeout(r, 800))
+        prof = await fetchProfile(result.user.id)
+      }
+
       toast.success('Login bem-sucedido!')
-      if (prof?.approval_status === 'pending' || prof?.approval_status === 'rejected') {
+      if (!prof) {
+        setError('Não foi possível carregar o seu perfil. Tente novamente dentro de momentos.')
+        return
+      }
+      if (prof.approval_status === 'pending' || prof.approval_status === 'rejected') {
         navigate('/pending-approval')
         return
       }
-      if (role === 'pending_role') {
+      if (prof.role === 'pending_role') {
         navigate('/role-choice')
         return
       }
-      if (role === 'student') navigate('/student/dashboard')
-      else if (role === 'parent') navigate('/parent/dashboard')
-      else if (role === 'association') navigate('/association/dashboard')
-      else if (role === 'admin') navigate('/admin')
-      else if (role === 'teacher') navigate('/teacher/dashboard')
-      else navigate('/')
+      const dashboardByRole = {
+        student: '/student/dashboard',
+        parent: '/parent/dashboard',
+        association: '/association/dashboard',
+        admin: '/admin',
+        teacher: '/teacher/dashboard',
+      }
+      navigate(dashboardByRole[prof.role] || '/')
     } catch (err) {
       setError(err.message || 'Erro ao fazer login')
       toast.error('Credenciais inválidas')
