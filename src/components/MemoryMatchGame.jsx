@@ -1,8 +1,48 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Clock, Trophy, RotateCcw, Sparkles } from 'lucide-react';
+import { Clock, Trophy, RotateCcw, Sparkles, BookOpen } from 'lucide-react';
 
 // Emojis para as cartas
 const CARD_SYMBOLS = ['🎓', '📚', '🎨', '🔬', '🌍', '🎵', '🧮', '🏆', '⭐', '🚀', '🌈', '🎯'];
+
+// Pares curriculares por disciplina: [conceito, definição/resposta]
+const EDUCATIONAL_PAIRS = {
+  matematica: [
+    ['7 × 8', '56'], ['9 × 6', '54'], ['½', '0,5'], ['Perímetro', 'Soma dos lados'],
+    ['100 ÷ 4', '25'], ['Triângulo', '3 lados'], ['12 × 12', '144'], ['Quadrado', '4 lados iguais'],
+  ],
+  portugues: [
+    ['Sinónimo de "feliz"', 'Contente'], ['Plural de "pão"', 'Pães'], ['Antónimo de "alto"', 'Baixo'],
+    ['Sujeito', 'Quem faz a ação'], ['"cão" rima com', 'Pão'], ['Adjetivo', 'Característica do nome'],
+    ['Plural de "cidadão"', 'Cidadãos'], ['Interrogação', 'Sinal de pergunta ?'],
+  ],
+  ciencias: [
+    ['Fotossíntese', 'Plantas produzem alimento'], ['Coração', 'Bombeia o sangue'], ['Marte', 'Planeta vermelho'],
+    ['H2O', 'Água'], ['Esqueleto', 'Sustenta o corpo'], ['Polinização', 'Abelhas ajudam plantas'],
+    ['Pulmões', 'Respiração'], ['Solar', 'Energia do Sol'],
+  ],
+  historia: [
+    ['1498', 'Chegada à Índia'], ['D. Afonso Henriques', '1.º rei de Portugal'], ['1143', 'Nascimento de Portugal'],
+    ['Vasco da Gama', 'Descobridor do caminho marítimo'], ['Romana', 'Civilização do Coliseu'],
+    ['Lusíadas', 'Poema de Camões'], ['Castelo', 'Fortaleza medieval'], ['Egitânia', 'Nome antigo de Idanha'],
+  ],
+  geografia: [
+    ['Lisboa', 'Capital de Portugal'], ['Atlântico', 'Oceano de Portugal'], ['Tejo', 'Rio mais extenso da PP'],
+    ['Serra da Estrela', 'Montanha mais alta da PP'], ['Espanha', 'Único vizinho da PP'],
+    ['Madrid', 'Capital de Espanha'], ['Algarve', 'Região mais a sul'], ['Minho', 'Região mais a norte'],
+  ],
+  ingles: [
+    ['Dog', 'Cão'], ['House', 'Casa'], ['Red', 'Vermelho'], ['Seven', 'Sete'],
+    ['Book', 'Livro'], ['Sun', 'Sol'], ['Friend', 'Amigo'], ['Water', 'Água'],
+  ],
+};
+const EDU_SUBJECTS = [
+  { id: 'matematica', name: 'Matemática', emoji: '🧮' },
+  { id: 'portugues', name: 'Português', emoji: '📖' },
+  { id: 'ciencias', name: 'Ciências', emoji: '🔬' },
+  { id: 'historia', name: 'História', emoji: '🏰' },
+  { id: 'geografia', name: 'Geografia', emoji: '🗺️' },
+  { id: 'ingles', name: 'Inglês', emoji: '🇬🇧' },
+];
 
 // Componente de Carta
 const MemoryCard = ({ card, isFlipped, isMatched, onClick }) => {
@@ -31,14 +71,18 @@ const MemoryCard = ({ card, isFlipped, isMatched, onClick }) => {
           <span className="text-4xl">❓</span>
         </div>
         
-        {/* Verso (símbolo) */}
+        {/* Verso (símbolo ou conceito) */}
         <div
-          className={`absolute w-full h-full rounded-xl flex items-center justify-center shadow-lg ${
+          className={`absolute w-full h-full rounded-xl flex items-center justify-center shadow-lg p-1 text-center ${
             isMatched ? 'bg-green-100 border-2 border-green-400' : 'bg-white border-2 border-slate-200'
           }`}
           style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
         >
-          <span className="text-4xl">{card.symbol}</span>
+          {card.text ? (
+            <span className="text-[11px] font-bold text-slate-700 leading-tight">{card.text}</span>
+          ) : (
+            <span className="text-4xl">{card.symbol}</span>
+          )}
         </div>
       </div>
     </div>
@@ -53,9 +97,9 @@ const MemoryMatchGame = ({ onGameEnd, difficulty = 'medium' }) => {
     medium: { pairs: 8, gridCols: 4, timeLimit: 90 },
     hard: { pairs: 12, gridCols: 4, timeLimit: 120 }
   };
-  
+
   const config = DIFFICULTY_CONFIG[difficulty];
-  
+  const [eduSubject, setEduSubject] = useState(null); // null = modo emoji clássico
   const [cards, setCards] = useState([]);
   const [flippedIndices, setFlippedIndices] = useState([]);
   const [matchedPairs, setMatchedPairs] = useState([]);
@@ -66,18 +110,27 @@ const MemoryMatchGame = ({ onGameEnd, difficulty = 'medium' }) => {
 
   // Inicializar cartas
   const initializeGame = useCallback(() => {
-    const symbols = CARD_SYMBOLS.slice(0, config.pairs);
-    const cardPairs = [...symbols, ...symbols]
-      .map((symbol, index) => ({ id: index, symbol, pairId: symbols.indexOf(symbol) }))
-      .sort(() => Math.random() - 0.5);
-    
+    let cardPairs;
+    if (eduSubject) {
+      // Modo curricular: par conceito <-> resposta
+      const pairs = [...EDUCATIONAL_PAIRS[eduSubject]].sort(() => Math.random() - 0.5).slice(0, config.pairs);
+      cardPairs = pairs.flatMap(([concept, answer], pi) => ([
+        { id: pi * 2, text: concept, pairId: pi },
+        { id: pi * 2 + 1, text: answer, pairId: pi },
+      ])).sort(() => Math.random() - 0.5);
+    } else {
+      const symbols = CARD_SYMBOLS.slice(0, config.pairs);
+      cardPairs = [...symbols, ...symbols]
+        .map((symbol, index) => ({ id: index, symbol, pairId: symbols.indexOf(symbol) }))
+        .sort(() => Math.random() - 0.5);
+    }
     setCards(cardPairs);
     setFlippedIndices([]);
     setMatchedPairs([]);
     setMoves(0);
     setTimeLeft(config.timeLimit);
     setGameStatus('playing');
-  }, [config.pairs, config.timeLimit]);
+  }, [config.pairs, config.timeLimit, eduSubject]);
 
   useEffect(() => {
     initializeGame();
@@ -204,6 +257,35 @@ const MemoryMatchGame = ({ onGameEnd, difficulty = 'medium' }) => {
 
   return (
     <div>
+      {/* Seletor de modo */}
+      <div className="mb-5">
+        <p className="text-sm font-bold text-slate-600 mb-2 flex items-center gap-2">
+          <BookOpen size={16} />
+          Modo de jogo: {eduSubject ? `curricular — ${EDU_SUBJECTS.find(s => s.id === eduSubject)?.name}` : 'clássico (emojis)'}
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setEduSubject(null)}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+              eduSubject === null ? 'bg-purple-500 text-white shadow' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            🎨 Clássico
+          </button>
+          {EDU_SUBJECTS.map(s => (
+            <button
+              key={s.id}
+              onClick={() => setEduSubject(s.id)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+                eduSubject === s.id ? 'bg-blue-500 text-white shadow' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              {s.emoji} {s.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Header com info do jogo */}
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-4">
@@ -244,7 +326,9 @@ const MemoryMatchGame = ({ onGameEnd, difficulty = 'medium' }) => {
       {/* Dica */}
       <div className="mt-6 flex items-center justify-center gap-2 text-slate-500 text-sm">
         <Sparkles size={16} />
-        Encontra todos os pares antes do tempo acabar!
+        {eduSubject
+          ? 'Encontra cada conceito e a sua resposta antes do tempo acabar!'
+          : 'Encontra todos os pares antes do tempo acabar!'}
       </div>
     </div>
   );

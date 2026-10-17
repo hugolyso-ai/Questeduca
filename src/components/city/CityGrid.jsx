@@ -37,13 +37,26 @@ const VillagerSprite = ({ tile, kind, name, gridSize, seed }) => {
       style={{ left: cx, top: cy, transform: 'translate(-50%, -100%)', zIndex: 200 + (tile.x + tile.y) * 2, transition: 'left 1.8s ease-in-out, top 1.8s ease-in-out' }}
       data-testid={`villager-${kind}-${seed}`}
     >
+      {mood?.emoji && (
+        <div className="absolute -top-6 left-1/2 -translate-x-1/2" style={{ fontSize: 15, animation: 'villagerPop 0.6s ease-out' }}>
+          {mood.emoji}
+        </div>
+      )}
+      {mood?.message && seed % 3 === 0 && (
+        <div
+          className="absolute -top-12 left-1/2 px-2 py-1 bg-white/95 rounded-lg shadow-lg border border-slate-200 text-slate-800 font-bold"
+          style={{ fontSize: 9, whiteSpace: 'nowrap', transform: 'translateX(-50%)', animation: 'villagerPop 0.6s ease-out', zIndex: 10 }}
+        >
+          {mood.message}
+        </div>
+      )}
       <img
         src={kind === 'soldier' ? ASSETS.soldier : ASSETS.villager}
         alt={name}
         style={{
           width: size,
           transform: `${flipped ? 'scaleX(-1)' : ''} ${bob ? 'translateY(-2px)' : ''}`,
-          filter: 'drop-shadow(0 3px 5px rgba(0,0,0,0.4))',
+          filter: mood?.filter || 'drop-shadow(0 3px 5px rgba(0,0,0,0.4))',
           transition: 'transform 0.3s',
         }}
         draggable={false}
@@ -233,6 +246,7 @@ const GhostBuilding = ({ buildingId, tile, gridSize, isValid }) => {
 const CityGrid = ({
   gridSize, roads, buildings, selectedBuildingId,
   mode, ghostBuildingId, isTileValid, onTileClick, onBuildingClick, skinBuildingFilter,
+  villagerMood,
 }) => {
   const [hoverTile, setHoverTile] = useState(null);
   const containerRef = useRef(null);
@@ -336,7 +350,7 @@ const CityGrid = ({
 
       {/* Moradores animados (só em modo de visualização) */}
       {mode === 'view' && !interactive && villagers.map(v => (
-        <VillagerSprite key={`v-${v.seed}-${v.tile.x}-${v.tile.y}`} tile={v.tile} kind={v.kind} name={v.name} gridSize={gridSize} seed={v.seed} />
+        <VillagerSprite key={`v-${v.seed}-${v.tile.x}-${v.tile.y}`} tile={v.tile} kind={v.kind} name={v.name} gridSize={gridSize} seed={v.seed} mood={villagerMood} />
       ))}
 
       {/* Ghost preview for placement / move */}
@@ -353,3 +367,11 @@ const CityGrid = ({
 };
 
 export default CityGrid;
+
+// Inject mood pop animation once
+if (typeof document !== 'undefined' && !document.getElementById('villager-mood-style')) {
+  const styleEl = document.createElement('style');
+  styleEl.id = 'villager-mood-style';
+  styleEl.textContent = '@keyframes villagerPop { 0% { transform: translate(-50%, 0) scale(0); } 60% { transform: translate(-50%, -6px) scale(1.25); } 100% { transform: translate(-50%, 0) scale(1); } }';
+  document.head.appendChild(styleEl);
+}

@@ -8,6 +8,7 @@ import {
   Check, AlertCircle, Crown, Heart, UserPlus, FileText
 } from 'lucide-react'
 import ReportExport, { ExportReportButton } from '../components/ReportExport'
+import DiagnosisPanel from '../components/DiagnosisPanel'
 import { OnlineStatusIndicator } from '../components/OfflineComponents'
 
 const ParentDashboard = () => {
@@ -206,6 +207,9 @@ const ParentDashboard = () => {
                       <div className="bg-purple-50 rounded-xl p-4 text-center"><Trophy className="mx-auto text-purple-500 mb-2" size={24} /><p className="text-2xl font-bold text-purple-700">{childGameData.gameState.current_streak}</p><p className="text-xs text-slate-500">Dias Seguidos</p></div>
                     </div>
                   )}
+
+                  {/* Learning Diagnosis */}
+                  <DiagnosisPanel userId={selectedChild.user_id} />
 
                   {/* Quiz History */}
                   <div>
