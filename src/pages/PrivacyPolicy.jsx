@@ -40,7 +40,7 @@ const PrivacyPolicy = () => (
             <li>Dados técnicos mínimos necessários à segurança da conta (identificador de sessão).</li>
           </ul>
           <p className="font-bold">2.3. Dados de faturação:</p>
-          <p>Os pagamentos são processados pelo nosso fornecedor de pagamentos. A QUESTEDUCA não armazena números de cartão de crédito. Podemos reter o email associado à compra e o comprovativo de faturação, nos termos legais.</p>
+          <p>Os pagamentos são processados pela <strong>Stripe Payments Europe, Ltd.</strong>, entidade de pagamento certificada (PCI-DSS) que recolhe e trata diretamente os dados do cartão. A QUESTEDUCA não armazena números de cartão de crédito nem códigos de segurança. Podemos reter o email associado à compra e o comprovativo de faturação, nos termos legais. O tratamento dos dados de pagamento pela Stripe rege-se pela respetiva política de privacidade, disponível no momento da compra.</p>
           <p className="font-bold">2.4. Não recolhemos, por princípio:</p>
           <ul className="list-disc pl-6 space-y-1">
             <li>Dados sensíveis (saúde, religião, etnia, orientação, opiniões políticas).</li>
@@ -70,7 +70,7 @@ const PrivacyPolicy = () => (
             <li><strong>Supabase</strong> (Supabase Inc., com infraestrutura em data centers da Amazon Web Services na União Europeia) — alojamento da base de dados, autenticação e funções de servidor.</li>
             <li><strong>Vercel Inc.</strong> — alojamento da aplicação web.</li>
             <li><strong>Google</strong> — apenas se escolher "Entrar com Google": partilhamos o seu nome e email para criar a conta.</li>
-            <li><strong>Fornecedor de pagamentos</strong> — processamento de subscrições, sem acesso da QUESTEDUCA aos dados completos do cartão.</li>
+            <li><strong>Stripe Payments Europe, Ltd.</strong> — processamento de pagamentos e subscrições, sem acesso da QUESTEDUCA aos dados completos do cartão.</li>
           </ul>
           <p>Podemos ainda partilhar dados quando exigido por lei ou ordem de autoridade competente.</p>
         </Section>

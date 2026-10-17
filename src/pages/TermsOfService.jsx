@@ -46,7 +46,8 @@ const TermsOfService = () => (
           <ul className="list-disc pl-6 space-y-1">
             <li>Existe um plano gratuito e planos pagos (mensais e anuais, individuais e familiares), com as funcionalidades descritas na página de preços.</li>
             <li>Os preços são apresentados em euros, com IVR/IVA à taxa legal incluída quando aplicável. A QUESTEDUCA comunica os preços antes da finalização da compra.</li>
-            <li>As subscrições pagas são renovadas automaticamente por períodos iguais, salvo cancelamento prévio pelo utilizador, que pode ser feito a qualquer momento na área de conta.</li>
+            <li><strong>Processamento de pagamentos:</strong> os pagamentos são processados pela <strong>Stripe Payments Europe, Ltd.</strong>, entidade de pagamento autorizada e regulamentada na União Europeia. Quando efetua uma compra, os dados do seu cartão são recolhidos e tratados diretamente pela Stripe em ambiente seguro e certificado (PCI-DSS); a QUESTEDUCA nunca recebe, vê ou armazena os números completos do cartão ou códigos de segurança. O tratamento dos dados de pagamento pela Stripe rege-se pelas respetivas condições de utilização e política de privacidade, disponíveis no momento da compra.</li>
+            <li>As subscrições pagas são renovadas automaticamente por períodos iguais, salvo cancelamento prévio pelo utilizador, que pode ser feito a qualquer momento na área de conta. O cancelamento impede futuras cobranças pela Stripe, mantendo o acesso até ao fim do período já pago.</li>
             <li>Existe um período de demonstração gratuito, quando indicado. No caso de renovação automática em contratos anuais com demonstração gratuita, o consumidor pode rescindir a qualquer momento com reembolso proporcional (artigo 24.º, n.º 6 do Decreto-Lei n.º 7/2004, na redação atual).</li>
           </ul>
         </Section>
