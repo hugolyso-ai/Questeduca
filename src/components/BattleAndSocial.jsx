@@ -163,63 +163,19 @@ const SendGiftModal = ({ isOpen, onClose, friendId, friendName, gameState, onSuc
     if (!user) return;
     setLoading(true);
     try {
-      // Validate sender has enough resources
-      if (giftType === 'coins') {
-        if ((gameState?.coins || 0) < amount) {
-          toast.error('Não tens moedas suficientes!');
-          return;
-        }
-      } else {
-        const res = gameState?.resources || {};
-        if ((res[giftType] || 0) < amount) {
-          toast.error('Não tens recursos suficientes!');
-          return;
-        }
-      }
-
-      // Deduct from sender
-      let senderUpdate = {};
-      if (giftType === 'coins') {
-        senderUpdate.coins = (gameState?.coins || 0) - amount;
-      } else {
-        const res = gameState?.resources || {};
-        senderUpdate.resources = { ...res, [giftType]: (res[giftType] || 0) - amount };
-      }
-      const { error: senderError } = await supabase
-        .from('game_states')
-        .update(senderUpdate)
-        .eq('user_id', user.id);
-      if (senderError) throw senderError;
-
-      // Add to receiver
-      const { data: receiverState, error: recvError } = await supabase
-        .from('game_states')
-        .select('*')
-        .eq('user_id', friendId)
-        .single();
-
-      if (!recvError && receiverState) {
-        let receiverUpdate = {};
-        if (giftType === 'coins') {
-          receiverUpdate.coins = (receiverState.coins || 0) + amount;
-        } else {
-          const recvRes = receiverState.resources || {};
-          receiverUpdate.resources = { ...recvRes, [giftType]: (recvRes[giftType] || 0) + amount };
-        }
-        await supabase
-          .from('game_states')
-          .update(receiverUpdate)
-          .eq('user_id', friendId);
-      }
-
-      // Insert notification for receiver
-      const senderName = profile?.name || 'Alguém';
-      const giftNames = { coins: 'moedas', wood: 'madeira', stone: 'pedra', iron: 'ferro', food: 'comida' };
-      await supabase.from('notifications').insert({
-        user_id: friendId,
-        type: 'gift',
-        message: `Recebeste ${amount} ${giftNames[giftType] || giftType} de ${senderName}!`,
+      // Tudo verificado e movido no servidor (amizade, limite 1-50, saldos)
+      const { error } = await supabase.rpc('send_gift', {
+        p_friend: friendId,
+        p_kind: giftType,
+        p_amount: amount,
       });
+      if (error) {
+        if (/Só podes enviar presentes/i.test(error.message)) toast.error('Só podes enviar presentes a amigos!');
+        else if (/Recursos insuficientes/i.test(error.message)) toast.error('Não tens recursos suficientes!');
+        else if (/Quantidade inválida/i.test(error.message)) toast.error('Quantidade inválida (1 a 50).');
+        else toast.error(error.message || 'Erro ao enviar presente');
+        return;
+      }
 
       toast.success(`Presente enviado para ${friendName}!`);
       onSuccess?.();
@@ -409,111 +365,19 @@ const BattleAndSocial = ({ friends, currentUserId, gameState, onRefresh }) => {
     fetchVisitPermissions();
   }, [user?.id]);
 
-  // Send raid
+  // Send raid (decidido no servidor: d20 + poderes, saque e registo)
   const handleSendRaid = async (targetUserId) => {
     if (!user) return;
     setLoading(true);
     try {
-      const attackPower = gameState?.attack_power || 0;
-      const attackerName = profile?.name || user?.email || 'Anónimo';
-
-      // Fetch defender's game state
-      const { data: defenderState, error: defError } = await supabase
-        .from('game_states')
-        .select('*')
-        .eq('user_id', targetUserId)
-        .single();
-
-      if (defError || !defenderState) {
-        toast.error('Não foi possível encontrar a cidade do adversário');
+      const { data, error } = await supabase.rpc('send_raid', { p_target: targetUserId });
+      if (error) {
+        if (/Só podes atacar amigos/i.test(error.message)) toast.error('Só podes atacar amigos!');
+        else toast.error(error.message || 'Erro ao enviar ataque');
         return;
       }
 
-      const defensePower = defenderState.defense_power || 0;
-      const friend = friends?.find((f) => f.friend_id === targetUserId);
-      const defenderName = friend?.name || 'Aventureiro';
-
-      // Battle rolls (d20 + power, highest wins)
-      const attackRoll = Math.floor(Math.random() * 20) + 1 + attackPower;
-      const defenseRoll = Math.floor(Math.random() * 20) + 1 + defensePower;
-      const victory = attackRoll > defenseRoll;
-
-      let loot = null;
-      if (victory) {
-        const defRes = defenderState.resources || {};
-        loot = {
-          coins: Math.floor((defenderState.coins || 0) * 0.1),
-          wood: Math.floor((defRes.wood || 0) * 0.1),
-          stone: Math.floor((defRes.stone || 0) * 0.1),
-          iron: Math.floor((defRes.iron || 0) * 0.1),
-          food: Math.floor((defRes.food || 0) * 0.1),
-        };
-
-        // Deduct loot from defender
-        const defNewRes = {
-          ...defRes,
-          wood: (defRes.wood || 0) - loot.wood,
-          stone: (defRes.stone || 0) - loot.stone,
-          iron: (defRes.iron || 0) - loot.iron,
-          food: (defRes.food || 0) - loot.food,
-        };
-        await supabase
-          .from('game_states')
-          .update({
-            coins: (defenderState.coins || 0) - loot.coins,
-            resources: defNewRes,
-          })
-          .eq('user_id', targetUserId);
-
-        // Add loot to attacker
-        const myRes = gameState?.resources || {};
-        const myNewRes = {
-          ...myRes,
-          wood: (myRes.wood || 0) + loot.wood,
-          stone: (myRes.stone || 0) + loot.stone,
-          iron: (myRes.iron || 0) + loot.iron,
-          food: (myRes.food || 0) + loot.food,
-        };
-        await supabase
-          .from('game_states')
-          .update({
-            coins: (gameState?.coins || 0) + loot.coins,
-            resources: myNewRes,
-          })
-          .eq('user_id', user.id);
-      }
-
-      // Insert raid record
-      await supabase.from('raids').insert({
-        attacker_id: user.id,
-        attacker_name: attackerName,
-        defender_id: targetUserId,
-        defender_name: defenderName,
-        attack_power: attackPower,
-        defense_power: defensePower,
-        attack_roll: attackRoll,
-        defense_roll: defenseRoll,
-        victory,
-        loot,
-      });
-
-      // Notify defender
-      await supabase.from('notifications').insert({
-        user_id: targetUserId,
-        type: 'raid',
-        message: victory
-          ? `${attackerName} atacou a tua cidade e venceu! Perdeste recursos.`
-          : `${attackerName} atacou a tua cidade mas a tua defesa resistiu!`,
-      });
-
-      setBattleResult({
-        victory,
-        attack_roll: attackRoll,
-        defense_roll: defenseRoll,
-        loot,
-        message: victory ? 'Saqueaste recursos com sucesso!' : 'A defesa inimiga foi demasiado forte!',
-      });
-
+      setBattleResult(data);
       fetchRaids();
       onRefresh?.();
     } catch (error) {

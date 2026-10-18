@@ -25,6 +25,7 @@ import AccessibilityPanel from '../components/AccessibilityPanel'
 import InteractiveTutorial from '../components/InteractiveTutorial'
 import { OnlineStatusIndicator } from '../components/OfflineComponents'
 import LibraryPanel from '../components/LibraryPanel'
+import FriendChat from '../components/FriendChat'
 
 const TABS = [
   { id: 'city', name: 'A Minha Cidade', icon: Castle },
@@ -131,6 +132,7 @@ const QuizView = ({ gameState, setGameState, userId, schoolYear }) => {
   const [hintsAvailable, setHintsAvailable] = useState(0)
   const [timeLeft, setTimeLeft] = useState(null)
   const [speakEnabled, setSpeakEnabled] = useState(() => localStorage.getItem('questeduca_speak') === 'true')
+  const [answers, setAnswers] = useState([])
   const [teacherTestToday, setTeacherTestToday] = useState(false)
 
   // Testes marcados por professores para hoje: dão ganhos extra conforme a pontuação
@@ -227,6 +229,7 @@ const QuizView = ({ gameState, setGameState, userId, schoolYear }) => {
           question: q.question,
           options: q.options,
           correct_answer: q.correct_answer,
+          explanation: q.explanation || null,
           subject: q.subject,
           difficulty: q.difficulty || 1,
         })))
@@ -243,6 +246,7 @@ const QuizView = ({ gameState, setGameState, userId, schoolYear }) => {
       setHintsAvailable(libraryLevel > 0 ? libraryLevel : 0)
       setAnswered(false)
       setSelectedAnswer(null)
+      setAnswers([])
       setQuizActive(true)
       setQuizComplete(false)
       setLoadingQuiz(false)
@@ -255,6 +259,7 @@ const QuizView = ({ gameState, setGameState, userId, schoolYear }) => {
     if (answered) return
     setSelectedAnswer(index)
     setAnswered(true)
+    setAnswers(prev => { const next = [...prev]; next[currentQuestion] = index; return next })
     const question = questions[currentQuestion]
     const isCorrect = index === question.correct_answer
     if (isCorrect) {
@@ -325,12 +330,13 @@ const QuizView = ({ gameState, setGameState, userId, schoolYear }) => {
           }).eq('user_id', userId)
         }
         if (questions.length > 0) {
+          const quizId = `${selectedSubject}_${Date.now()}`
           const rows = questions.map((q, idx) => ({
             user_id: userId,
-            quiz_id: `${selectedSubject}_${Date.now()}`,
+            quiz_id: quizId,
             question_id: q.id ? String(q.id) : `gen_${idx}`,
-            answer_index: idx,
-            correct: idx < correctCount,
+            answer_index: answers[idx] ?? null,
+            correct: answers[idx] === q.correct_answer,
             subject: selectedSubject,
             school_year: String(schoolYear || 5),
           }))
@@ -344,6 +350,7 @@ const QuizView = ({ gameState, setGameState, userId, schoolYear }) => {
   }
 
   if (quizComplete) {
+    const wrong = questions.map((q, idx) => ({ q, given: answers[idx] })).filter(r => r.given !== r.q.correct_answer)
     return (
       <div className="bg-white rounded-3xl shadow-xl p-8 text-center">
         <Trophy className="w-20 h-20 text-yellow-500 mx-auto mb-6" />
@@ -356,6 +363,23 @@ const QuizView = ({ gameState, setGameState, userId, schoolYear }) => {
           <div className="bg-[hsl(38,80%,93%)] rounded-xl p-4"><p className="text-3xl font-bold text-[hsl(28,85%,40%)]">{score}</p><p className="text-xs text-slate-500">Pontos</p></div>
           <div className="bg-amber-50 rounded-xl p-4"><p className="text-3xl font-bold text-amber-600">{correctCount * 5}</p><p className="text-xs text-slate-500">Moedas</p></div>
         </div>
+
+        {wrong.length > 0 && (
+          <div className="max-w-md mx-auto mb-6 text-left">
+            <h3 className="font-bold text-slate-800 mb-3 flex items-center gap-2">📖 Revê as tuas respostas</h3>
+            <div className="space-y-3">
+              {wrong.map(({ q, given }, i) => (
+                <div key={i} className="bg-slate-50 border-2 border-slate-100 rounded-xl p-4" data-testid={`review-${i}`}>
+                  <p className="font-semibold text-slate-800 text-sm mb-2">{q.question}</p>
+                  <p className="text-sm text-red-600 mb-1">✗ Resposta: {given === undefined || given === null ? 'sem resposta' : q.options[given]}</p>
+                  <p className="text-sm text-[hsl(28,85%,40%)] mb-1">✓ Certa: {q.options[q.correct_answer]}</p>
+                  {q.explanation && <p className="text-xs text-slate-500 mt-2 bg-white rounded-lg p-2 border border-slate-100">💡 {q.explanation}</p>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="flex gap-3 justify-center">
           <button onClick={() => { setQuizComplete(false); startQuiz(selectedSubject, mode) }} className="px-6 py-3 bg-[hsl(35,92%,50%)] text-white font-bold rounded-xl hover:bg-[hsl(24,70%,42%)] transition">Jogar Outro</button>
           <button onClick={() => { setQuizComplete(false); setMode(null); setSelectedSubject(null) }} className="px-6 py-3 bg-[hsl(35,92%,50%)] text-white font-bold rounded-xl hover:bg-[hsl(33,90%,45%)] transition">Voltar aos Quizzes</button>
@@ -560,7 +584,7 @@ const StudentDashboard = () => {
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-3 min-w-0">
-              <Castle className="h-8 w-8 flex-shrink-0 text-[hsl(35,92%,45%)]" strokeWidth={2.5} />
+              <img src="/logo.png" alt="QUESTEDUCA" className="h-10 w-auto flex-shrink-0 drop-shadow" />
               <span className="text-xl font-bold text-slate-900 truncate" style={{ fontFamily: 'Cinzel, serif' }}>QUESTEDUCA</span>
             </div>
             <div className="flex items-center gap-1.5 md:gap-4 flex-shrink-0">
@@ -613,6 +637,7 @@ const StudentDashboard = () => {
         )}
         {activeTab === 'social' && (
           <div className="space-y-6">
+            <FriendChat currentUserId={user.id} />
             <PortugalFriendMap />
             <QuizDuels onRefresh={fetchGameData} />
             <BattleAndSocial gameState={gameState} userId={user.id} onRefresh={fetchGameData} />
@@ -640,7 +665,15 @@ const StudentDashboard = () => {
       )}
       {showSettings && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center p-4 overflow-y-auto" onClick={() => setShowSettings(false)}>
-          <div className="w-full max-w-2xl my-8" onClick={e => e.stopPropagation()}>
+          <div className="w-full max-w-2xl my-8 relative" onClick={e => e.stopPropagation()}>
+            <button
+              onClick={() => setShowSettings(false)}
+              className="fixed top-4 right-4 md:top-6 md:right-6 z-[60] p-3 bg-white rounded-full shadow-2xl border-2 border-slate-200 hover:bg-slate-100 transition"
+              title="Fechar definições"
+              data-testid="settings-close-btn"
+            >
+              <X size={22} />
+            </button>
             <ProfileSettingsPanel studentProfile={studentProfile} onRefresh={fetchGameData} />
             <AccessibilityPanel />
             <button onClick={() => setShowSettings(false)} className="w-full mt-4 py-3 bg-slate-200 rounded-xl font-semibold">Fechar</button>

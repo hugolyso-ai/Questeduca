@@ -17,6 +17,7 @@ import TeacherDashboard from './pages/TeacherDashboard'
 import PaymentSuccess from './pages/PaymentSuccess'
 import PaymentCancel from './pages/PaymentCancel'
 import PrivacyPolicy from './pages/PrivacyPolicy'
+import SubscriptionPlans from './components/SubscriptionPlans'
 import TermsOfService from './pages/TermsOfService'
 import ResetPasswordPage from './pages/ResetPasswordPage'
 import { RoleChoicePage, PendingApprovalPage } from './pages/RoleChoicePage'
@@ -41,6 +42,7 @@ function App() {
             <Route path="/terms-of-service" element={<TermsOfService />} />
             <Route path="/payment/success" element={<ProtectedRoute allowedRoles={['parent']}><PaymentSuccess /></ProtectedRoute>} />
             <Route path="/payment/cancel" element={<ProtectedRoute allowedRoles={['parent']}><PaymentCancel /></ProtectedRoute>} />
+            <Route path="/parent/plans" element={<ProtectedRoute allowedRoles={['parent']}><SubscriptionPlans /></ProtectedRoute>} />
             <Route path="/student/dashboard" element={<ProtectedRoute allowedRoles={['student']}><StudentDashboard /></ProtectedRoute>} />
             <Route path="/parent/dashboard" element={<ProtectedRoute allowedRoles={['parent']}><ParentDashboard /></ProtectedRoute>} />
             <Route path="/parent" element={<ProtectedRoute allowedRoles={['parent']}><ParentDashboard /></ProtectedRoute>} />

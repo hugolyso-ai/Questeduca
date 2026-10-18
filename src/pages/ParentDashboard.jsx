@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { toast } from 'sonner'
 import {
@@ -11,12 +12,15 @@ import {
 import ReportExport, { ExportReportButton } from '../components/ReportExport'
 import DiagnosisPanel from '../components/DiagnosisPanel'
 import ParentAuthorizations from '../components/ParentAuthorizations'
+import ChildChatMonitor from '../components/ChildChatMonitor'
+import ChildWeaknesses from '../components/ChildWeaknesses'
 import AccessibilityPanel from '../components/AccessibilityPanel'
 import { OnlineStatusIndicator } from '../components/OfflineComponents'
 import { Pencil } from 'lucide-react'
 
 const ParentDashboard = () => {
   const { user, profile, logout } = useAuth()
+  const navigate = useNavigate()
   const [children, setChildren] = useState([])
   const [selectedChild, setSelectedChild] = useState(null)
   const [childGameData, setChildGameData] = useState({})
@@ -32,6 +36,10 @@ const ParentDashboard = () => {
   const [editSchoolChild, setEditSchoolChild] = useState(null)
   const [schoolSearch, setSchoolSearch] = useState('')
   const [schoolOptions, setSchoolOptions] = useState([])
+
+  const handleUpgrade = () => {
+    navigate('/parent/plans')
+  }
 
   // Ciclo do ano escolar: 1.º ciclo = anos 1–4, 2.º/3.º ciclos = anos 5–9
   const cycleForYear = (year) => (parseInt(year) <= 4 ? '1' : '2')
@@ -88,8 +96,18 @@ const ParentDashboard = () => {
       if (data && data.length > 0 && !selectedChild) {
         setSelectedChild(data[0])
       }
-      const { data: subData } = await supabase.from('subscriptions').select('*').eq('user_id', user.id).eq('status', 'active').single()
-      setSubscription(subData)
+      const { data: subData } = await supabase
+        .from('stripe_user_subscriptions')
+        .select('subscription_status, current_period_end, cancel_at_period_end')
+        .maybeSingle()
+      const stripeActive = subData && ['active', 'trialing', 'past_due'].includes(subData.subscription_status)
+      if (stripeActive) {
+        setSubscription(subData)
+      } else {
+        // Fallback: subscrição manual (ex.: atribuída pelo admin)
+        const { data: legacySub } = await supabase.from('subscriptions').select('*').eq('user_id', user.id).eq('status', 'active').maybeSingle()
+        setSubscription(legacySub)
+      }
     } catch (error) {
       toast.error('Erro ao carregar dados')
     } finally {
@@ -189,7 +207,7 @@ const ParentDashboard = () => {
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-3">
-              <Castle className="h-8 w-8 text-[hsl(35,92%,45%)]" strokeWidth={2.5} />
+              <img src="/logo.png" alt="QUESTEDUCA" className="h-10 w-auto flex-shrink-0 drop-shadow" />
               <span className="text-xl font-bold text-slate-900" style={{ fontFamily: 'Cinzel, serif' }}>QUESTEDUCA</span>
               <span className="text-sm text-slate-500 ml-2">Pai/Encarregado</span>
             </div>
@@ -207,14 +225,26 @@ const ParentDashboard = () => {
           <div className="bg-gradient-to-r from-amber-400 to-orange-500 rounded-2xl p-6 text-white mb-6 flex items-center justify-between">
             <div>
               <h3 className="font-bold text-lg mb-1">Conta Grátis</h3>
-              <p className="text-white/90 text-sm">Faz upgrade para Premium e desbloqueia tudo!</p>
+              <p className="text-white/90 text-sm">Premium: 6,99 €/mês ou 69,90 €/ano — desbloqueia tudo!</p>
             </div>
-            <button onClick={() => toast.info('Pagamentos em breve!')} className="px-6 py-3 bg-white text-orange-600 font-bold rounded-xl hover:bg-slate-50 transition">Upgrade</button>
+            <button onClick={handleUpgrade} className="px-6 py-3 bg-white text-orange-600 font-bold rounded-xl hover:bg-slate-50 transition">
+              Upgrade
+            </button>
           </div>
         )}
 
         <div className="mb-6">
           <ParentAuthorizations />
+        </div>
+
+        {/* Conversas dos filhos (monitorização parental) */}
+        <div className="mb-6">
+          <ChildChatMonitor children={children} />
+        </div>
+
+        {/* Relatório: onde o filho erra mais */}
+        <div className="mb-6">
+          <ChildWeaknesses children={children} />
         </div>
 
         {/* Acessibilidades do próprio pai/encarregado */}

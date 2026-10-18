@@ -1,7 +1,7 @@
 import React from 'react';
-import { Coins, Diamond, TreePine, Mountain, Pickaxe, Wheat, Home, Shield, Sword } from 'lucide-react';
+import { Coins, Diamond, TreePine, Mountain, Pickaxe, Wheat, Home, Shield, Sword, ShoppingCart } from 'lucide-react';
 
-const ResourceBar = ({ gameState }) => {
+const ResourceBar = ({ gameState, onOpenShop }) => {
   const resources = gameState?.resources || { wood: 0, stone: 0, iron: 0, food: 0 };
 
   return (
@@ -28,6 +28,16 @@ const ResourceBar = ({ gameState }) => {
           ))}
 
           <div className="h-14 w-px bg-gradient-to-b from-transparent via-amber-300 to-transparent" />
+
+          <button
+            onClick={onOpenShop}
+            className="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-600 text-white px-4 py-2.5 rounded-xl font-bold shadow-lg hover:opacity-90 transition"
+            data-testid="open-shop-btn"
+            title="Comprar materiais com moedas e diamantes"
+          >
+            <ShoppingCart size={20} />
+            <span>Loja</span>
+          </button>
 
           <div className="flex items-center gap-3">
             {[

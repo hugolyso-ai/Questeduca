@@ -3,3 +3,9 @@ project_id = "questeduca"
 
 [functions.email-queue-processor]
 verify_jwt = false
+
+[functions.stripe-checkout]
+verify_jwt = true
+
+[functions.stripe-webhook]
+verify_jwt = false

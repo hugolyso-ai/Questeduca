@@ -68,6 +68,17 @@
 }
 .high-contrast .bg-white { background-color: #000 !important; color: #fff !important; }
 
+/* Focus visível para navegação por teclado (acessibilidade) */
+:focus-visible {
+  outline: 3px solid hsl(var(--ring));
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+.high-contrast :focus-visible {
+  outline: 3px solid #ffd700;
+  outline-offset: 2px;
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: hsl(var(--muted)); }

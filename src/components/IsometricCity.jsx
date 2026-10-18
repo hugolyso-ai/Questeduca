@@ -16,6 +16,7 @@ import ResourceBar from './city/ResourceBar';
 import Snowfall from './city/Snowfall';
 import SkinSelector from './city/SkinSelector';
 import LibraryPopup from './city/LibraryPopup';
+import ResourceShop from './city/ResourceShop';
 
 const AMBIENT_SOUND_URL = 'https://cdn.pixabay.com/audio/2024/11/04/audio_aff31d7b67.mp3';
 const GRID_SIZE = 14;
@@ -110,6 +111,7 @@ const IsometricCity = ({ gameState, onRefresh }) => {
   const [currentSkin, setCurrentSkin] = useState(() => localStorage.getItem('questeduca_city_skin') || 'normal');
   const [soundEnabled, setSoundEnabled] = useState(() => localStorage.getItem('questeduca_ambient_sound') === 'true');
   const [showLibrary, setShowLibrary] = useState(false);
+  const [showShop, setShowShop] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState('');
   const audioRef = useRef(null);
@@ -521,7 +523,7 @@ const IsometricCity = ({ gameState, onRefresh }) => {
       {/* Ambient audio element */}
       <audio ref={audioRef} src={AMBIENT_SOUND_URL} loop preload="none" />
 
-      <ResourceBar gameState={gameState} />
+      <ResourceBar gameState={gameState} onOpenShop={() => setShowShop(true)} />
 
       {/* Controls */}
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -677,6 +679,14 @@ const IsometricCity = ({ gameState, onRefresh }) => {
       )}
 
       {showLibrary && <LibraryPopup onClose={() => setShowLibrary(false)} />}
+
+      {showShop && (
+        <ResourceShop
+          gameState={gameState}
+          onClose={() => setShowShop(false)}
+          onRefresh={refreshAll}
+        />
+      )}
 
       {/* Renomear aldeia */}
       {editingName && (
