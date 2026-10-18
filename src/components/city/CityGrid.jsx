@@ -4,7 +4,7 @@ import {
 } from './cityConfig';
 
 // Morador animado que vagueia perto de um edifício (aldeão ou soldado)
-const VillagerSprite = ({ tile, kind, name, gridSize, seed }) => {
+const VillagerSprite = ({ tile, kind, name, gridSize, seed, mood }) => {
   const { left, top } = gridToScreen(tile.x, tile.y, gridSize);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [flipped, setFlipped] = useState(false);
