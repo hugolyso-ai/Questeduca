@@ -52,6 +52,7 @@ const ParentAuthorizations = () => {
     }
     setLoading(true);
     try {
+      // Preenche o nickname com a parte do email; será substituído pelo escolhido pelo aluno no registo
       const { error } = await supabase.from('student_authorizations').insert({
         parent_id: user.id,
         student_email: newAuth.email.trim().toLowerCase(),
@@ -139,7 +140,9 @@ const ParentAuthorizations = () => {
           <p className="text-slate-400 text-sm text-center py-4">Ainda não autorizou nenhum filho. Adicione acima para que possa registar-se.</p>
         ) : (
           <div className="space-y-2">
-            {authorizations.map(a => (
+            {authorizations.map(a => {
+              const hasAccount = a.status === 'registered' || !!a.authorized_user_id;
+              return (
               <div key={a.id} className="flex items-center justify-between bg-slate-50 rounded-xl p-3">
                 <div>
                   <p className="font-semibold text-slate-800 text-sm">{a.nickname}</p>
@@ -147,18 +150,20 @@ const ParentAuthorizations = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className={`text-xs px-2.5 py-1 rounded-full font-bold ${
+                    hasAccount ? 'bg-[hsl(142,45%,80%)] text-green-800' :
                     a.status === 'authorized' ? 'bg-[hsl(142,45%,88%)] text-green-700' : 'bg-slate-200 text-slate-500'
                   }`}>
-                    {a.status === 'authorized' ? 'Ativo' : 'Revogado'}
+                    {hasAccount ? 'Autorizado · conta criada' : a.status === 'authorized' ? 'Autorizado' : 'Revogado'}
                   </span>
-                  {a.status === 'authorized' && (
+                  {!hasAccount && (
                     <button onClick={() => revoke(a.id)} className="p-2 text-red-400 hover:bg-red-50 rounded-lg transition" title="Revogar">
                       <Trash2 size={16} />
                     </button>
                   )}
                 </div>
               </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>

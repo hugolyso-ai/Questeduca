@@ -9,6 +9,7 @@ import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import StudentDashboard from './pages/StudentDashboard'
+import StudentOnboarding from './pages/StudentOnboarding'
 import ParentDashboard from './pages/ParentDashboard'
 import AssociationDashboard from './pages/AssociationDashboard'
 import AdminDashboard from './pages/AdminDashboard'
@@ -17,6 +18,7 @@ import PaymentSuccess from './pages/PaymentSuccess'
 import PaymentCancel from './pages/PaymentCancel'
 import PrivacyPolicy from './pages/PrivacyPolicy'
 import TermsOfService from './pages/TermsOfService'
+import ResetPasswordPage from './pages/ResetPasswordPage'
 import { RoleChoicePage, PendingApprovalPage } from './pages/RoleChoicePage'
 
 function App() {
@@ -30,7 +32,9 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/role-choice" element={<RoleChoicePage />} />
+            <Route path="/student/onboarding" element={<ProtectedRoute allowedRoles={['student']}><StudentOnboarding /></ProtectedRoute>} />
             <Route path="/pending-approval" element={<PendingApprovalPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<TermsOfService />} />

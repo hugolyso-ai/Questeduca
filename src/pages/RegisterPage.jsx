@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { Swords, Mail, Lock, User, Building2, MapPin, School, Users, Plus, Trash2, Paperclip, Phone } from 'lucide-react'
+import { Swords, Mail, Lock, User, Building2, MapPin, School, Users, Plus, Trash2, Paperclip, Phone, CheckCircle2, XCircle, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { supabase } from '../lib/supabase'
+import SchoolPicker from '../components/SchoolPicker'
 
 const GoogleIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24">
@@ -29,13 +30,15 @@ const RegisterPage = () => {
 
   const [teacherData, setTeacherData] = useState({
     disciplines: [],
-    school_id: '',
-    school_name: '',
-    class_name: '',
+    teaching_years: [],
+    schools: [],
     teacher_kind: 'tutelar',
     mobile_phone: '',
     proof_file: null
   })
+
+  // Escola em edição (para adicionar à lista do professor)
+  const [teacherSchoolDraft, setTeacherSchoolDraft] = useState({ district: '', municipality: '', locality: '', school_id: '', school_name: '' })
 
   const [associationData, setAssociationData] = useState({
     association_name: '',
@@ -56,6 +59,38 @@ const RegisterPage = () => {
   const [localities, setLocalities] = useState([])
   const [schools, setSchools] = useState([])
 
+  // Validação em background do email de aluno (autorizado pelo pai?)
+  const [authCheck, setAuthCheck] = useState('idle') // idle | checking | ok | not_ok
+  useEffect(() => {
+    if (formData.role !== 'student' || !formData.email.trim()) {
+      setAuthCheck('idle')
+      return
+    }
+    setAuthCheck('checking')
+    const t = setTimeout(async () => {
+      try {
+        // Sessão temporária anónima para o backend saber qual email validar
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session) {
+          // Utilizador já autenticado: valida diretamente o próprio email
+          const { data } = await supabase.rpc('is_authorized_student_email')
+          setAuthCheck(data?.authorized ? 'ok' : 'not_ok')
+        } else {
+          // Sem sessão: consulta a lista pública de autorizações por email (view anónima)
+          const { data } = await supabase
+            .from('authorized_student_emails')
+            .select('student_email')
+            .eq('student_email', formData.email.trim().toLowerCase())
+            .maybeSingle()
+          setAuthCheck(data ? 'ok' : 'not_ok')
+        }
+      } catch {
+        setAuthCheck('idle')
+      }
+    }, 600)
+    return () => clearTimeout(t)
+  }, [formData.email, formData.role])
+
   useEffect(() => {
     const fetchDistricts = async () => {
       const { data } = await supabase.from('districts').select('*').order('name')
@@ -63,6 +98,56 @@ const RegisterPage = () => {
     }
     fetchDistricts()
   }, [])
+
+  useEffect(() => {
+    if (!associationData.district) return
+    const fetchMunicipalities = async () => {
+      const { data } = await supabase
+        .from('schools')
+        .select('municipality')
+        .eq('district', associationData.district)
+        .order('municipality')
+      const unique = [...new Set(data?.map(s => s.municipality) || [])]
+      setMunicipalities(unique)
+      setAssociationData(prev => ({ ...prev, municipality: '', locality: '', school_id: '', school_name: '' }))
+      setLocalities([])
+      setSchools([])
+    }
+    fetchMunicipalities()
+  }, [associationData.district])
+
+  useEffect(() => {
+    if (!associationData.municipality) return
+    const fetchLocalities = async () => {
+      const { data } = await supabase
+        .from('schools')
+        .select('locality')
+        .eq('district', associationData.district)
+        .eq('municipality', associationData.municipality)
+        .order('locality')
+      const unique = [...new Set(data?.map(s => s.locality).filter(Boolean) || [])]
+      setLocalities(unique)
+      setAssociationData(prev => ({ ...prev, locality: '', school_id: '', school_name: '' }))
+      setSchools([])
+    }
+    fetchLocalities()
+  }, [associationData.municipality])
+
+  useEffect(() => {
+    if (!associationData.locality) return
+    const fetchSchools = async () => {
+      const { data } = await supabase
+        .from('schools')
+        .select('*')
+        .eq('district', associationData.district)
+        .eq('municipality', associationData.municipality)
+        .eq('locality', associationData.locality)
+        .order('name')
+      setSchools(data || [])
+      setAssociationData(prev => ({ ...prev, school_id: '', school_name: '' }))
+    }
+    fetchSchools()
+  }, [associationData.locality])
 
   useEffect(() => {
     if (!associationData.district) return
@@ -157,6 +242,46 @@ const RegisterPage = () => {
     }))
   }
 
+  const TEACHING_YEARS = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+  const toggleTeachingYear = (y) => {
+    setTeacherData(prev => ({
+      ...prev,
+      teaching_years: prev.teaching_years.includes(y)
+        ? prev.teaching_years.filter(x => x !== y).sort()
+        : [...prev.teaching_years, y].sort()
+    }))
+  }
+
+  const addTeacherSchool = () => {
+    if (!teacherSchoolDraft.school_id) {
+      toast.error('Escolha a escola (distrito, concelho e escola)')
+      return
+    }
+    if (teacherData.schools.some(s => s.school_id === teacherSchoolDraft.school_id)) {
+      toast.error('Essa escola já foi adicionada')
+      return
+    }
+    setTeacherData(prev => ({
+      ...prev,
+      schools: [...prev.schools, { ...teacherSchoolDraft }],
+      school_id: prev.school_id || teacherSchoolDraft.school_id,
+      school_name: prev.school_name || teacherSchoolDraft.school_name,
+    }))
+    setTeacherSchoolDraft({ district: '', municipality: '', locality: '', school_id: '', school_name: '' })
+  }
+
+  const removeTeacherSchool = (schoolId) => {
+    setTeacherData(prev => {
+      const remaining = prev.schools.filter(s => s.school_id !== schoolId)
+      return {
+        ...prev,
+        schools: remaining,
+        school_id: remaining[0]?.school_id || '',
+        school_name: remaining[0]?.school_name || '',
+      }
+    })
+  }
+
   const uploadProof = async (userId, file) => {
     const path = `${userId}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`
     const { error } = await supabase.storage.from('proofs').upload(path, file)
@@ -167,6 +292,14 @@ const RegisterPage = () => {
   const handleTeacherRegister = async () => {
     if (teacherData.disciplines.length === 0) {
       toast.error('Selecione pelo menos uma disciplina')
+      return
+    }
+    if (teacherData.teaching_years.length === 0) {
+      toast.error('Selecione pelo menos um ano que leciona')
+      return
+    }
+    if (teacherData.schools.length === 0) {
+      toast.error('Adicione pelo menos uma escola')
       return
     }
     if (!teacherData.mobile_phone.trim()) {
@@ -204,11 +337,12 @@ const RegisterPage = () => {
       mobile_phone: teacherData.mobile_phone.trim(),
       proof_document_name: teacherData.proof_file.name,
       proof_document_url: proofPath,
-      school_id: teacherData.school_id || null,
-      school_name: teacherData.school_name || null,
-      class_name: teacherData.class_name || null,
+      school_id: teacherData.schools[0]?.school_id || null,
+      school_name: teacherData.schools[0]?.school_name || null,
       teacher_kind: teacherData.teacher_kind,
       disciplines: teacherData.disciplines,
+      teaching_years: teacherData.teaching_years,
+      schools: teacherData.schools,
     })
   }
 
@@ -304,7 +438,25 @@ const RegisterPage = () => {
         toast.success('Registo submetido! A conta fica pendente de aprovação do administrador. Será notificado por email.', { duration: 10000 })
         navigate('/login')
       } else {
-        await register(formData.email, formData.password, formData.name, formData.role, formData.nickname)
+        if (formData.role === 'student' && authCheck !== 'ok') {
+          toast.error('Este email não está autorizado. Peça ao seu pai/encarregado de educação para o autorizar primeiro no painel de pais.')
+          setLoading(false)
+          return
+        }
+        try {
+          await register(formData.email, formData.password, formData.name, formData.role, formData.nickname)
+        } catch (regErr) {
+          if (
+            regErr?.message?.toLowerCase().includes('already') ||
+            regErr?.message?.toLowerCase().includes('existe') ||
+            regErr?.status === 422
+          ) {
+            toast.error('Este email já tem uma conta. Em vez de registar, faça login com esse email — se for aluno e faltar completar os dados, será pedido ao entrar.', { duration: 8000 })
+            setLoading(false)
+            return
+          }
+          throw regErr
+        }
         toast.success('Registo bem-sucedido! Por favor, faça login.')
         navigate('/login')
       }
@@ -385,11 +537,28 @@ const RegisterPage = () => {
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   required
-                  className="w-full pl-12 pr-4 py-3 bg-[hsl(36,33%,93%)] border-2 border-[hsl(35,25%,85%)] rounded-xl focus:border-[hsl(35,92%,50%)] focus:ring-4 focus:ring-[hsl(35,92%,50%)]/20 transition-all"
+                  className="w-full pl-12 pr-10 py-3 bg-[hsl(36,33%,93%)] border-2 border-[hsl(35,25%,85%)] rounded-xl focus:border-[hsl(35,92%,50%)] focus:ring-4 focus:ring-[hsl(35,92%,50%)]/20 transition-all"
                   style={{ fontFamily: 'Nunito, sans-serif' }}
                   placeholder="seu@email.com"
                 />
+                {isStudent && authCheck !== 'idle' && (
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2">
+                    {authCheck === 'checking' && <Loader2 size={18} className="text-slate-400 animate-spin" />}
+                    {authCheck === 'ok' && <CheckCircle2 size={18} className="text-green-600" />}
+                    {authCheck === 'not_ok' && <XCircle size={18} className="text-red-500" />}
+                  </span>
+                )}
               </div>
+              {isStudent && authCheck === 'ok' && (
+                <p className="text-xs text-green-700 bg-green-50 border border-green-200 rounded-lg p-2 mt-2">
+                  Email autorizado pelos seus pais. Pode prosseguir com o registo.
+                </p>
+              )}
+              {isStudent && authCheck === 'not_ok' && (
+                <p className="text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg p-2 mt-2">
+                  Este email ainda não foi autorizado. O seu pai/encarregado deve autorizá-lo primeiro no painel de pais.
+                </p>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -504,33 +673,56 @@ const RegisterPage = () => {
                     ))}
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-2" style={{ fontFamily: 'Nunito, sans-serif' }}>
-                      Escola (opcional)
-                    </label>
-                    <input
-                      type="text"
-                      value={teacherData.school_name}
-                      onChange={(e) => setTeacherData({ ...teacherData, school_name: e.target.value })}
-                      className="w-full px-4 py-3 bg-[hsl(36,33%,93%)] border-2 border-[hsl(35,25%,85%)] rounded-xl focus:border-[hsl(35,92%,50%)] focus:ring-4 focus:ring-[hsl(35,92%,50%)]/20 transition-all"
-                      style={{ fontFamily: 'Nunito, sans-serif' }}
-                      placeholder="Nome da escola"
-                    />
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2" style={{ fontFamily: 'Nunito, sans-serif' }}>
+                    Anos que leciona
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {TEACHING_YEARS.map(y => (
+                      <button
+                        key={y}
+                        type="button"
+                        onClick={() => toggleTeachingYear(y)}
+                        className={`w-11 h-9 rounded-lg text-sm font-bold transition ${
+                          teacherData.teaching_years.includes(y)
+                            ? 'bg-[hsl(35,92%,50%)] text-white shadow'
+                            : 'bg-[hsl(36,33%,91%)] text-[hsl(25,10%,40%)] hover:bg-[hsl(36,33%,86%)]'
+                        }`}
+                      >
+                        {y}º
+                      </button>
+                    ))}
                   </div>
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-2" style={{ fontFamily: 'Nunito, sans-serif' }}>
-                      Turma (opcional)
-                    </label>
-                    <input
-                      type="text"
-                      value={teacherData.class_name}
-                      onChange={(e) => setTeacherData({ ...teacherData, class_name: e.target.value })}
-                      className="w-full px-4 py-3 bg-[hsl(36,33%,93%)] border-2 border-[hsl(35,25%,85%)] rounded-xl focus:border-[hsl(35,92%,50%)] focus:ring-4 focus:ring-[hsl(35,92%,50%)]/20 transition-all"
-                      style={{ fontFamily: 'Nunito, sans-serif' }}
-                      placeholder="Ex: 5ºA"
-                    />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2" style={{ fontFamily: 'Nunito, sans-serif' }}>
+                    Escolas onde leciona (pode adicionar várias)
+                  </label>
+                  <div className="p-4 bg-[hsl(36,33%,95%)] rounded-xl border-2 border-dashed border-[hsl(35,25%,85%)]">
+                    <SchoolPicker value={teacherSchoolDraft} onChange={setTeacherSchoolDraft} showLocality />
+                    <button
+                      type="button"
+                      onClick={addTeacherSchool}
+                      className="mt-3 w-full py-2.5 bg-[hsl(142,45%,80%)] text-[hsl(28,85%,30%)] font-bold rounded-xl hover:bg-[hsl(142,45%,75%)] transition flex items-center justify-center gap-2"
+                    >
+                      <Plus size={16} /> Adicionar escola
+                    </button>
                   </div>
+                  {teacherData.schools.length > 0 && (
+                    <div className="mt-3 space-y-2">
+                      {teacherData.schools.map(s => (
+                        <div key={s.school_id} className="flex items-center justify-between bg-white rounded-xl p-3 border border-slate-200">
+                          <div>
+                            <p className="font-semibold text-slate-800 text-sm">{s.school_name}</p>
+                            <p className="text-xs text-slate-500">{[s.locality, s.municipality, s.district].filter(Boolean).join(', ')}</p>
+                          </div>
+                          <button type="button" onClick={() => removeTeacherSchool(s.school_id)} className="p-2 text-red-400 hover:bg-red-50 rounded-lg transition">
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-2" style={{ fontFamily: 'Nunito, sans-serif' }}>

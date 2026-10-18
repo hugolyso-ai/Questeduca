@@ -3,7 +3,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import { toast } from 'sonner'
-import { Swords, School as StudentIcon, Users, GraduationCap, Building2, Phone, Paperclip, Clock } from 'lucide-react'
+import { Swords, School as StudentIcon, Users, GraduationCap, Building2, Phone, Paperclip, Clock, Plus, Trash2 } from 'lucide-react'
+import SchoolPicker from '../components/SchoolPicker'
 
 const RoleChoicePage = () => {
   const navigate = useNavigate()
@@ -12,6 +13,25 @@ const RoleChoicePage = () => {
   const [loading, setLoading] = useState(false)
   const [mobile, setMobile] = useState('')
   const [proofFile, setProofFile] = useState(null)
+  const [teacherKind, setTeacherKind] = useState('tutelar')
+  const [disciplines, setDisciplines] = useState([])
+  const [teachingYears, setTeachingYears] = useState([])
+  const [teacherSchools, setTeacherSchools] = useState([])
+  const [schoolDraft, setSchoolDraft] = useState({ district: '', municipality: '', locality: '', school_id: '', school_name: '' })
+
+  const TEACHER_SUBJECTS = ['Matemática', 'Português', 'Estudo do Meio', 'História', 'Geografia', 'Ciências', 'Inglês', 'Educação Física', 'Educação Musical', 'Educação Visual']
+
+  const toggleDiscipline = (d) => setDisciplines(prev => prev.includes(d) ? prev.filter(x => x !== d) : [...prev, d])
+  const toggleYear = (y) => setTeachingYears(prev => prev.includes(y) ? prev.filter(x => x !== y).sort() : [...prev, y].sort())
+
+  const addSchool = () => {
+    if (!schoolDraft.school_id) { toast.error('Escolha a escola (distrito, concelho e escola)'); return }
+    if (teacherSchools.some(s => s.school_id === schoolDraft.school_id)) { toast.error('Essa escola já foi adicionada'); return }
+    setTeacherSchools(prev => [...prev, { ...schoolDraft }])
+    setSchoolDraft({ district: '', municipality: '', locality: '', school_id: '', school_name: '' })
+  }
+
+  const removeSchool = (id) => setTeacherSchools(prev => prev.filter(s => s.school_id !== id))
 
   const uploadProof = async (file) => {
     const path = `${user.id}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`
@@ -32,6 +52,11 @@ const RoleChoicePage = () => {
         return
       }
     }
+    if (role === 'teacher') {
+      if (disciplines.length === 0) { toast.error('Selecione pelo menos uma disciplina'); return }
+      if (teachingYears.length === 0) { toast.error('Selecione pelo menos um ano que leciona'); return }
+      if (teacherSchools.length === 0) { toast.error('Adicione pelo menos uma escola'); return }
+    }
     setLoading(true)
     try {
       const proofPath = (role === 'teacher' || role === 'association') ? await uploadProof(proofFile) : null
@@ -40,13 +65,19 @@ const RoleChoicePage = () => {
         p_mobile_phone: (role === 'teacher' || role === 'association') ? mobile.trim() : null,
         p_proof_name: (role === 'teacher' || role === 'association') ? proofFile.name : null,
         p_proof_url: proofPath,
+        p_school_id: role === 'teacher' ? teacherSchools[0]?.school_id || null : null,
+        p_school_name: role === 'teacher' ? teacherSchools[0]?.school_name || null : null,
+        p_teacher_kind: role === 'teacher' ? teacherKind : null,
+        p_disciplines: role === 'teacher' ? disciplines : null,
+        p_teaching_years: role === 'teacher' ? teachingYears : null,
+        p_schools: role === 'teacher' ? teacherSchools : null,
       })
       if (error) throw error
 
       if (data === 'student' || data === 'parent') {
         toast.success('Conta criada com sucesso!')
         await fetchProfile(user.id)
-        navigate(data === 'student' ? '/student/dashboard' : '/parent/dashboard')
+        navigate(data === 'student' ? '/student/onboarding' : '/parent/dashboard')
       } else {
         await fetchProfile(user.id)
         toast.success('Pedido submetido! A conta fica pendente de aprovação do administrador. Será notificado por email.', { duration: 10000 })
@@ -113,6 +144,63 @@ const RoleChoicePage = () => {
 
           {needsProof && (
             <div className="space-y-4 mb-6 pt-4 border-t-2 border-slate-100">
+              {role === 'teacher' && (
+                <>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-2" style={{ fontFamily: 'Nunito, sans-serif' }}>Tipo de Professor</label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button type="button" onClick={() => setTeacherKind('tutelar')} className={`p-3 rounded-xl border-2 text-left transition ${teacherKind === 'tutelar' ? 'border-[hsl(35,92%,50%)] bg-[hsl(38,95%,92%)]' : 'border-[hsl(35,25%,85%)]'}`}>
+                        <p className="font-bold text-sm">Professor Tutelar</p>
+                        <p className="text-xs text-slate-500">Titular da turma</p>
+                      </button>
+                      <button type="button" onClick={() => setTeacherKind('explicador')} className={`p-3 rounded-xl border-2 text-left transition ${teacherKind === 'explicador' ? 'border-[hsl(35,92%,50%)] bg-[hsl(38,95%,92%)]' : 'border-[hsl(35,25%,85%)]'}`}>
+                        <p className="font-bold text-sm">Explicador / Centro</p>
+                        <p className="text-xs text-slate-500">Apoio em disciplinas</p>
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-2" style={{ fontFamily: 'Nunito, sans-serif' }}>Disciplinas que leciona</label>
+                    <div className="flex flex-wrap gap-2">
+                      {TEACHER_SUBJECTS.map(d => (
+                        <button key={d} type="button" onClick={() => toggleDiscipline(d)} className={`px-3 py-1.5 rounded-full text-sm font-semibold transition ${disciplines.includes(d) ? 'bg-[hsl(35,92%,50%)] text-white shadow' : 'bg-[hsl(36,33%,91%)] text-[hsl(25,10%,40%)] hover:bg-[hsl(36,33%,86%)]'}`}>{d}</button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-2" style={{ fontFamily: 'Nunito, sans-serif' }}>Anos que leciona</label>
+                    <div className="flex flex-wrap gap-2">
+                      {[1,2,3,4,5,6,7,8,9].map(y => (
+                        <button key={y} type="button" onClick={() => toggleYear(y)} className={`w-11 h-9 rounded-lg text-sm font-bold transition ${teachingYears.includes(y) ? 'bg-[hsl(35,92%,50%)] text-white shadow' : 'bg-[hsl(36,33%,91%)] text-[hsl(25,10%,40%)] hover:bg-[hsl(36,33%,86%)]'}`}>{y}º</button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-2" style={{ fontFamily: 'Nunito, sans-serif' }}>Escolas onde leciona (pode adicionar várias)</label>
+                    <div className="p-4 bg-[hsl(36,33%,95%)] rounded-xl border-2 border-dashed border-[hsl(35,25%,85%)]">
+                      <SchoolPicker value={schoolDraft} onChange={setSchoolDraft} showLocality />
+                      <button type="button" onClick={addSchool} className="mt-3 w-full py-2.5 bg-[hsl(142,45%,80%)] text-[hsl(28,85%,30%)] font-bold rounded-xl hover:bg-[hsl(142,45%,75%)] transition flex items-center justify-center gap-2">
+                        <Plus size={16} /> Adicionar escola
+                      </button>
+                    </div>
+                    {teacherSchools.length > 0 && (
+                      <div className="mt-3 space-y-2">
+                        {teacherSchools.map(s => (
+                          <div key={s.school_id} className="flex items-center justify-between bg-white rounded-xl p-3 border border-slate-200">
+                            <div>
+                              <p className="font-semibold text-slate-800 text-sm">{s.school_name}</p>
+                              <p className="text-xs text-slate-500">{[s.locality, s.municipality, s.district].filter(Boolean).join(', ')}</p>
+                            </div>
+                            <button type="button" onClick={() => removeSchool(s.school_id)} className="p-2 text-red-400 hover:bg-red-50 rounded-lg transition">
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-2" style={{ fontFamily: 'Nunito, sans-serif' }}>
                   Contacto Móvel

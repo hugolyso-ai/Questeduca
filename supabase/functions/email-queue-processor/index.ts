@@ -1,5 +1,5 @@
-// Processa a fila de emails (email_queue): envia pendentes via SMTP (mail.serv2all.pt, SSL porta 465)
-// com a conta questeduca@serv2all.pt e marca como enviados.
+// Processa a fila de emails (email_queue): envia pendentes via SMTP (webdomain01.dnscpanel.com, SSL porta 465)
+// com a conta info@questeduca.pt e marca como enviados.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import nodemailer from 'npm:nodemailer@10.1.2';
 
@@ -34,10 +34,11 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    const smtpHost = Deno.env.get('SMTP_HOST') || 'mail.serv2all.pt';
+    const smtpHost = Deno.env.get('SMTP_HOST') || 'webdomain01.dnscpanel.com';
     const smtpPort = parseInt(Deno.env.get('SMTP_PORT') || '465', 10);
-    const smtpUser = Deno.env.get('SMTP_USER') || 'questeduca@serv2all.pt';
+    const smtpUser = Deno.env.get('SMTP_USER') || 'info@questeduca.pt';
     const smtpPass = Deno.env.get('SMTP_PASS') || 'Questmail*';
+    const smtpFrom = Deno.env.get('SMTP_FROM') || 'QUESTEDUCA <info@questeduca.pt>';
 
     const transporter = nodemailer.createTransport({
       host: smtpHost,
@@ -52,7 +53,7 @@ Deno.serve(async (req: Request) => {
     for (const email of pending) {
       try {
         await transporter.sendMail({
-          from: 'QUESTEDUCA <questeduca@serv2all.pt>',
+          from: smtpFrom,
           to: email.to_email,
           subject: email.subject,
           text: email.body,

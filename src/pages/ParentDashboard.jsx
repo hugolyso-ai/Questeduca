@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 import {
   Castle, LogOut, Plus, Users, CreditCard, TrendingUp, Trophy,
   Coins, Gem, BookOpen, Calendar, Star, Eye, Download, X,
-  Check, AlertCircle, Crown, Heart, UserPlus, FileText
+  Check, AlertCircle, Crown, Heart, UserPlus, FileText, GraduationCap
 } from 'lucide-react'
 import ReportExport, { ExportReportButton } from '../components/ReportExport'
 import DiagnosisPanel from '../components/DiagnosisPanel'
@@ -25,6 +25,8 @@ const ParentDashboard = () => {
   const [newChild, setNewChild] = useState({ nickname: '', school_year: 1, school_id: '' })
   const [renameChild, setRenameChild] = useState(null)
   const [newNickname, setNewNickname] = useState('')
+  const [editYearChild, setEditYearChild] = useState(null)
+  const [newYear, setNewYear] = useState(1)
 
   const fetchChildren = useCallback(async () => {
     if (!user?.id) return
@@ -185,8 +187,17 @@ const ParentDashboard = () => {
                       <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-[hsl(24,70%,42%)] flex items-center justify-center text-white font-bold text-lg">{child.nickname?.[0]?.toUpperCase() || '?'}</div>
                       <div className="flex-1">
                         <p className="font-bold text-slate-800">{child.nickname}</p>
-                        <p className="text-sm text-slate-500">{child.school_year}º Ano</p>
+                        <p className="text-sm text-slate-500">{child.school_year ? `${child.school_year}º Ano` : 'Ano não definido'}{child.birth_date ? ` · ${new Date().getFullYear() - new Date(child.birth_date).getFullYear()} anos` : ''}</p>
                       </div>
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => { e.stopPropagation(); setEditYearChild(child); setNewYear(parseInt(child.school_year) || 1) }}
+                        className="p-2 text-slate-400 hover:text-[hsl(28,85%,40%)] hover:bg-[hsl(38,80%,93%)] rounded-lg transition"
+                        title="Alterar ano escolar"
+                      >
+                        <GraduationCap size={16} />
+                      </span>
                       <span
                         role="button"
                         tabIndex={0}
@@ -288,6 +299,42 @@ const ParentDashboard = () => {
                 </select>
               </div>
               <button type="submit" className="w-full py-4 bg-[hsl(35,92%,50%)] text-white font-bold rounded-xl hover:bg-[hsl(33,90%,45%)] transition">Adicionar</button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit School Year Modal */}
+      {editYearChild && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setEditYearChild(null)}>
+          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl p-6" onClick={e => e.stopPropagation()}>
+            <h2 className="text-2xl font-bold mb-2" style={{ fontFamily: 'Cinzel, serif' }}>Alterar Ano Escolar</h2>
+            <p className="text-sm text-slate-500 mb-4">
+              O ano é calculado automaticamente a partir da data de nascimento. Se alterar aqui, passa a ser fixo (deixa de ser atualizado automaticamente no início do ano letivo).
+            </p>
+            <form onSubmit={async (e) => {
+              e.preventDefault()
+              try {
+                const { error } = await supabase
+                  .from('student_profiles')
+                  .update({ school_year: String(newYear), school_year_manual: true })
+                  .eq('user_id', editYearChild.user_id)
+                if (error) throw error
+                toast.success(`Ano escolar de ${editYearChild.nickname} atualizado para ${newYear}º ano.`)
+                setEditYearChild(null)
+                fetchChildren()
+              } catch (err) {
+                toast.error(err.message || 'Erro ao alterar ano escolar')
+              }
+            }} className="space-y-4">
+              <select
+                value={newYear}
+                onChange={e => setNewYear(parseInt(e.target.value))}
+                className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-[hsl(35,92%,50%)] focus:ring-4 focus:ring-[hsl(35,92%,50%)]/20 transition"
+              >
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(y => <option key={y} value={y}>{y}º Ano</option>)}
+              </select>
+              <button type="submit" className="w-full py-4 bg-[hsl(35,92%,50%)] text-white font-bold rounded-xl hover:bg-[hsl(33,90%,45%)] transition">Guardar</button>
             </form>
           </div>
         </div>

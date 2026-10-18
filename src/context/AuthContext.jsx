@@ -55,6 +55,12 @@ export const AuthProvider = ({ children }) => {
       (event, session) => {
         (async () => {
           if (session?.user) {
+            // Link de recuperação de password: enviar para a página de nova password
+            if (event === 'PASSWORD_RECOVERY') {
+              if (!window.location.hash.startsWith('#/reset-password')) window.location.hash = '#/reset-password'
+              setLoading(false)
+              return
+            }
             setUser(session.user)
             const isGoogleUser = session.user.identities?.some(identity => identity.provider === 'google')
             let prof = isGoogleUser ? await ensureGoogleProfile(session.user) : null

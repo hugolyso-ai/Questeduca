@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import { toast } from 'sonner'
@@ -457,6 +458,7 @@ const QuizView = ({ gameState, setGameState, userId, schoolYear }) => {
 
 const StudentDashboard = () => {
   const { user, profile, logout } = useAuth()
+  const navigate = useNavigate()
   const [gameState, setGameState] = useState(null)
   const [studentProfile, setStudentProfile] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -501,6 +503,9 @@ const StudentDashboard = () => {
 
       const { data: sp } = await supabase.from('student_profiles').select('*').eq('user_id', user.id).single()
       if (sp) setStudentProfile(sp)
+      if (sp && !sp.birth_date) {
+        navigate('/student/onboarding', { replace: true })
+      }
     } catch (error) { /* ignore */ }
     finally { setLoading(false) }
   }, [user])
