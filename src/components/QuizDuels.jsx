@@ -14,7 +14,15 @@ const DuelSubjects = [
 
 const DuelGame = ({ duel, onExit, onFinished }) => {
   const { user } = useAuth();
-  const questions = duel.questions || [];
+  const questions = React.useMemo(() => {
+    let raw = duel.questions;
+    if (typeof raw === 'string') {
+      try { raw = JSON.parse(raw); } catch { raw = []; }
+    }
+    return (Array.isArray(raw) ? raw : []).filter(
+      q => q && q.question && Array.isArray(q.options) && q.options.length >= 2 && Number.isInteger(q.correct_answer)
+    );
+  }, [duel.id]);
   const isChallenger = duel.challenger_id === user?.id;
   const [idx, setIdx] = useState(0);
   const [correct, setCorrect] = useState(0);
@@ -22,6 +30,19 @@ const DuelGame = ({ duel, onExit, onFinished }) => {
   const [picked, setPicked] = useState(null);
   const [startTime] = useState(Date.now());
   const [done, setDone] = useState(false);
+
+  if (questions.length === 0) {
+    return (
+      <div className="bg-white rounded-3xl shadow-xl p-8 text-center">
+        <Swords className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+        <h3 className="text-2xl font-bold text-slate-800 mb-2" style={{ fontFamily: 'Cinzel, serif' }}>
+          Duelo indisponível
+        </h3>
+        <p className="text-slate-500 mb-4">Este duelo não tem perguntas válidas. Pede ao criador para enviar um novo desafio.</p>
+        <button onClick={onExit} className="mt-2 px-6 py-3 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-600 transition">Voltar</button>
+      </div>
+    );
+  }
 
   const finish = async (finalScore) => {
     const elapsed = Math.round((Date.now() - startTime) / 1000);
@@ -108,6 +129,15 @@ const DuelGame = ({ duel, onExit, onFinished }) => {
   }
 
   const q = questions[idx];
+  if (!q) {
+    return (
+      <div className="bg-white rounded-3xl shadow-xl p-8 text-center">
+        <Swords className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+        <p className="text-slate-500 mb-4">Pergunta indisponível. Voltando ao duelos…</p>
+        <button onClick={onExit} className="px-6 py-3 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-600 transition">Voltar</button>
+      </div>
+    );
+  }
   return (
     <div className="bg-white rounded-3xl shadow-xl p-6">
       <div className="flex justify-between items-center mb-4">

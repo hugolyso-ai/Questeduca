@@ -121,12 +121,45 @@ const DISTRICTS = {
   }
 };
 
+const ISLANDS = {
+  "Açores": {
+    boxPos: [30, 55],
+    boxSize: [150, 130],
+    islets: [
+      { x: 15, y: 25, r: 6 },
+      { x: 32, y: 32, r: 5 },
+      { x: 48, y: 22, r: 4 },
+      { x: 62, y: 40, r: 6 },
+      { x: 78, y: 30, r: 5 },
+      { white: true, x: 95, y: 50, r: 5 },
+      { x: 110, y: 38, r: 6 },
+      { x: 125, y: 55, r: 5 },
+      { white: true, x: 55, y: 55, r: 3.5 },
+      { white: true, x: 60, y: 70, r: 3 },
+      { white: true, x: 90, y: 90, r: 4 },
+      { white: true, x: 108, y: 100, r: 3 },
+    ],
+    labelPos: [55, 12],
+  },
+  "Madeira": {
+    boxPos: [30, 205],
+    boxSize: [150, 105],
+    islets: [
+      { white: true, x: 105, y: 25, r: 6 },
+      { x: 35, y: 55, r: 9 },
+      { white: true, x: 70, y: 75, r: 4 },
+      { white: true, x: 85, y: 88, r: 3 },
+    ],
+    labelPos: [18, 12],
+  },
+};
+
 const PortugalMap = ({ onDistrictSelect, selectedDistrict, studentsPerDistrict = {}, friendPins = [] }) => {
   const [hoveredDistrict, setHoveredDistrict] = useState(null);
 
   return (
     <div className="relative bg-gradient-to-br from-[#8ec5d6] via-[#a8d5e5] to-[#7bb8cc] rounded-3xl p-4 overflow-hidden shadow-inner">
-      <svg viewBox="0 0 420 850" className="w-full max-w-md mx-auto drop-shadow-sm">
+      <svg viewBox="0 0 620 850" className="w-full max-w-lg mx-auto drop-shadow-sm">
         <defs>
           <linearGradient id="oceanGradient2" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#8ec5d6" />
@@ -138,15 +171,85 @@ const PortugalMap = ({ onDistrictSelect, selectedDistrict, studentsPerDistrict =
           </filter>
         </defs>
 
-        <rect x="0" y="0" width="420" height="850" fill="url(#oceanGradient2)" />
+        <rect x="0" y="0" width="620" height="850" fill="url(#oceanGradient2)" />
 
-        <g opacity="0.3">
-          <path d="M0,150 Q40,140 80,150 T160,150 T240,150" fill="none" stroke="#6ba8bc" strokeWidth="2" strokeLinecap="round" />
-          <path d="M0,420 Q60,410 120,420 T240,420" fill="none" stroke="#6ba8bc" strokeWidth="2" strokeLinecap="round" />
-          <path d="M0,580 Q45,570 90,580 T180,580" fill="none" stroke="#6ba8bc" strokeWidth="2" strokeLinecap="round" />
+        <g transform="translate(255, -5)" filter="url(#districtShadow2)">
+          {Object.entries(ISLANDS).map(([name, data]) => {
+            const isSelected = selectedDistrict === name;
+            const isHovered = hoveredDistrict === name;
+            const studentCount = studentsPerDistrict[name] || 0;
+            const friendsHere = friendPins.filter(f => f.district === name);
+
+            return (
+              <g key={name}>
+                <rect
+                  x={data.boxPos[0]}
+                  y={data.boxPos[1]}
+                  width={data.boxSize[0]}
+                  height={data.boxSize[1]}
+                  rx="4"
+                  fill="none"
+                  stroke="#2d2d2d"
+                  strokeWidth={isSelected ? 2 : isHovered ? 1.5 : 0.8}
+                  style={{ cursor: 'pointer', transition: 'all 0.25s ease' }}
+                  onClick={() => onDistrictSelect && onDistrictSelect(name)}
+                  onMouseEnter={() => setHoveredDistrict(name)}
+                  onMouseLeave={() => setHoveredDistrict(null)}
+                />
+                {data.islets.map((isl, i) => (
+                  <ellipse
+                    key={i}
+                    cx={data.boxPos[0] + isl.x}
+                    cy={data.boxPos[1] + isl.y}
+                    rx={isl.r}
+                    ry={isl.r * 0.7}
+                    fill={isl.white ? '#fff' : DISTRICT_COLORS[name]}
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => onDistrictSelect && onDistrictSelect(name)}
+                    onMouseEnter={() => setHoveredDistrict(name)}
+                    onMouseLeave={() => setHoveredDistrict(null)}
+                  />
+                ))}
+                <text
+                  x={data.boxPos[0] + data.labelPos[0]}
+                  y={data.boxPos[1] + data.labelPos[1]}
+                  textAnchor="middle"
+                  fontSize="10"
+                  fontWeight="700"
+                  fill={name === 'Madeira' ? '#c62828' : '#2e7d32'}
+                  style={{ pointerEvents: 'none', fontFamily: 'Georgia, serif' }}
+                >
+                  {name}
+                </text>
+
+                {studentCount > 0 && (
+                  <g transform={`translate(${data.boxPos[0] + data.boxSize[0] - 12}, ${data.boxPos[1] + 12})`}>
+                    <circle cx="0" cy="0" r="9" fill="#fff" stroke={DISTRICT_COLORS[name]} strokeWidth="1.5" />
+                    <text x="0" y="3" textAnchor="middle" fontSize="7" fontWeight="bold" fill="#333">
+                      {studentCount > 99 ? '99+' : studentCount}
+                    </text>
+                  </g>
+                )}
+
+                {friendsHere.map((f, i) => (
+                  <g
+                    key={f.friend_id}
+                    transform={`translate(${data.boxPos[0] + 20 + (i % 4) * 14}, ${data.boxPos[1] + data.boxSize[1] - 12 - Math.floor(i / 4) * 10})`}
+                    className="cursor-pointer"
+                    onClick={(e) => { e.stopPropagation(); onDistrictSelect && onDistrictSelect(name); }}
+                  >
+                    <circle r="5" fill="#e11d48" stroke="#fff" strokeWidth="1.5">
+                      <animate attributeName="r" values="4.5;6;4.5" dur="2s" repeatCount="indefinite" begin={`${(i % 5) * 0.3}s`} />
+                    </circle>
+                    <title>{f.nickname}</title>
+                  </g>
+                ))}
+              </g>
+            );
+          })}
         </g>
 
-        <g transform="translate(25, -5)" filter="url(#districtShadow2)">
+        <g transform="translate(255, -5)" filter="url(#districtShadow2)">
           {Object.entries(DISTRICTS).map(([name, data]) => {
             const isSelected = selectedDistrict === name;
             const isHovered = hoveredDistrict === name;

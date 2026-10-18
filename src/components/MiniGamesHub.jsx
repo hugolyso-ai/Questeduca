@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Users, Trophy, Gamepad2, Zap, Brain, Clock, Star, X, Check, ArrowRight, Crown, Calculator } from 'lucide-react'
 import { toast } from 'sonner'
 import { supabase } from '../lib/supabase'
@@ -134,6 +134,14 @@ const QuizDuelGame = ({ opponent, onEnd, questions }) => {
   }
 
   const question = questions[currentQuestion]
+  if (!question || !Array.isArray(question.options)) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-slate-500 mb-4">Não foi possível carregar as perguntas do duelo.</p>
+        <button onClick={() => onEnd(10)} className="px-6 py-3 bg-slate-200 rounded-xl font-semibold">Voltar</button>
+      </div>
+    )
+  }
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
@@ -182,8 +190,9 @@ const MiniGamesHub = ({ childId, childName, onClose }) => {
       if (game.id === 'quiz_duel') {
         // Tenta buscar perguntas do banco (aleatórias, por ano se possível)
         const { data } = await supabase.from('quiz_questions').select('*').limit(50)
-        if (data && data.length >= 3) {
-          const shuffled = [...data].sort(() => Math.random() - 0.5).slice(0, 5)
+        const valid = (data || []).filter(q => q && q.question && Array.isArray(q.options) && q.options.length >= 2 && Number.isInteger(q.correct_answer))
+        if (valid.length >= 3) {
+          const shuffled = [...valid].sort(() => Math.random() - 0.5).slice(0, 5)
           setQuestions(shuffled.map(q => ({
             question_text: q.question,
             options: q.options,
