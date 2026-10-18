@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { GraduationCap, School, User, Save, Check } from 'lucide-react';
+import { GraduationCap, School, User, Save, Check, Lock } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
 
 const CLASS_SUGGESTIONS = ['1ºA', '1ºB', '2ºA', '2ºB', '3ºA', '3ºB', '4ºA', '4ºB', '5ºA', '5ºB', '5ºC', '6ºA', '6ºB', '6ºC', '7ºA', '7ºB', '8ºA', '8ºB', '9ºA', '9ºB'];
 
-const ProfileSettingsPanel = ({ studentProfile, onSaved }) => {
+const ProfileSettingsPanel = ({ studentProfile, onSaved, onRefresh }) => {
   const { user, profile } = useAuth();
   const [schools, setSchools] = useState([]);
   const [schoolSearch, setSchoolSearch] = useState(studentProfile?.school_name || '');
   const [selectedSchoolId, setSelectedSchoolId] = useState(studentProfile?.school_id || null);
   const [className, setClassName] = useState(studentProfile?.class_name || '');
-  const [schoolYear, setSchoolYear] = useState(studentProfile?.school_year || '');
+  const schoolYear = studentProfile?.school_year || studentProfile?.school_year_auto || '';
   const [nickname, setNickname] = useState(studentProfile?.nickname || profile?.name || '');
   const [saving, setSaving] = useState(false);
 
@@ -23,7 +23,7 @@ const ProfileSettingsPanel = ({ studentProfile, onSaved }) => {
           .from('schools')
           .select('school_id, name, district, municipality')
           .order('name')
-          .limit(500);
+          .limit(1000);
         if (error) throw error;
         setSchools(data || []);
       } catch (e) {
@@ -33,8 +33,14 @@ const ProfileSettingsPanel = ({ studentProfile, onSaved }) => {
     fetchSchools();
   }, []);
 
+  // Garante que a escola atual aparece na pesquisa mesmo antes de a lista chegar,
+  // para o aluno não "perder" a escola ao salvar sem tocar na pesquisa.
+  const effectiveSchools = (studentProfile?.school_id && studentProfile?.school_name && !schools.some(s => s.school_id === studentProfile.school_id))
+    ? [{ school_id: studentProfile.school_id, name: studentProfile.school_name, district: studentProfile.district, municipality: studentProfile.municipality }, ...schools]
+    : schools;
+
   const filteredSchools = schoolSearch.length >= 2
-    ? schools.filter(s =>
+    ? effectiveSchools.filter(s =>
         s.name.toLowerCase().includes(schoolSearch.toLowerCase()) ||
         (s.municipality || '').toLowerCase().includes(schoolSearch.toLowerCase())
       ).slice(0, 8)
@@ -44,13 +50,15 @@ const ProfileSettingsPanel = ({ studentProfile, onSaved }) => {
     if (!user) return;
     setSaving(true);
     try {
-      const selectedSchool = schools.find(s => s.school_id === selectedSchoolId);
+      // Preserva a escola atual quando o aluno não tocou na pesquisa
+      const searchTouched = schoolSearch !== (studentProfile?.school_name || '');
+      const keepSchoolId = searchTouched ? selectedSchoolId : (studentProfile?.school_id ?? selectedSchoolId);
+      const selectedSchool = effectiveSchools.find(s => s.school_id === keepSchoolId);
       const updates = {
         nickname: nickname.trim() || null,
         class_name: className.trim() || null,
-        school_year: schoolYear || null,
-        school_id: selectedSchoolId,
-        school_name: selectedSchool?.name || null,
+        school_id: keepSchoolId,
+        school_name: selectedSchool?.name || (keepSchoolId ? (studentProfile?.school_name || null) : null),
       };
       const { error } = await supabase
         .from('student_profiles')
@@ -59,6 +67,7 @@ const ProfileSettingsPanel = ({ studentProfile, onSaved }) => {
       if (error) throw error;
       toast.success('Perfil guardado! Já apareces nas classificações da tua turma e escola!');
       onSaved?.();
+      onRefresh?.();
     } catch (e) {
       toast.error('Não foi possível guardar. Tenta novamente.');
     } finally {
@@ -67,9 +76,7 @@ const ProfileSettingsPanel = ({ studentProfile, onSaved }) => {
   };
 
   const hasChanges = nickname !== (studentProfile?.nickname || profile?.name || '') ||
-    className !== (studentProfile?.class_name || '') ||
-    schoolYear !== (studentProfile?.school_year || '') ||
-    selectedSchoolId !== (studentProfile?.school_id || null);
+    className !== (studentProfile?.class_name || '');
 
   return (
     <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
@@ -101,23 +108,17 @@ const ProfileSettingsPanel = ({ studentProfile, onSaved }) => {
           />
         </div>
 
-        {/* Ano escolar */}
+        {/* Ano escolar — apenas leitura (definido pelo professor) */}
         <div>
-          <label className="block text-sm font-bold text-slate-700 mb-2">Ano escolar</label>
-          <div className="flex flex-wrap gap-2">
-            {['1','2','3','4','5','6','7','8','9'].map(y => (
-              <button
-                key={y}
-                onClick={() => setSchoolYear(y)}
-                className={`px-4 py-2 rounded-xl font-bold transition ${
-                  schoolYear === y
-                    ? 'bg-emerald-500 text-white shadow-md'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-              >
-                {y}º
-              </button>
-            ))}
+          <label className="flex items-center justify-between text-sm font-bold text-slate-700 mb-2">
+            <span>Ano escolar</span>
+            <span className="flex items-center gap-1 text-xs text-slate-400 font-normal">
+              <Lock size={12} /> Definido pelo teu professor
+            </span>
+          </label>
+          <div className="w-full px-4 py-3 bg-slate-100 border-2 border-slate-200 rounded-xl text-slate-600 font-semibold flex items-center gap-2">
+            <GraduationCap size={18} className="text-emerald-600" />
+            {schoolYear ? `${schoolYear}º ano` : 'Ainda não definido'}
           </div>
         </div>
 

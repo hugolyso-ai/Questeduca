@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, ChevronLeft, ChevronRight, BookOpen, Trophy, Target, Star, X, Bell } from 'lucide-react';
+import { Calendar, ChevronLeft, ChevronRight, BookOpen, Trophy, Target, Star, Bell } from 'lucide-react';
 import { useAccessibility } from '../context/AccessibilityContext';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
@@ -78,7 +78,7 @@ const getQuestEducaEvents = (year, month) => {
   return events;
 };
 
-const SchoolCalendar = ({ isOpen, onClose, userRole = 'student' }) => {
+const SchoolCalendar = ({ schoolYear, userRole = 'student' }) => {
   const { settings } = useAccessibility();
   const { user } = useAuth();
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -103,7 +103,7 @@ const SchoolCalendar = ({ isOpen, onClose, userRole = 'student' }) => {
   // Fetch user data from Supabase
   useEffect(() => {
     const fetchData = async () => {
-      if (!user || !isOpen) return;
+      if (!user) return;
 
       try {
         // Fetch weekly challenge progress (count completed)
@@ -142,7 +142,7 @@ const SchoolCalendar = ({ isOpen, onClose, userRole = 'student' }) => {
       }
     };
     fetchData();
-  }, [isOpen, user]);
+  }, [user]);
 
   const getDaysInMonth = (year, month) => {
     return new Date(year, month + 1, 0).getDate();
@@ -244,36 +244,26 @@ const SchoolCalendar = ({ isOpen, onClose, userRole = 'student' }) => {
 
   const selectedEvents = selectedDate ? getEventsForDay(selectedDate) : [];
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className={`rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl ${
-        settings.darkMode ? 'bg-slate-800' : 'bg-white'
-      }`}>
-        {/* Header */}
-        <div className="sticky top-0 bg-gradient-to-r from-purple-500 to-[hsl(24,70%,42%)] p-6 text-white rounded-t-3xl">
-          <div className="flex justify-between items-center">
-            <div>
-              <h2 className="text-2xl font-bold flex items-center gap-2" style={{ fontFamily: 'Cinzel, serif' }}>
-                <Calendar size={28} />
-                Calendário Escolar
-              </h2>
-              <p className="text-white/80 text-sm mt-1">
-                Ano Letivo {year >= 9 ? year : year - 1}/{year >= 9 ? year + 1 : year}
-              </p>
-            </div>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-white/20 rounded-full transition"
-              data-testid="close-calendar-btn"
-            >
-              <X size={24} />
-            </button>
+    <div className={`w-full rounded-3xl shadow-xl overflow-hidden ${
+      settings.darkMode ? 'bg-slate-800' : 'bg-white'
+    }`}>
+      {/* Header */}
+      <div className="bg-gradient-to-r from-purple-500 to-[hsl(24,70%,42%)] p-6 text-white">
+        <div className="flex justify-between items-center">
+          <div>
+            <h2 className="text-2xl font-bold flex items-center gap-2" style={{ fontFamily: 'Cinzel, serif' }}>
+              <Calendar size={28} />
+              Calendário Escolar
+            </h2>
+            <p className="text-white/80 text-sm mt-1">
+              Ano Letivo {currentDate.getMonth() >= 8 ? currentDate.getFullYear() : currentDate.getFullYear() - 1}/{currentDate.getMonth() >= 8 ? currentDate.getFullYear() + 1 : currentDate.getFullYear()}
+            </p>
           </div>
         </div>
+      </div>
 
-        <div className="p-6">
+      <div className="p-6">
           {/* Quick Stats */}
           <div className="grid grid-cols-2 gap-4 mb-6">
             <div className={`rounded-xl p-4 ${settings.darkMode ? 'bg-purple-900/30' : 'bg-purple-50'}`}>
@@ -452,7 +442,6 @@ const SchoolCalendar = ({ isOpen, onClose, userRole = 'student' }) => {
                 ))}
             </div>
           </div>
-        </div>
       </div>
     </div>
   );

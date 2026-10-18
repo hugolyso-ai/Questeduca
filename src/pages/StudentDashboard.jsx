@@ -471,14 +471,20 @@ const StudentDashboard = () => {
     if (!user?.id) return
     try {
       const { data: gs, error: gsError } = await supabase.from('game_states').select('*').eq('user_id', user.id).single()
+      const { data: sp } = await supabase.from('student_profiles').select('*').eq('user_id', user.id).single()
+      if (sp) setStudentProfile(sp)
+      if (sp && !sp.birth_date) {
+        navigate('/student/onboarding', { replace: true })
+      }
       if (gsError && gsError.code === 'PGRST116') {
+        const villageName = sp?.nickname || profile?.name || ''
         const { data: newGs, error: insertError } = await supabase.from('game_states').insert({
           user_id: user.id,
-          coins: 100,
+          coins: 300,
           diamonds: 10,
           xp: 0,
           level: 1,
-          resources: { wood: 50, stone: 50, food: 50, gold: 20 },
+          resources: { wood: 200, stone: 150, iron: 60, food: 200 },
           buildings: {
             town_hall: { x: 6, y: 6, level: 1, placed: true, producing: false },
             library: { x: 7, y: 7, level: 1, placed: true, producing: false },
@@ -494,21 +500,15 @@ const StudentDashboard = () => {
           current_streak: 0,
           longest_streak: 0,
           streak_claimed_today: false,
-          city_name: 'A Minha Aldeia',
+          city_name: villageName ? `Aldeia do ${villageName}` : 'A Minha Aldeia',
         }).select().single()
         if (!insertError) setGameState(newGs)
       } else if (gs) {
         setGameState(gs)
       }
-
-      const { data: sp } = await supabase.from('student_profiles').select('*').eq('user_id', user.id).single()
-      if (sp) setStudentProfile(sp)
-      if (sp && !sp.birth_date) {
-        navigate('/student/onboarding', { replace: true })
-      }
     } catch (error) { /* ignore */ }
     finally { setLoading(false) }
-  }, [user])
+  }, [user, profile?.name])
 
   useEffect(() => {
     fetchGameData()

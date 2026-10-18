@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
-  ZoomIn, ZoomOut, RotateCcw, Volume2, VolumeX, Move, Maximize2, X,
+  ZoomIn, ZoomOut, RotateCcw, Volume2, VolumeX, Move, Maximize2, X, Pencil,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '../lib/supabase';
@@ -110,6 +110,8 @@ const IsometricCity = ({ gameState, onRefresh }) => {
   const [currentSkin, setCurrentSkin] = useState(() => localStorage.getItem('questeduca_city_skin') || 'normal');
   const [soundEnabled, setSoundEnabled] = useState(() => localStorage.getItem('questeduca_ambient_sound') === 'true');
   const [showLibrary, setShowLibrary] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState('');
   const audioRef = useRef(null);
   const mapRef = useRef(null);
 
@@ -195,6 +197,20 @@ const IsometricCity = ({ gameState, onRefresh }) => {
     localStorage.setItem('questeduca_city_skin', skinId);
   };
   const activeSkin = SEASONAL_SKINS[currentSkin] || SEASONAL_SKINS.normal;
+
+  const handleRenameSave = async () => {
+    const trimmed = nameDraft.trim();
+    if (!trimmed || !user) { setEditingName(false); return; }
+    try {
+      const { error } = await supabase.from('game_states').update({ city_name: trimmed }).eq('user_id', user.id);
+      if (error) throw error;
+      toast.success('Nome da aldeia atualizado!', { icon: '🏰' });
+      refreshAll();
+    } catch {
+      toast.error('Não foi possível renomear a aldeia');
+    }
+    setEditingName(false);
+  };
 
   // ===== Layout helpers =====
   const roadSet = useMemo(() => new Set(roads.map(([x, y]) => `${x},${y}`)), [roads]);
@@ -539,6 +555,14 @@ const IsometricCity = ({ gameState, onRefresh }) => {
           <div className="px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-amber-600 via-orange-500 to-red-500 text-white rounded-2xl font-black text-base sm:text-lg shadow-xl flex items-center gap-2 sm:gap-3 min-w-0">
             <span className="text-xl sm:text-2xl flex-shrink-0">🏰</span>
             <span className="hidden sm:inline">Reino de</span> <span className="truncate">{gameState?.city_name || 'Aventureiro'}</span>
+            <button
+              onClick={() => { setNameDraft(gameState?.city_name || ''); setEditingName(true); }}
+              className="ml-1 p-1 rounded-lg hover:bg-white/25 transition flex-shrink-0"
+              title="Mudar nome da aldeia"
+              data-testid="rename-city-btn"
+            >
+              <Pencil size={16} className="opacity-90" />
+            </button>
           </div>
         </div>
       </div>
@@ -653,6 +677,31 @@ const IsometricCity = ({ gameState, onRefresh }) => {
       )}
 
       {showLibrary && <LibraryPopup onClose={() => setShowLibrary(false)} />}
+
+      {/* Renomear aldeia */}
+      {editingName && (
+        <div className="fixed inset-0 z-[130] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setEditingName(false)}>
+          <div className="bg-white rounded-3xl shadow-2xl p-6 w-full max-w-md" onClick={e => e.stopPropagation()} data-testid="rename-city-dialog">
+            <h3 className="text-xl font-bold text-slate-800 mb-1" style={{ fontFamily: 'Cinzel, serif' }}>🏰 Nome da Aldeia</h3>
+            <p className="text-sm text-slate-500 mb-4">Escolhe o nome do teu reino — vai aparecer no topo do mapa.</p>
+            <input
+              type="text"
+              value={nameDraft}
+              onChange={e => setNameDraft(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') handleRenameSave(); }}
+              maxLength={30}
+              autoFocus
+              placeholder="Ex.: Aldeia do SuperPedro"
+              className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-amber-500 focus:outline-none transition mb-4"
+              data-testid="rename-city-input"
+            />
+            <div className="flex gap-2">
+              <button onClick={() => setEditingName(false)} className="flex-1 py-3 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition">Cancelar</button>
+              <button onClick={handleRenameSave} className="flex-1 py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-white font-bold rounded-xl hover:opacity-90 transition" data-testid="rename-city-save">Guardar</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

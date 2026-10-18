@@ -3,6 +3,7 @@ import { X, BookOpen, FileText, Sparkles } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'sonner';
+import LibraryRoom3D from './LibraryRoom3D';
 
 const SHELF_SUBJECTS = [
   { id: 'Matemática', icon: '∑' },
@@ -126,23 +127,17 @@ const LibraryPopup = ({ onClose }) => {
     >
       {/* Fundo: sala antiga de biblioteca */}
       <div className="absolute inset-0" onClick={onClose} style={{ background: 'rgba(10,6,2,0.85)' }} />
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background: `
-            radial-gradient(ellipse at 50% 0%, rgba(255,190,90,0.18), transparent 55%),
-            radial-gradient(ellipse at 20% 100%, rgba(120,60,20,0.25), transparent 50%),
-            linear-gradient(180deg, #1a120a 0%, #241708 45%, #120b04 100%)`,
-        }}
-      />
+      {/* Interior 3D da biblioteca — sempre visível, com ou sem livros */}
+      <LibraryRoom3D />
       {/* Velas/quente glow nas bordas */}
       <div className="absolute inset-0 pointer-events-none" style={{ boxShadow: 'inset 0 0 180px rgba(0,0,0,0.9), inset 0 0 60px rgba(255,170,60,0.08)' }} />
 
       <div
         className="relative w-full max-w-5xl max-h-[92vh] overflow-hidden rounded-3xl border-4 flex flex-col"
         style={{
-          borderColor: '#6b4a1f',
-          background: 'linear-gradient(180deg, #2b1c0c 0%, #1e130a 60%, #170e06 100%)',
+          borderColor: 'rgba(107,74,31,0.85)',
+          background: 'linear-gradient(180deg, rgba(43,28,12,0.82) 0%, rgba(30,19,10,0.88) 60%, rgba(23,14,6,0.92) 100%)',
+          backdropFilter: 'blur(3px)',
           boxShadow: '0 30px 90px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,200,120,0.15)',
         }}
       >
@@ -183,7 +178,7 @@ const LibraryPopup = ({ onClose }) => {
           )}
 
           {!loading && books.length === 0 && (
-            <div className="text-center py-14">
+            <div className="text-center py-10">
               <Sparkles size={40} className="mx-auto text-amber-500/60 mb-4" />
               <p className="text-amber-200 font-bold text-lg" style={{ fontFamily: 'Cinzel, serif' }}>
                 As prateleiras esperam pelos primeiros livros

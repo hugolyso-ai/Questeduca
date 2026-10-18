@@ -4,6 +4,7 @@ import {
   Heart, Users, Building2, Coins, Diamond, Clock, Flame,
   Medal, Shield, Sparkles, GraduationCap, TrendingUp, Lock, Home
 } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 // Definição completa de todas as conquistas
 export const ACHIEVEMENTS = {
@@ -343,8 +344,17 @@ export const AchievementBadge = ({ achievement, unlocked, size = 'md', showDetai
 };
 
 // Componente de Lista de Conquistas
-export const AchievementsList = ({ stats, unlockedIds = [] }) => {
+export const AchievementsList = ({ stats: rawStats, unlockedIds = [] }) => {
   const [selectedCategory, setSelectedCategory] = React.useState('all');
+
+  // Garante que todas as métricas existem — evita ecrã em branco se dados ainda não chegaram
+  const stats = {
+    quizzesCompleted: 0, perfectQuizzes: 0, longestStreak: 0,
+    totalBuildingLevel: 0, allBuildingsLevel1: false, settlementLevel: 'village',
+    maxLevelBuildings: 0, friendsCount: 0, minigamesPlayed: 0, minigamesWon: 0,
+    totalCoinsEarned: 0, totalXp: 0,
+    ...(rawStats || {}),
+  };
 
   const filteredAchievements = Object.values(ACHIEVEMENTS).filter(a =>
     selectedCategory === 'all' || a.category === selectedCategory
@@ -462,4 +472,62 @@ export const AchievementsList = ({ stats, unlockedIds = [] }) => {
   );
 };
 
-export default AchievementsList;
+// Wrapper usado pelo painel do aluno: calcula estatísticas a partir do estado de jogo
+// e da base de dados, com valores seguros enquanto os dados carregam.
+const AchievementsSystem = ({ gameState, userId }) => {
+  const [fetched, setFetched] = React.useState({ quizzesCompleted: 0, perfectQuizzes: 0, friendsCount: 0, minigamesPlayed: 0, minigamesWon: 0 });
+
+  React.useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const [answersRes, friendsRes, gamesRes] = await Promise.all([
+          supabase.from('quiz_answers').select('quiz_id, correct').eq('user_id', userId),
+          supabase.from('friendships').select('user1_id, user2_id').or(`user1_id.eq.${userId},user2_id.eq.${userId}`),
+          supabase.from('mini_game_scores').select('score, coins_won').eq('user_id', userId),
+        ]);
+        if (cancelled) return;
+        const answers = answersRes.data || [];
+        // Agrupa por quiz: um quiz está completo quando tem 10 respostas; perfeito quando todas corretas
+        const byQuiz = {};
+        answers.forEach(a => {
+          if (!a.quiz_id) return;
+          byQuiz[a.quiz_id] = byQuiz[a.quiz_id] || { total: 0, correct: 0 };
+          byQuiz[a.quiz_id].total += 1;
+          if (a.correct) byQuiz[a.quiz_id].correct += 1;
+        });
+        const quizzes = Object.values(byQuiz);
+        const games = gamesRes.data || [];
+        setFetched({
+          quizzesCompleted: quizzes.filter(q => q.total >= 10).length || quizzes.length,
+          perfectQuizzes: quizzes.filter(q => q.total >= 10 && q.correct === q.total).length,
+          friendsCount: (friendsRes.data || []).length,
+          minigamesPlayed: games.length,
+          minigamesWon: games.filter(g => (g.coins_won || 0) > 0).length,
+        });
+      } catch {
+        if (!cancelled) setFetched({ quizzesCompleted: 0, perfectQuizzes: 0, friendsCount: 0, minigamesPlayed: 0, minigamesWon: 0 });
+      }
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [userId]);
+
+  const buildings = gameState?.buildings || {};
+  const placed = Object.values(buildings).filter(b => b && b.placed && (b.level || 0) > 0);
+  const stats = {
+    ...fetched,
+    longestStreak: gameState?.longest_streak || 0,
+    totalCoinsEarned: gameState?.coins || 0,
+    totalXp: gameState?.xp || 0,
+    settlementLevel: gameState?.settlement_level || 'village',
+    totalBuildingLevel: placed.reduce((sum, b) => sum + (b.level || 0), 0),
+    allBuildingsLevel1: placed.length > 0 && placed.every(b => (b.level || 0) >= 1),
+    maxLevelBuildings: placed.filter(b => (b.level || 0) >= 3).length,
+  };
+
+  return <AchievementsList stats={stats} />;
+};
+
+export default AchievementsSystem;
