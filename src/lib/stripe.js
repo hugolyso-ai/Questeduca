@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { FunctionsHttpError } from '@supabase/supabase-js'
 
 // IDs dos produtos da subscrição Premium no Stripe.
 // O servidor de pagamento resolve automaticamente o preço ativo de cada produto.
@@ -21,7 +22,21 @@ export async function startCheckout({ priceId, mode = 'subscription' } = {}) {
     },
   })
 
-  if (error) throw error
+  if (error) {
+    let message = 'Erro ao iniciar o pagamento. Tenta novamente.'
+    if (error instanceof FunctionsHttpError) {
+      try {
+        const detail = await error.context.json()
+        if (detail?.error) message = detail.error
+      } catch {
+        // mantém a mensagem genérica
+      }
+    } else if (error.message) {
+      message = error.message
+    }
+    throw new Error(message)
+  }
+
   if (!data?.url) throw new Error('Não foi possível iniciar o pagamento. Tenta novamente.')
 
   window.location.href = data.url
