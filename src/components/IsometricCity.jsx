@@ -74,26 +74,6 @@ const Minimap = ({ gridSize, roads, buildings, selectedId }) => {
     left: `${(((x - y) / (2 * gridSize)) + 0.5) * 100}%`,
     top: `${((x + y) / (2 * gridSize)) * 100}%`,
   });
-  // Moradores reagem ao desempenho e à atividade recente
-  const villagerMood = (() => {
-    const streak = gameState?.current_streak || 0;
-    const level = gameState?.level || 1;
-    // Dias desde a última atividade (último quiz)
-    let daysInactive = 0;
-    if (gameState?.last_quiz_date) {
-      const last = new Date(gameState.last_quiz_date);
-      if (!isNaN(last)) {
-        daysInactive = Math.floor((Date.now() - last.getTime()) / 86400000);
-      }
-    }
-    if (daysInactive >= 4) return { emoji: '😢', message: 'Temos saudades! Joga connosco.', filter: 'grayscale(0.7) drop-shadow(0 3px 5px rgba(0,0,0,0.4))' };
-    if (daysInactive >= 2) return { emoji: '🥺', message: 'Vamos estudar hoje?' };
-    if (streak >= 5) return { emoji: '🎉', message: 'Que cidade incrível!', filter: 'drop-shadow(0 3px 5px rgba(0,0,0,0.4)) drop-shadow(0 0 8px rgba(250,204,21,0.9))' };
-    if (streak >= 3) return { emoji: '😄', message: 'Continua assim!' };
-    if (level >= 5) return { emoji: '😎', message: 'O nosso líder!' };
-    if (level >= 2) return { emoji: '😊' };
-    return { emoji: '🏠' };
-  })();
 
   return (
     <div className="absolute bottom-4 left-4 w-40 h-28 bg-emerald-950/90 rounded-xl border-2 border-amber-600 overflow-hidden backdrop-blur-sm shadow-2xl" data-testid="city-minimap">
@@ -132,6 +112,27 @@ const IsometricCity = ({ gameState, onRefresh }) => {
   const [showLibrary, setShowLibrary] = useState(false);
   const audioRef = useRef(null);
   const mapRef = useRef(null);
+
+  // Moradores reagem ao desempenho e à atividade recente
+  const villagerMood = useMemo(() => {
+    const streak = gameState?.current_streak || 0;
+    const level = gameState?.level || 1;
+    // Dias desde a última atividade (último quiz)
+    let daysInactive = 0;
+    if (gameState?.last_quiz_date) {
+      const last = new Date(gameState.last_quiz_date);
+      if (!isNaN(last)) {
+        daysInactive = Math.floor((Date.now() - last.getTime()) / 86400000);
+      }
+    }
+    if (daysInactive >= 4) return { emoji: '😢', message: 'Temos saudades! Joga connosco.', filter: 'grayscale(0.7) drop-shadow(0 3px 5px rgba(0,0,0,0.4))' };
+    if (daysInactive >= 2) return { emoji: '🥺', message: 'Vamos estudar hoje?' };
+    if (streak >= 5) return { emoji: '🎉', message: 'Que cidade incrível!', filter: 'drop-shadow(0 3px 5px rgba(0,0,0,0.4)) drop-shadow(0 0 8px rgba(250,204,21,0.9))' };
+    if (streak >= 3) return { emoji: '😄', message: 'Continua assim!' };
+    if (level >= 5) return { emoji: '😎', message: 'O nosso líder!' };
+    if (level >= 2) return { emoji: '😊' };
+    return { emoji: '🏠' };
+  }, [gameState?.current_streak, gameState?.level, gameState?.last_quiz_date]);
 
   // Layout is derived from gameState (buildings/roads are jsonb columns on game_states)
   // Toda aldeia começa com Câmara e Biblioteca no centro
