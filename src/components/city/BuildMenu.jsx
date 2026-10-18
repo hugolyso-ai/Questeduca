@@ -36,6 +36,24 @@ const CostRow = ({ cost, gameState }) => {
 
 const RESOURCE_LABELS = { coins: 'Moedas', wood: 'Madeira', stone: 'Pedra', iron: 'Ferro' };
 
+// Quantos quizzes (de 10 perguntas) são precisos para juntar o que falta.
+// Ganho médio por quiz: 50 moedas (5 por acerto) ou 100 XP (10 por acerto).
+const getQuizSuggestion = (gameState, cost) => {
+  const res = gameState?.resources || {};
+  const have = { coins: gameState?.coins || 0, wood: res.wood || 0, stone: res.stone || 0, iron: res.iron || 0 };
+  const lines = [];
+  Object.keys(RESOURCE_LABELS).forEach((k) => {
+    const need = cost[k] || 0;
+    if (have[k] < need) {
+      const missing = Math.ceil(need - have[k]);
+      const quizzes = Math.max(1, Math.ceil(missing / 50));
+      const label = k === 'coins' ? 'moedas' : k === 'wood' ? 'madeira' : k === 'stone' ? 'pedra' : 'ferro';
+      lines.push(`${quizzes} quiz${quizzes > 1 ? 'es' : ''} de 10 perguntas para ${missing} de ${label}`);
+    }
+  });
+  return lines;
+};
+
 const getMissingResources = (gameState, cost) => {
   const res = gameState?.resources || {};
   const have = { coins: gameState?.coins || 0, wood: res.wood || 0, stone: res.stone || 0, iron: res.iron || 0 };
@@ -92,6 +110,13 @@ const BuildingCard = ({ id, gameState, buildings, placingId, onStartPlace }) => 
       {!affordable && (
         <span className="text-[9px] text-red-400 font-semibold leading-tight">
           Falta: {missing.join(', ')}
+        </span>
+      )}
+      {!affordable && (
+        <span className="text-[8px] text-amber-600 font-semibold leading-tight">
+          {getQuizSuggestion(gameState, cost).map((line) => (
+            <span key={line} className="block">{line}</span>
+          ))}
         </span>
       )}
     </button>

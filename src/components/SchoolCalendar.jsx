@@ -89,9 +89,35 @@ const SchoolCalendar = ({ schoolYear, userRole = 'student' }) => {
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
 
+  const [teacherEvents, setTeacherEvents] = useState([]);
+
+  // Busca eventos agendados por professores para este aluno
+  useEffect(() => {
+    const load = async () => {
+      if (!user) return;
+      try {
+        const { data } = await supabase
+          .from('teacher_events')
+          .select('id, title, event_type, event_date')
+          .eq('student_id', user.id)
+          .order('event_date', { ascending: true });
+        setTeacherEvents((data || []).map(ev => ({
+          id: ev.id,
+          date: ev.event_date,
+          name: ev.title,
+          type: ev.event_type === 'test' ? 'teacher-test' : 'teacher-event',
+          icon: ev.event_type === 'test' ? '📝' : '📚',
+        })));
+      } catch {
+        setTeacherEvents([]);
+      }
+    };
+    load();
+  }, [user]);
+
   const holidays = getSchoolHolidays(year);
   const questEvents = getQuestEducaEvents(year, month);
-  const allEvents = [...holidays, ...questEvents];
+  const allEvents = [...holidays, ...questEvents, ...teacherEvents];
 
   const monthNames = [
     'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -173,6 +199,8 @@ const SchoolCalendar = ({ schoolYear, userRole = 'student' }) => {
       case 'school': return 'bg-[hsl(200,55%,88%)] text-blue-700 border-blue-300';
       case 'challenge': return 'bg-purple-100 text-purple-700 border-purple-300';
       case 'league': return 'bg-amber-100 text-amber-700 border-amber-300';
+      case 'teacher-test': return 'bg-cyan-100 text-cyan-700 border-cyan-300';
+      case 'teacher-event': return 'bg-indigo-100 text-indigo-700 border-indigo-300';
       default: return 'bg-slate-100 text-slate-700 border-slate-300';
     }
   };
@@ -184,6 +212,8 @@ const SchoolCalendar = ({ schoolYear, userRole = 'student' }) => {
       case 'school': return 'bg-[hsl(35,92%,50%)]';
       case 'challenge': return 'bg-purple-500';
       case 'league': return 'bg-amber-500';
+      case 'teacher-test': return 'bg-cyan-500';
+      case 'teacher-event': return 'bg-indigo-500';
       default: return 'bg-slate-500';
     }
   };
@@ -359,10 +389,18 @@ const SchoolCalendar = ({ schoolYear, userRole = 'student' }) => {
                       className={`flex items-center gap-3 p-3 rounded-xl border ${getEventTypeColor(event.type)}`}
                     >
                       <span className="text-2xl">{event.icon}</span>
-                      <div>
+                      <div className="flex-1">
                         <p className="font-semibold">{event.name}</p>
-                        <p className="text-xs capitalize opacity-80">{event.type === 'challenge' ? 'Desafio QUESTEDUCA' : event.type === 'league' ? 'Liga QUESTEDUCA' : event.type}</p>
+                        <p className="text-xs capitalize opacity-80">{event.type === 'teacher-test' ? 'Teste marcado pelo professor' : event.type === 'teacher-event' ? 'Agendado pelo professor' : event.type === 'challenge' ? 'Desafio QUESTEDUCA' : event.type === 'league' ? 'Liga QUESTEDUCA' : event.type}</p>
                       </div>
+                      {(event.type === 'teacher-test' || event.type === 'teacher-event') && (
+                        <span className="text-xs font-black bg-white/70 text-slate-700 rounded-full px-2.5 py-1 whitespace-nowrap">
+                          {(() => {
+                            const days = Math.ceil((new Date(event.date + 'T12:00:00') - new Date()) / 86400000);
+                            return days <= 0 ? 'É hoje!' : days === 1 ? 'Amanhã!' : `Faltam ${days} dias`;
+                          })()}
+                        </span>
+                      )}
                     </div>
                   ))}
                 </div>

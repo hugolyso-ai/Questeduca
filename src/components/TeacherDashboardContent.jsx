@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { GraduationCap, UserPlus, BookPlus, Trash2, Users, BookOpen, FileText, Search } from 'lucide-react';
+import { GraduationCap, UserPlus, BookPlus, Trash2, Users, BookOpen, FileText, Search, CalendarPlus, Eye } from 'lucide-react';
+import AccessibilityPanel from './AccessibilityPanel';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
@@ -184,6 +185,8 @@ const TeacherDashboardContent = () => {
         {[
           { id: 'students', label: 'Meus Alunos', icon: Users },
           { id: 'library', label: 'Biblioteca', icon: BookOpen },
+          { id: 'events', label: 'Testes e Aulas', icon: CalendarPlus },
+          { id: 'accessibility', label: 'Acessibilidade', icon: Eye },
         ].map(t => (
           <button
             key={t.id}
@@ -263,6 +266,14 @@ const TeacherDashboardContent = () => {
             )}
           </div>
         </div>
+      )}
+
+      {tab === 'events' && (
+        <TeacherEventsForm profile={profile} />
+      )}
+
+      {tab === 'accessibility' && (
+        <AccessibilityPanel embedded />
       )}
 
       {tab === 'library' && (

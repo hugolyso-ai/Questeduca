@@ -35,7 +35,6 @@ const TABS = [
   { id: 'achievements', name: 'Conquistas', icon: Award },
   { id: 'library', name: 'Biblioteca', icon: LibraryBig },
   { id: 'calendar', name: 'Calendário', icon: Calendar },
-  { id: 'settings', name: 'Definições', icon: Settings },
 ]
 
 const SUBJECTS = [
@@ -132,6 +131,21 @@ const QuizView = ({ gameState, setGameState, userId, schoolYear }) => {
   const [hintsAvailable, setHintsAvailable] = useState(0)
   const [timeLeft, setTimeLeft] = useState(null)
   const [speakEnabled, setSpeakEnabled] = useState(() => localStorage.getItem('questeduca_speak') === 'true')
+  const [teacherTestToday, setTeacherTestToday] = useState(false)
+
+  // Testes marcados por professores para hoje: dão ganhos extra conforme a pontuação
+  useEffect(() => {
+    if (!userId) return
+    const today = new Date().toISOString().split('T')[0]
+    supabase
+      .from('teacher_events')
+      .select('id')
+      .eq('student_id', userId)
+      .eq('event_type', 'test')
+      .eq('event_date', today)
+      .limit(1)
+      .then(({ data }) => setTeacherTestToday(!!data && data.length > 0))
+  }, [userId])
 
   // Bónus da cidade: Escola +XP, Biblioteca +dicas
   const schoolLevel = useMemo(() => {
@@ -288,8 +302,11 @@ const QuizView = ({ gameState, setGameState, userId, schoolYear }) => {
 
   const finishQuiz = async (timedOut = false) => {
     const schoolBonus = 1 + (schoolLevel * 0.1)
-    const coinsEarned = Math.round(correctCount * 5 * (mode === 'desafio' ? 1.5 : 1) * schoolBonus)
-    const xpEarned = Math.round(correctCount * 10 * (mode === 'desafio' ? 1.5 : 1) * schoolBonus)
+    const correctFraction = questions.length > 0 ? correctCount / questions.length : 0
+    // Teste do professor: ganhos extra proporcionais à pontuação positiva (até 2x)
+    const teacherBonus = teacherTestToday ? 1 + correctFraction : 1
+    const coinsEarned = Math.round(correctCount * 5 * (mode === 'desafio' ? 1.5 : 1) * schoolBonus * teacherBonus)
+    const xpEarned = Math.round(correctCount * 10 * (mode === 'desafio' ? 1.5 : 1) * schoolBonus * teacherBonus)
     const perfect = correctCount === questions.length && questions.length > 0
     setQuizActive(false)
     setQuizComplete(true)
@@ -323,7 +340,7 @@ const QuizView = ({ gameState, setGameState, userId, schoolYear }) => {
     }
     if (perfect) toast.success(`PERFEITO! ${correctCount}/${questions.length}! +${coinsEarned} moedas, +${xpEarned} XP`, { icon: '🌟' })
     else if (timedOut) toast(`Tempo esgotado! ${correctCount}/${questions.length} corretas. +${coinsEarned} moedas`, { icon: '⏰' })
-    else toast.success(`Quiz completo! ${correctCount}/${questions.length} corretas. +${coinsEarned} moedas!`)
+    else toast.success(`Quiz completo! ${correctCount}/${questions.length} corretas. +${coinsEarned} moedas!${teacherTestToday && teacherBonus > 1 ? ' 📝 Teste do professor: ganhos extra!' : ''}`)
   }
 
   if (quizComplete) {
@@ -464,7 +481,7 @@ const StudentDashboard = () => {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('city')
   const [showTutorial, setShowTutorial] = useState(false)
-  const [showAccessibility, setShowAccessibility] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
   const [quizRefreshKey, setQuizRefreshKey] = useState(0)
 
   const fetchGameData = useCallback(async () => {
@@ -560,7 +577,7 @@ const StudentDashboard = () => {
                 </>
               )}
               <OnlineStatusIndicator />
-              <button onClick={() => setShowAccessibility(true)} className="p-2 hover:bg-slate-100 rounded-xl transition"><Settings size={20} /></button>
+              <button onClick={() => setShowSettings(true)} className="p-2 hover:bg-slate-100 rounded-xl transition" title="Definições"><Settings size={20} /></button>
               <button onClick={logout} className="p-2 hover:bg-red-50 text-red-500 rounded-xl transition"><LogOut size={20} /></button>
             </div>
           </div>
@@ -616,22 +633,17 @@ const StudentDashboard = () => {
         {activeTab === 'calendar' && (
           <SchoolCalendar schoolYear={studentProfile?.school_year} />
         )}
-        {activeTab === 'settings' && (
-          <div className="space-y-6">
-            <ProfileSettingsPanel studentProfile={studentProfile} onRefresh={fetchGameData} />
-            <AccessibilityPanel />
-          </div>
-        )}
       </div>
 
       {showTutorial && (
         <InteractiveTutorial onClose={() => { setShowTutorial(false); localStorage.setItem('questeduca_tutorial_seen', '1') }} />
       )}
-      {showAccessibility && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowAccessibility(false)}>
-          <div className="w-full max-w-md" onClick={e => e.stopPropagation()}>
+      {showSettings && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center p-4 overflow-y-auto" onClick={() => setShowSettings(false)}>
+          <div className="w-full max-w-2xl my-8" onClick={e => e.stopPropagation()}>
+            <ProfileSettingsPanel studentProfile={studentProfile} onRefresh={fetchGameData} />
             <AccessibilityPanel />
-            <button onClick={() => setShowAccessibility(false)} className="w-full mt-4 py-3 bg-slate-200 rounded-xl font-semibold">Fechar</button>
+            <button onClick={() => setShowSettings(false)} className="w-full mt-4 py-3 bg-slate-200 rounded-xl font-semibold">Fechar</button>
           </div>
         </div>
       )}

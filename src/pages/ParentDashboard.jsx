@@ -5,11 +5,13 @@ import { toast } from 'sonner'
 import {
   Castle, LogOut, Plus, Users, CreditCard, TrendingUp, Trophy,
   Coins, Gem, BookOpen, Calendar, Star, Eye, Download, X,
-  Check, AlertCircle, Crown, Heart, UserPlus, FileText, GraduationCap
+  Check, AlertCircle, Crown, Heart, UserPlus, FileText, GraduationCap,
+  School
 } from 'lucide-react'
 import ReportExport, { ExportReportButton } from '../components/ReportExport'
 import DiagnosisPanel from '../components/DiagnosisPanel'
 import ParentAuthorizations from '../components/ParentAuthorizations'
+import AccessibilityPanel from '../components/AccessibilityPanel'
 import { OnlineStatusIndicator } from '../components/OfflineComponents'
 import { Pencil } from 'lucide-react'
 
@@ -27,6 +29,55 @@ const ParentDashboard = () => {
   const [newNickname, setNewNickname] = useState('')
   const [editYearChild, setEditYearChild] = useState(null)
   const [newYear, setNewYear] = useState(1)
+  const [editSchoolChild, setEditSchoolChild] = useState(null)
+  const [schoolSearch, setSchoolSearch] = useState('')
+  const [schoolOptions, setSchoolOptions] = useState([])
+
+  // Ciclo do ano escolar: 1.º ciclo = anos 1–4, 2.º/3.º ciclos = anos 5–9
+  const cycleForYear = (year) => (parseInt(year) <= 4 ? '1' : '2')
+
+  const openSchoolEditor = (child) => {
+    setEditSchoolChild(child)
+    setSchoolSearch(child.school_name || '')
+    setSchoolOptions([])
+  }
+
+  const searchSchools = async (query) => {
+    if (!editSchoolChild || query.trim().length < 2) {
+      setSchoolOptions([])
+      return
+    }
+    try {
+      const cycle = cycleForYear(editSchoolChild.school_year)
+      // Só escolas que oferecem o ciclo do ano atual do filho
+      const { data, error } = await supabase
+        .from('schools')
+        .select('school_id, name, district, municipality, cycles')
+        .contains('cycles', [cycle])
+        .ilike('name', `%${query.trim()}%`)
+        .order('name')
+        .limit(8)
+      if (error) throw error
+      setSchoolOptions(data || [])
+    } catch {
+      setSchoolOptions([])
+    }
+  }
+
+  const saveChildSchool = async (school) => {
+    try {
+      const { error } = await supabase
+        .from('student_profiles')
+        .update({ school_id: school.school_id, school_name: school.name })
+        .eq('user_id', editSchoolChild.user_id)
+      if (error) throw error
+      toast.success(`Escola de ${editSchoolChild.nickname} atualizada para ${school.name}. Fica guardada automaticamente na mudança de ano letivo.`)
+      setEditSchoolChild(null)
+      fetchChildren()
+    } catch (err) {
+      toast.error(err.message || 'Erro ao guardar escola')
+    }
+  }
 
   const fetchChildren = useCallback(async () => {
     if (!user?.id) return
@@ -166,6 +217,11 @@ const ParentDashboard = () => {
           <ParentAuthorizations />
         </div>
 
+        {/* Acessibilidades do próprio pai/encarregado */}
+        <div className="mb-6">
+          <AccessibilityPanel embedded />
+        </div>
+
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Children List */}
           <div className="lg:col-span-1">
@@ -189,6 +245,15 @@ const ParentDashboard = () => {
                         <p className="font-bold text-slate-800">{child.nickname}</p>
                         <p className="text-sm text-slate-500">{child.school_year ? `${child.school_year}º Ano` : 'Ano não definido'}{child.birth_date ? ` · ${new Date().getFullYear() - new Date(child.birth_date).getFullYear()} anos` : ''}</p>
                       </div>
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => { e.stopPropagation(); openSchoolEditor(child) }}
+                        className="p-2 text-slate-400 hover:text-[hsl(28,85%,40%)] hover:bg-[hsl(38,80%,93%)] rounded-lg transition"
+                        title="Alterar escola"
+                      >
+                        <School size={16} />
+                      </span>
                       <span
                         role="button"
                         tabIndex={0}
@@ -241,6 +306,9 @@ const ParentDashboard = () => {
 
                   {/* Learning Diagnosis */}
                   <DiagnosisPanel userId={selectedChild.user_id} />
+
+                  {/* Acessibilidades do filho */}
+                  <AccessibilityPanel embedded />
 
                   {/* Quiz History */}
                   <div>
@@ -373,6 +441,46 @@ const ParentDashboard = () => {
               />
               <button type="submit" className="w-full py-4 bg-[hsl(35,92%,50%)] text-white font-bold rounded-xl hover:bg-[hsl(33,90%,45%)] transition">Guardar</button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit School Modal */}
+      {editSchoolChild && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setEditSchoolChild(null)}>
+          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl p-6" onClick={e => e.stopPropagation()}>
+            <h2 className="text-2xl font-bold mb-2" style={{ fontFamily: 'Cinzel, serif' }}>Alterar Escola</h2>
+            <p className="text-sm text-slate-500 mb-4">
+              Escolas para o {editSchoolChild.school_year}º ano ({cycleForYear(editSchoolChild.school_year) === '1' ? '1.º' : '2.º/3.º'} ciclo). A escola mantém-se automaticamente na mudança de ano letivo, salvo se o novo ciclo não existir na escola.
+            </p>
+            <input
+              type="text"
+              value={schoolSearch}
+              onChange={(e) => { setSchoolSearch(e.target.value); searchSchools(e.target.value) }}
+              placeholder="Escreve o nome da escola..."
+              className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-[hsl(35,92%,50%)] focus:ring-4 focus:ring-[hsl(35,92%,50%)]/20 transition"
+            />
+            {schoolOptions.length > 0 && (
+              <div className="mt-3 bg-white border-2 border-slate-200 rounded-xl overflow-hidden max-h-56 overflow-y-auto shadow-lg">
+                {schoolOptions.map(s => (
+                  <button
+                    key={s.school_id}
+                    onClick={() => saveChildSchool(s)}
+                    className="w-full text-left px-4 py-2.5 hover:bg-emerald-50 transition flex items-center justify-between"
+                  >
+                    <div>
+                      <p className="font-semibold text-slate-800 text-sm">{s.name}</p>
+                      <p className="text-xs text-slate-500">{s.municipality || s.district}</p>
+                    </div>
+                    <Check size={16} className="text-emerald-600" />
+                  </button>
+                ))}
+              </div>
+            )}
+            {schoolSearch.trim().length >= 2 && schoolOptions.length === 0 && (
+              <p className="text-xs text-slate-400 mt-3">Nenhuma escola encontrada para este ciclo — tenta outro nome.</p>
+            )}
+            <button onClick={() => setEditSchoolChild(null)} className="w-full mt-4 py-3 bg-slate-100 rounded-xl font-semibold text-slate-600">Fechar</button>
           </div>
         </div>
       )}

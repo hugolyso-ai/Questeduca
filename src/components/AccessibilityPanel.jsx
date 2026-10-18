@@ -1,8 +1,30 @@
 import React from 'react';
 import { useAccessibility } from '../context/AccessibilityContext';
-import { Eye, Type, Palette, RotateCcw, Check, Moon, Sun } from 'lucide-react';
+import { Eye, Type, Palette, RotateCcw, Check, Moon, Sun, Glasses, Focus, ScanLine } from 'lucide-react';
 
-const AccessibilityPanel = ({ isOpen, onClose }) => {
+// Linha de alternância reutilizável dentro do painel
+const ToggleRow = ({ icon, title, description, enabled, darkMode, onToggle }) => (
+  <div className={`flex items-center justify-between gap-3 rounded-xl p-3 ${darkMode ? 'bg-slate-700' : 'bg-white'}`}>
+    <div className="flex items-center gap-3">
+      <div className={`p-2 rounded-lg ${darkMode ? 'bg-slate-600 text-white' : 'bg-slate-100 text-slate-600'}`}>{icon}</div>
+      <div>
+        <h4 className={`font-bold text-sm ${darkMode ? 'text-white' : 'text-slate-800'}`}>{title}</h4>
+        <p className={`text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{description}</p>
+      </div>
+    </div>
+    <button
+      onClick={onToggle}
+      className={`relative w-12 h-7 rounded-full transition-colors shrink-0 ${enabled ? 'bg-emerald-500' : darkMode ? 'bg-slate-600' : 'bg-slate-300'}`}
+      data-testid={`toggle-${title.replace(/\s+/g, '-').toLowerCase()}`}
+    >
+      <span
+        className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow transition-transform ${enabled ? 'translate-x-6' : 'translate-x-1'}`}
+      />
+    </button>
+  </div>
+);
+
+const AccessibilityPanel = ({ isOpen = true, onClose, embedded = false }) => {
   const { settings, updateSetting, reset } = useAccessibility();
 
   if (!isOpen) return null;
@@ -21,68 +43,33 @@ const AccessibilityPanel = ({ isOpen, onClose }) => {
     { value: 'xlarge', label: 'Extra Grande', example: 'Aa' }
   ];
 
-  return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className={`rounded-3xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl ${settings.darkMode ? 'bg-slate-800' : 'bg-white'}`}>
-        {/* Header */}
-        <div className="sticky top-0 bg-gradient-to-r from-purple-500 to-[hsl(24,70%,42%)] p-6 text-white rounded-t-3xl">
-          <div className="flex justify-between items-center">
-            <div>
-              <h2 className="text-2xl font-bold" style={{ fontFamily: 'Cinzel, serif' }}>
-                <Eye className="inline mr-2" size={28} />
-                Acessibilidade
-              </h2>
-              <p className="text-white/80 text-sm mt-1">
-                Personaliza a tua experiência de jogo
-              </p>
-            </div>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-white/20 rounded-full transition"
-              data-testid="close-accessibility-btn"
-            >
-              ✕
-            </button>
-          </div>
+  const header = (
+    <div className="bg-gradient-to-r from-purple-500 to-[hsl(24,70%,42%)] p-6 text-white rounded-t-3xl">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold" style={{ fontFamily: 'Cinzel, serif' }}>
+            <Eye className="inline mr-2" size={28} />
+            Acessibilidade
+          </h2>
+          <p className="text-white/80 text-sm mt-1">
+            Personaliza a tua experiência de jogo
+          </p>
         </div>
+        {!embedded && onClose && (
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-white/20 rounded-full transition"
+            data-testid="close-accessibility-btn"
+          >
+            ✕
+          </button>
+        )}
+      </div>
+    </div>
+  );
 
-        <div className="p-6 space-y-6">
-          {/* Dark Mode */}
-          <div className={`rounded-2xl p-5 ${settings.darkMode ? 'bg-slate-700' : 'bg-slate-50'}`}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className={`p-3 rounded-xl ${settings.darkMode ? 'bg-indigo-600' : 'bg-indigo-100'}`}>
-                  {settings.darkMode ? (
-                    <Moon className="text-white" size={24} />
-                  ) : (
-                    <Sun className="text-indigo-600" size={24} />
-                  )}
-                </div>
-                <div>
-                  <h3 className={`font-bold ${settings.darkMode ? 'text-white' : 'text-slate-800'}`} style={{ fontFamily: 'Cinzel, serif' }}>
-                    Modo Escuro
-                  </h3>
-                  <p className={`text-sm ${settings.darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                    Reduz o brilho para estudar à noite
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => updateSetting('darkMode', !settings.darkMode)}
-                className={`relative w-14 h-8 rounded-full transition-colors ${
-                  settings.darkMode ? 'bg-indigo-500' : 'bg-slate-300'
-                }`}
-                data-testid="toggle-dark-mode"
-              >
-                <span
-                  className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow transition-transform ${
-                    settings.darkMode ? 'translate-x-7' : 'translate-x-1'
-                  }`}
-                />
-              </button>
-            </div>
-          </div>
-
+  const body = (
+    <div className="p-6 space-y-6">
           {/* Dyslexia Font */}
           <div className={`rounded-2xl p-5 ${settings.darkMode ? 'bg-slate-700' : 'bg-slate-50'}`}>
             <div className="flex items-center justify-between">
@@ -199,6 +186,49 @@ const AccessibilityPanel = ({ isOpen, onClose }) => {
             </div>
           </div>
 
+          {/* Vision helpers */}
+          <div className={`rounded-2xl p-5 ${settings.darkMode ? 'bg-slate-700' : 'bg-slate-50'}`}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="bg-gradient-to-br from-cyan-500 to-blue-600 p-3 rounded-xl">
+                <Glasses className="text-white" size={24} />
+              </div>
+              <div>
+                <h3 className={`font-bold ${settings.darkMode ? 'text-white' : 'text-slate-800'}`} style={{ fontFamily: 'Cinzel, serif' }}>
+                  Apoios de Visão
+                </h3>
+                <p className={`text-sm ${settings.darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                  Destaques e foco para ver melhor
+                </p>
+              </div>
+            </div>
+            <div className="space-y-3">
+              <ToggleRow
+                icon={<Moon size={20} />}
+                title="Modo Escuro"
+                description="Reduz o brilho para estudar à noite"
+                enabled={settings.darkMode}
+                darkMode={settings.darkMode}
+                onToggle={() => updateSetting('darkMode', !settings.darkMode)}
+              />
+              <ToggleRow
+                icon={<Focus size={20} />}
+                title="Foco nas Perguntas"
+                description="Aumenta o destaque da pergunta ativa"
+                enabled={!!settings.highlightQuestion}
+                darkMode={settings.darkMode}
+                onToggle={() => updateSetting('highlightQuestion', !settings.highlightQuestion)}
+              />
+              <ToggleRow
+                icon={<ScanLine size={20} />}
+                title="Guias de Leitura"
+                description="Linhas-guia que ajudam a seguir o texto"
+                enabled={!!settings.readingGuides}
+                darkMode={settings.darkMode}
+                onToggle={() => updateSetting('readingGuides', !settings.readingGuides)}
+              />
+            </div>
+          </div>
+
           {/* Text Size */}
           <div className={`rounded-2xl p-5 ${settings.darkMode ? 'bg-slate-700' : 'bg-slate-50'}`}>
             <div className="flex items-center gap-3 mb-4">
@@ -258,6 +288,22 @@ const AccessibilityPanel = ({ isOpen, onClose }) => {
             Repor Definições
           </button>
         </div>
+  );
+
+  if (embedded) {
+    return (
+      <div className={`w-full rounded-3xl shadow-xl overflow-hidden ${settings.darkMode ? 'bg-slate-800' : 'bg-white'}`}>
+        {header}
+        {body}
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className={`rounded-3xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl ${settings.darkMode ? 'bg-slate-800' : 'bg-white'}`}>
+        {header}
+        {body}
       </div>
     </div>
   );
