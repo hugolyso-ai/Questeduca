@@ -6,7 +6,7 @@ import { toast } from 'sonner'
 import {
   Castle, Coins, Gem, Trophy, LogOut, BookOpen, Home, Users, Gamepad2,
   Calendar, Award, Zap, Brain, ChevronRight, Star, TrendingUp, Settings,
-  Plus, Check, X, Timer, Flame, Shield, Sword, Wrench, LibraryBig, MessageCircle, ClipboardList, FileText
+  Plus, Check, X, Timer, Flame, Shield, Sword, Wrench, LibraryBig, MessageCircle, ClipboardList, FileText, GraduationCap
 } from 'lucide-react'
 import IsometricCity from '../components/IsometricCity'
 import BattleAndSocial from '../components/BattleAndSocial'
