@@ -206,7 +206,7 @@ const SpeedMathGame = ({ onGameEnd, difficulty = 'medium' }) => {
         </div>
         
         <p className="text-lg text-[hsl(28,85%,40%)] font-semibold mb-6">
-          +{coinsWon} moedas ganhas!
+          +{coinsWon} Qu€sts ganhas!
         </p>
         
         <div className="flex gap-3 justify-center">

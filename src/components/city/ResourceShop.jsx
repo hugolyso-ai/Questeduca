@@ -83,14 +83,14 @@ const ResourceShop = ({ gameState, onClose, onRefresh }) => {
             🛒 Loja de Materiais
           </h2>
           <p className="text-sm text-slate-500 mt-1">
-            Troca as moedas e diamantes ganhos nos quizzes por materiais de construção.
+            Troca as Qu€sts e diamantes ganhos nos quizzes por materiais de construção.
           </p>
 
           <div className="flex items-center gap-3 mt-4">
             <div className="flex items-center gap-2 bg-amber-50 px-4 py-2 rounded-xl border border-amber-200">
               <Coins className="text-amber-500" size={18} />
               <span className="font-bold text-amber-700">{balance.coins}</span>
-              <span className="text-xs text-amber-600/70">moedas</span>
+              <span className="text-xs text-amber-600/70">Qu€sts</span>
             </div>
             <div className="flex items-center gap-2 bg-cyan-50 px-4 py-2 rounded-xl border border-cyan-200">
               <Gem className="text-cyan-500" size={18} />

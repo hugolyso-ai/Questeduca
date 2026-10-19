@@ -48,6 +48,10 @@ const ProfileSettingsPanel = ({ studentProfile, onSaved, onRefresh }) => {
 
   const handleSave = async () => {
     if (!user) return;
+    if (!className.trim()) {
+      toast.error('A turma é obrigatória — escreve a tua turma (ex.: 5ºA).');
+      return;
+    }
     setSaving(true);
     try {
       // Preserva a escola atual quando o aluno não tocou na pesquisa
@@ -160,12 +164,13 @@ const ProfileSettingsPanel = ({ studentProfile, onSaved, onRefresh }) => {
 
         {/* Turma */}
         <div>
-          <label className="block text-sm font-bold text-slate-700 mb-2">Turma (opcional)</label>
+          <label className="block text-sm font-bold text-slate-700 mb-2">Turma (obrigatória)</label>
           <input
             type="text"
             value={className}
-            onChange={e => setClassName(e.target.value)}
+            onChange={e => setClassName(e.target.value.toUpperCase())}
             maxLength={10}
+            required
             placeholder="Ex.: 5ºA"
             className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-emerald-500 focus:outline-none transition"
           />

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { Cake, School, Sparkles, Loader2 } from 'lucide-react'
+import { Cake, School, Sparkles, Loader2, Users } from 'lucide-react'
 import { toast } from 'sonner'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
@@ -56,6 +56,8 @@ const StudentOnboarding = () => {
     run()
   }, [user?.id])
 
+  const [className, setClassName] = useState('')
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!birthDate) {
@@ -64,6 +66,10 @@ const StudentOnboarding = () => {
     }
     if (!school.school_id) {
       toast.error('Escolha a sua escola')
+      return
+    }
+    if (!className.trim()) {
+      toast.error('Indica a tua turma (ex.: 5ºA)')
       return
     }
     setSaving(true)
@@ -81,6 +87,7 @@ const StudentOnboarding = () => {
           district: school.district,
           municipality: school.municipality,
           locality: school.locality,
+          class_name: className.trim().toUpperCase(),
         })
         .eq('user_id', user.id)
       if (updErr) throw updErr
@@ -153,6 +160,25 @@ const StudentOnboarding = () => {
                 <School size={16} /> A tua escola
               </label>
               <SchoolPicker value={school} onChange={setSchool} showLocality />
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-1.5" style={labelStyle}>
+                <Users size={16} /> A tua turma (obrigatória)
+              </label>
+              <input
+                type="text"
+                value={className}
+                onChange={(e) => setClassName(e.target.value.toUpperCase())}
+                maxLength={10}
+                required
+                placeholder="Ex.: 5ºA"
+                className={inputCls}
+                style={labelStyle}
+              />
+              <p className="text-xs text-slate-400 mt-1" style={labelStyle}>
+                É pela turma que recebes testes e livros do teu professor.
+              </p>
             </div>
 
             <button

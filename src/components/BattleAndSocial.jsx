@@ -141,7 +141,7 @@ const RaidHistory = ({ raids, currentUserId }) => {
 
             {raid.loot && raid.victory && wasAttacker && (
               <div className="mt-2 flex gap-2 text-xs text-slate-600">
-                {raid.loot.coins > 0 && <span>+{raid.loot.coins} moedas</span>}
+                {raid.loot.coins > 0 && <span>+{raid.loot.coins} Qu€sts</span>}
                 {raid.loot.wood > 0 && <span>+{raid.loot.wood} madeira</span>}
               </div>
             )}
@@ -190,7 +190,7 @@ const SendGiftModal = ({ isOpen, onClose, friendId, friendName, gameState, onSuc
   if (!isOpen) return null;
 
   const giftOptions = [
-    { id: 'coins', name: 'Moedas', icon: Coins, color: 'text-yellow-500' },
+    { id: 'coins', name: 'Qu€sts', icon: Coins, color: 'text-yellow-500' },
     { id: 'wood', name: 'Madeira', icon: TreePine, color: 'text-amber-600' },
     { id: 'stone', name: 'Pedra', icon: Mountain, color: 'text-slate-500' },
     { id: 'iron', name: 'Ferro', icon: Pickaxe, color: 'text-zinc-600' },

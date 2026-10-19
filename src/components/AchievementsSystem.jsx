@@ -222,7 +222,7 @@ export const ACHIEVEMENTS = {
   rich_100: {
     id: 'rich_100',
     name: 'Poupador',
-    description: 'Junta 100 moedas',
+    description: 'Junta 100 Qu€sts',
     icon: Coins,
     color: 'from-yellow-400 to-yellow-600',
     category: 'resources',
@@ -234,7 +234,7 @@ export const ACHIEVEMENTS = {
   rich_1000: {
     id: 'rich_1000',
     name: 'Tesouro',
-    description: 'Junta 1000 moedas',
+    description: 'Junta 1000 Qu€sts',
     icon: Coins,
     color: 'from-amber-400 to-orange-500',
     category: 'resources',
@@ -246,7 +246,7 @@ export const ACHIEVEMENTS = {
   rich_10000: {
     id: 'rich_10000',
     name: 'Milionário',
-    description: 'Junta 10000 moedas',
+    description: 'Junta 10000 Qu€sts',
     icon: Diamond,
     color: 'from-cyan-400 to-[hsl(24,70%,42%)]',
     category: 'resources',

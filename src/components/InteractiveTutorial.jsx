@@ -19,7 +19,7 @@ const TUTORIAL_STEPS = {
     {
       id: 'resources',
       title: 'Os Teus Recursos 💰',
-      description: 'Aqui podes ver as tuas moedas, diamantes e XP. Ganha-os respondendo a quizzes!',
+      description: 'Aqui podes ver as tuas Qu€sts, diamantes e XP. Ganha-os respondendo a quizzes!',
       icon: Star,
       color: 'from-yellow-400 to-amber-500',
       highlight: '[data-testid="resources-bar"]',
@@ -37,7 +37,7 @@ const TUTORIAL_STEPS = {
     {
       id: 'quiz',
       title: 'Aprender & Ganhar 📚',
-      description: 'Na aba "Aprender", responde a quizzes do teu ano escolar para ganhar moedas e XP!',
+      description: 'Na aba "Aprender", responde a quizzes do teu ano escolar para ganhar Qu€sts e XP!',
       icon: BookOpen,
       color: 'from-[hsl(35,92%,50%)] to-indigo-600',
       highlight: '[data-testid="tab-quiz"]',
@@ -73,7 +73,7 @@ const TUTORIAL_STEPS = {
     {
       id: 'complete',
       title: 'Pronto para Jogar! 🚀',
-      description: 'Agora já sabes tudo! Começa por fazer um quiz e ganhar as tuas primeiras moedas.',
+      description: 'Agora já sabes tudo! Começa por fazer um quiz e ganhar as tuas primeiras Qu€sts.',
       icon: Gift,
       color: 'from-gradient-to-br from-purple-500 via-[hsl(340,60%,55%)] to-red-500',
       highlight: null,

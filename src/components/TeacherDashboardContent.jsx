@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { GraduationCap, UserPlus, BookPlus, Trash2, Users, BookOpen, FileText, Search, CalendarPlus, Eye } from 'lucide-react';
+import { GraduationCap, UserPlus, BookPlus, Trash2, Users, BookOpen, FileText, Search, CalendarPlus, Eye, ClipboardList, Send } from 'lucide-react';
 import AccessibilityPanel from './AccessibilityPanel';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
@@ -17,6 +17,8 @@ const TeacherDashboardContent = () => {
   const [bookForm, setBookForm] = useState({ title: '', author: '', subject: SUBJECTS[0], book_type: 'digital', file_url: '', notes: '', target_nickname: '' });
   const [tab, setTab] = useState('students');
   const [loading, setLoading] = useState(false);
+  const [assignForm, setAssignForm] = useState({ kind: 'quiz', title: '', description: '', target_class: '', target_nickname: '' });
+  const [myAssignments, setMyAssignments] = useState([]);
 
   const fetchAll = useCallback(async () => {
     if (!user) return;
@@ -36,6 +38,14 @@ const TeacherDashboardContent = () => {
         .eq('teacher_id', user.id)
         .order('created_at', { ascending: false });
       setMyBooks(books || []);
+
+      const { data: assigns } = await supabase
+        .from('teacher_assignments')
+        .select('*')
+        .eq('teacher_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(50);
+      setMyAssignments(assigns || []);
     } catch (e) { /* ignore */ }
   }, [user]);
 
@@ -163,6 +173,92 @@ const TeacherDashboardContent = () => {
     fetchAll();
   };
 
+  // Alunos agrupados por turma (ignora maiúsculas/minúsculas: 5ra = 5RA)
+  const classGroups = (() => {
+    const groups = {};
+    (myStudents || []).forEach(link => {
+      const s = link.student_profiles;
+      const raw = (s?.class_name || '').trim();
+      if (!raw) return;
+      const key = raw.toUpperCase();
+      groups[key] = groups[key] || { label: raw, students: [] };
+      groups[key].students.push(s);
+    });
+    return groups;
+  })();
+
+  const findStudentByNickname = (nick) => {
+    const key = nick.trim().toLowerCase();
+    for (const link of myStudents) {
+      const s = link.student_profiles;
+      if (s?.nickname && s.nickname.toLowerCase() === key) return s;
+    }
+    return null;
+  };
+
+  const addAssignment = async (e) => {
+    e.preventDefault();
+    if (!assignForm.title.trim()) {
+      toast.error('Indica o título da atribuição.');
+      return;
+    }
+    const nick = assignForm.target_nickname.trim();
+    const cls = assignForm.target_class.trim().toUpperCase();
+    if (!nick && !cls) {
+      toast.error('Escolhe uma turma ou um aluno específico.');
+      return;
+    }
+    let targetStudentId = null;
+    if (nick) {
+      const s = findStudentByNickname(nick);
+      if (!s) {
+        toast.error(`Nenhum dos teus alunos tem o nickname "${nick}".`);
+        return;
+      }
+      targetStudentId = s.user_id;
+    }
+    setLoading(true);
+    try {
+      const { error } = await supabase.from('teacher_assignments').insert({
+        teacher_id: user.id,
+        kind: assignForm.kind,
+        title: assignForm.title.trim(),
+        description: assignForm.description.trim() || null,
+        school_id: teacherProfile?.school_id || null,
+        target_class: nick ? null : cls,
+        target_student_id: targetStudentId,
+      });
+      if (error) throw error;
+
+      // Notifica os alunos visados (turma inteira ou o aluno escolhido)
+      const targets = targetStudentId
+        ? [targetStudentId]
+        : (classGroups[cls]?.students || []).map(s => s.user_id);
+      if (targets.length > 0) {
+        const kindLabel = assignForm.kind === 'quiz' ? 'teste' : assignForm.kind === 'book' ? 'livro' : 'dica de livro';
+        await supabase.from('notifications').insert(targets.map(uid => ({
+          user_id: uid,
+          type: 'assignment',
+          title: 'Nova atribuição do professor!',
+          message: `${assignForm.title} (${kindLabel})${assignForm.description ? ` — ${assignForm.description}` : ''}`,
+        })));
+      }
+      toast.success(nick ? 'Atribuição enviada ao aluno!' : `Atribuição enviada à turma ${cls}!`);
+      setAssignForm({ kind: 'quiz', title: '', description: '', target_class: '', target_nickname: '' });
+      fetchAll();
+    } catch (err) {
+      toast.error(err.message || 'Erro ao criar atribuição.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const removeAssignment = async (id) => {
+    await supabase.from('teacher_assignments').delete().eq('id', id);
+    toast.success('Atribuição removida.');
+    fetchAll();
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -184,6 +280,7 @@ const TeacherDashboardContent = () => {
       <div className="flex gap-2">
         {[
           { id: 'students', label: 'Meus Alunos', icon: Users },
+          { id: 'assignments', label: 'Atribuições', icon: ClipboardList },
           { id: 'library', label: 'Biblioteca', icon: BookOpen },
           { id: 'events', label: 'Testes e Aulas', icon: CalendarPlus },
           { id: 'accessibility', label: 'Acessibilidade', icon: Eye },
@@ -253,7 +350,7 @@ const TeacherDashboardContent = () => {
                         </div>
                         <div>
                           <p className="font-semibold text-slate-800 text-sm">{s?.nickname || 'Sem nome'}</p>
-                          <p className="text-xs text-slate-500">{link.subject}{s?.school_year ? ` · ${s.school_year}º ano` : ''}</p>
+                          <p className="text-xs text-slate-500">{link.subject}{s?.class_name ? ` · Turma ${s.class_name}` : ''}{s?.school_year ? ` · ${s.school_year}º ano` : ''}</p>
                         </div>
                       </div>
                       <button onClick={() => removeStudent(link.id)} className="p-2 text-red-400 hover:bg-red-50 rounded-lg transition" title="Remover">
@@ -262,6 +359,102 @@ const TeacherDashboardContent = () => {
                     </div>
                   );
                 })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {tab === 'assignments' && (
+        <div className="space-y-4">
+          <div className="bg-white rounded-3xl shadow-lg overflow-hidden">
+            <div className="bg-gradient-to-r from-indigo-600 to-cyan-600 p-5 text-white flex items-center gap-3">
+              <div className="bg-white/20 p-2.5 rounded-xl"><ClipboardList size={24} /></div>
+              <div>
+                <h4 className="font-bold" style={{ fontFamily: 'Cinzel, serif' }}>Nova Atribuição</h4>
+                <p className="text-white/80 text-xs">Envia um teste, livro ou dica a uma turma inteira ou a um aluno específico.</p>
+              </div>
+            </div>
+            <form onSubmit={addAssignment} className="p-5 space-y-3">
+              <div className="grid md:grid-cols-3 gap-3">
+                <select
+                  value={assignForm.kind}
+                  onChange={e => setAssignForm({ ...assignForm, kind: e.target.value })}
+                  className="px-4 py-2.5 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-indigo-500 focus:outline-none transition"
+                >
+                  <option value="quiz">Teste / Quiz</option>
+                  <option value="book">Livro</option>
+                  <option value="tip">Dica de livro</option>
+                </select>
+                <input
+                  type="text"
+                  value={assignForm.title}
+                  onChange={e => setAssignForm({ ...assignForm, title: e.target.value })}
+                  placeholder="Título *"
+                  className="px-4 py-2.5 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-indigo-500 focus:outline-none transition"
+                />
+                <input
+                  type="text"
+                  value={assignForm.description}
+                  onChange={e => setAssignForm({ ...assignForm, description: e.target.value })}
+                  placeholder="Descrição / instruções"
+                  className="px-4 py-2.5 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-indigo-500 focus:outline-none transition"
+                />
+              </div>
+              <div className="grid md:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-slate-600 mb-1 block">Turma (recebem todos os alunos da turma)</label>
+                  <select
+                    value={assignForm.target_class}
+                    onChange={e => setAssignForm({ ...assignForm, target_class: e.target.value, target_nickname: '' })}
+                    className="w-full px-4 py-2.5 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-indigo-500 focus:outline-none transition"
+                  >
+                    <option value="">— escolher turma —</option>
+                    {Object.keys(classGroups).map(c => <option key={c} value={c}>Turma {classGroups[c].label}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-slate-600 mb-1 block">…ou aluno específico (sobrepõe a turma)</label>
+                  <input
+                    type="text"
+                    value={assignForm.target_nickname}
+                    onChange={e => setAssignForm({ ...assignForm, target_nickname: e.target.value, target_class: '' })}
+                    placeholder="Nickname do aluno (opcional)"
+                    className="w-full px-4 py-2.5 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-indigo-500 focus:outline-none transition"
+                  />
+                </div>
+              </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3 bg-gradient-to-r from-indigo-500 to-cyan-600 text-white font-bold rounded-xl hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                <Send size={18} />
+                {loading ? 'A enviar...' : 'Enviar atribuição'}
+              </button>
+            </form>
+          </div>
+
+          <div className="bg-white rounded-3xl shadow-lg p-5">
+            <h4 className="font-bold text-slate-800 mb-3" style={{ fontFamily: 'Cinzel, serif' }}>Atribuições Enviadas ({myAssignments.length})</h4>
+            {myAssignments.length === 0 ? (
+              <p className="text-slate-400 text-sm text-center py-4">Ainda sem atribuições.</p>
+            ) : (
+              <div className="space-y-2">
+                {myAssignments.map(a => (
+                  <div key={a.id} className="flex items-center justify-between bg-slate-50 rounded-xl p-3">
+                    <div>
+                      <p className="font-semibold text-slate-800 text-sm">{a.title}</p>
+                      <p className="text-xs text-slate-500">
+                        {a.kind === 'quiz' ? 'Teste' : a.kind === 'book' ? 'Livro' : 'Dica'} · {a.target_student_id ? 'Aluno específico' : `Turma ${a.target_class}`}
+                        {a.description ? ` · ${a.description}` : ''}
+                      </p>
+                    </div>
+                    <button onClick={() => removeAssignment(a.id)} className="p-2 text-red-400 hover:bg-red-50 rounded-lg transition">
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
           </div>

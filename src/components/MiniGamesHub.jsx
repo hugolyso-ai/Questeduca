@@ -64,7 +64,7 @@ const MiniGameCard = ({ game, onSelect, disabled }) => {
       </div>
       <div className="mt-4 pt-4 border-t border-slate-100">
         <div className="flex justify-between text-sm">
-          <span className="text-[hsl(28,85%,40%)] font-semibold"><Trophy size={14} className="inline mr-1" />+{game.rewards.winner} moedas</span>
+          <span className="text-[hsl(28,85%,40%)] font-semibold"><Trophy size={14} className="inline mr-1" />+{game.rewards.winner} Qu€sts</span>
           <span className="text-slate-400">Participação: +{game.rewards.loser}</span>
         </div>
       </div>
@@ -127,7 +127,7 @@ const QuizDuelGame = ({ opponent, onEnd, questions }) => {
           <div className="text-2xl font-bold text-slate-300 self-center">VS</div>
           <div className="text-center"><p className="text-sm text-slate-500">{opponent}</p><p className="text-4xl font-bold text-slate-600">{opponentScore}</p></div>
         </div>
-        <p className="text-lg text-[hsl(28,85%,40%)] font-semibold mb-6">+{won ? 50 : tie ? 25 : 10} moedas ganhas!</p>
+        <p className="text-lg text-[hsl(28,85%,40%)] font-semibold mb-6">+{won ? 50 : tie ? 25 : 10} Qu€sts ganhas!</p>
         <button onClick={() => onEnd(won ? 50 : tie ? 25 : 10)} className="px-8 py-3 bg-gradient-to-r from-[hsl(35,92%,50%)] to-cyan-600 text-white font-bold rounded-xl hover:opacity-90 transition">Continuar</button>
       </div>
     )
@@ -232,7 +232,7 @@ const MiniGamesHub = ({ childId, childName, onClose }) => {
         // Ignore - still show success to user
       }
     }
-    toast.success(`+${coinsWon} moedas ganhas!`)
+    toast.success(`+${coinsWon} Qu€sts ganhas!`)
     setGameStarted(false)
     setSelectedGame(null)
   }
@@ -260,7 +260,7 @@ const MiniGamesHub = ({ childId, childName, onClose }) => {
         </div>
         <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-xl transition"><X size={20} /></button>
       </div>
-      <p className="text-slate-500 mb-6" style={{ fontFamily: 'Nunito, sans-serif' }}>Escolhe um jogo e ganha moedas extras!</p>
+      <p className="text-slate-500 mb-6" style={{ fontFamily: 'Nunito, sans-serif' }}>Escolhe um jogo e ganha Qu€sts extras!</p>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {Object.values(MINIGAMES).map(game => (
           <MiniGameCard key={game.id} game={game} onSelect={startGame} disabled={loading} />

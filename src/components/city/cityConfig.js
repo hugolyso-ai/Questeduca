@@ -46,7 +46,7 @@ export const BUILDING_CONFIG = {
   lumber_mill: { name: 'Serração', category: 'resources', description: 'Produz madeira para construção.', scale: 1.1, produces: true },
   quarry: { name: 'Pedreira', category: 'resources', description: 'Extrai pedra para construções.', scale: 1.15, produces: true },
   mine: { name: 'Mina', category: 'resources', description: 'Extrai ferro para construções avançadas.', scale: 1.1, produces: true },
-  market: { name: 'Mercado', category: 'resources', description: 'Produz moedas ao longo do tempo. Funciona melhor no centro!', scale: 1.15, produces: true },
+  market: { name: 'Mercado', category: 'resources', description: 'Produz Qu€sts ao longo do tempo. Funciona melhor no centro!', scale: 1.15, produces: true },
   barracks: { name: 'Quartel', category: 'military', description: 'Treina soldados. +5 poder de ataque.', scale: 1.3 },
   wall: { name: 'Muralha', category: 'military', description: 'Defesa da cidade. +10 poder de defesa.', scale: 1.25 },
 };

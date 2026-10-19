@@ -6,7 +6,7 @@ import { toast } from 'sonner'
 import {
   Castle, Coins, Gem, Trophy, LogOut, BookOpen, Home, Users, Gamepad2,
   Calendar, Award, Zap, Brain, ChevronRight, Star, TrendingUp, Settings,
-  Plus, Check, X, Timer, Flame, Shield, Sword, Wrench, LibraryBig
+  Plus, Check, X, Timer, Flame, Shield, Sword, Wrench, LibraryBig, MessageCircle, ClipboardList
 } from 'lucide-react'
 import IsometricCity from '../components/IsometricCity'
 import BattleAndSocial from '../components/BattleAndSocial'
@@ -26,6 +26,8 @@ import InteractiveTutorial from '../components/InteractiveTutorial'
 import { OnlineStatusIndicator } from '../components/OfflineComponents'
 import LibraryPanel from '../components/LibraryPanel'
 import FriendChat from '../components/FriendChat'
+import TeacherStudentChat from '../components/TeacherStudentChat'
+import AssignmentsPanel from '../components/AssignmentsPanel'
 
 const TABS = [
   { id: 'city', name: 'A Minha Cidade', icon: Castle },
@@ -35,6 +37,8 @@ const TABS = [
   { id: 'minigames', name: 'Mini-Jogos', icon: Gamepad2 },
   { id: 'achievements', name: 'Conquistas', icon: Award },
   { id: 'library', name: 'Biblioteca', icon: LibraryBig },
+  { id: 'chat', name: 'Professor', icon: MessageCircle },
+  { id: 'assignments', name: 'Atribuições', icon: ClipboardList },
   { id: 'calendar', name: 'Calendário', icon: Calendar },
 ]
 
@@ -344,9 +348,9 @@ const QuizView = ({ gameState, setGameState, userId, schoolYear }) => {
         }
       } catch (error) { /* ignore */ }
     }
-    if (perfect) toast.success(`PERFEITO! ${correctCount}/${questions.length}! +${coinsEarned} moedas, +${xpEarned} XP`, { icon: '🌟' })
-    else if (timedOut) toast(`Tempo esgotado! ${correctCount}/${questions.length} corretas. +${coinsEarned} moedas`, { icon: '⏰' })
-    else toast.success(`Quiz completo! ${correctCount}/${questions.length} corretas. +${coinsEarned} moedas!${teacherTestToday && teacherBonus > 1 ? ' 📝 Teste do professor: ganhos extra!' : ''}`)
+    if (perfect) toast.success(`PERFEITO! ${correctCount}/${questions.length}! +${coinsEarned} Qu€sts, +${xpEarned} XP`, { icon: '🌟' })
+    else if (timedOut) toast(`Tempo esgotado! ${correctCount}/${questions.length} corretas. +${coinsEarned} Qu€sts`, { icon: '⏰' })
+    else toast.success(`Quiz completo! ${correctCount}/${questions.length} corretas. +${coinsEarned} Qu€sts!${teacherTestToday && teacherBonus > 1 ? ' 📝 Teste do professor: ganhos extra!' : ''}`)
   }
 
   if (quizComplete) {
@@ -361,7 +365,7 @@ const QuizView = ({ gameState, setGameState, userId, schoolYear }) => {
         <div className="grid grid-cols-3 gap-4 max-w-md mx-auto mb-6">
           <div className="bg-[hsl(38,80%,93%)] rounded-xl p-4"><p className="text-3xl font-bold text-[hsl(28,85%,40%)]">{correctCount}</p><p className="text-xs text-slate-500">Corretas</p></div>
           <div className="bg-[hsl(38,80%,93%)] rounded-xl p-4"><p className="text-3xl font-bold text-[hsl(28,85%,40%)]">{score}</p><p className="text-xs text-slate-500">Pontos</p></div>
-          <div className="bg-amber-50 rounded-xl p-4"><p className="text-3xl font-bold text-amber-600">{correctCount * 5}</p><p className="text-xs text-slate-500">Moedas</p></div>
+          <div className="bg-amber-50 rounded-xl p-4"><p className="text-3xl font-bold text-amber-600">{correctCount * 5}</p><p className="text-xs text-slate-500">Qu€sts</p></div>
         </div>
 
         {wrong.length > 0 && (
@@ -468,7 +472,7 @@ const QuizView = ({ gameState, setGameState, userId, schoolYear }) => {
         </div>
         {schoolLevel > 0 && (
           <div className="hidden md:flex items-center gap-2 bg-[hsl(142,45%,88%)] px-4 py-2 rounded-xl">
-            <span className="text-green-700 font-bold text-sm">🏫 Escola Nv.{schoolLevel}: +{schoolLevel * 10}% XP e moedas</span>
+            <span className="text-green-700 font-bold text-sm">🏫 Escola Nv.{schoolLevel}: +{schoolLevel * 10}% XP e Qu€sts</span>
           </div>
         )}
       </div>
@@ -654,6 +658,12 @@ const StudentDashboard = () => {
         )}
         {activeTab === 'library' && (
           <LibraryPanel />
+        )}
+        {activeTab === 'chat' && (
+          <TeacherStudentChat role="student" />
+        )}
+        {activeTab === 'assignments' && (
+          <AssignmentsPanel />
         )}
         {activeTab === 'calendar' && (
           <SchoolCalendar schoolYear={studentProfile?.school_year} />

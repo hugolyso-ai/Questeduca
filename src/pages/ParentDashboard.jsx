@@ -14,6 +14,7 @@ import DiagnosisPanel from '../components/DiagnosisPanel'
 import ParentAuthorizations from '../components/ParentAuthorizations'
 import ChildChatMonitor from '../components/ChildChatMonitor'
 import ChildWeaknesses from '../components/ChildWeaknesses'
+import FamilyPlayPanel from '../components/FamilyPlayPanel'
 import AccessibilityPanel from '../components/AccessibilityPanel'
 import { OnlineStatusIndicator } from '../components/OfflineComponents'
 import { Pencil } from 'lucide-react'
@@ -28,7 +29,7 @@ const ParentDashboard = () => {
   const [showAddChild, setShowAddChild] = useState(false)
   const [showReport, setShowReport] = useState(false)
   const [subscription, setSubscription] = useState(null)
-  const [newChild, setNewChild] = useState({ nickname: '', school_year: 1, school_id: '' })
+  const [newChild, setNewChild] = useState({ nickname: '', school_year: 1, school_id: '', class_name: '' })
   const [renameChild, setRenameChild] = useState(null)
   const [newNickname, setNewNickname] = useState('')
   const [editYearChild, setEditYearChild] = useState(null)
@@ -158,6 +159,7 @@ const ParentDashboard = () => {
         nickname: newChild.nickname,
         school_year: parseInt(newChild.school_year),
         school_id: newChild.school_id || null,
+        class_name: (newChild.class_name || '').trim() || null,
       })
       await supabase.from('game_states').insert({
         user_id: childId,
@@ -242,14 +244,14 @@ const ParentDashboard = () => {
           <ChildChatMonitor children={children} />
         </div>
 
+        {/* Jogar em família: mini-jogos + batalhas entre famílias */}
+        <div className="mb-6">
+          <FamilyPlayPanel children={children} />
+        </div>
+
         {/* Relatório: onde o filho erra mais */}
         <div className="mb-6">
           <ChildWeaknesses children={children} />
-        </div>
-
-        {/* Acessibilidades do próprio pai/encarregado */}
-        <div className="mb-6">
-          <AccessibilityPanel embedded />
         </div>
 
         <div className="grid lg:grid-cols-3 gap-6">
@@ -327,7 +329,7 @@ const ParentDashboard = () => {
 
                   {childGameData.gameState && (
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                      <div className="bg-amber-50 rounded-xl p-4 text-center"><Coins className="mx-auto text-amber-500 mb-2" size={24} /><p className="text-2xl font-bold text-amber-700">{childGameData.gameState.coins}</p><p className="text-xs text-slate-500">Moedas</p></div>
+                      <div className="bg-amber-50 rounded-xl p-4 text-center"><Coins className="mx-auto text-amber-500 mb-2" size={24} /><p className="text-2xl font-bold text-amber-700">{childGameData.gameState.coins}</p><p className="text-xs text-slate-500">Qu€sts</p></div>
                       <div className="bg-cyan-50 rounded-xl p-4 text-center"><Gem className="mx-auto text-cyan-500 mb-2" size={24} /><p className="text-2xl font-bold text-cyan-700">{childGameData.gameState.diamonds}</p><p className="text-xs text-slate-500">Diamantes</p></div>
                       <div className="bg-[hsl(38,80%,93%)] rounded-xl p-4 text-center"><TrendingUp className="mx-auto text-[hsl(35,92%,45%)] mb-2" size={24} /><p className="text-2xl font-bold text-green-700">{childGameData.gameState.xp}</p><p className="text-xs text-slate-500">XP Total</p></div>
                       <div className="bg-purple-50 rounded-xl p-4 text-center"><Trophy className="mx-auto text-purple-500 mb-2" size={24} /><p className="text-2xl font-bold text-purple-700">{childGameData.gameState.current_streak}</p><p className="text-xs text-slate-500">Dias Seguidos</p></div>
@@ -395,6 +397,10 @@ const ParentDashboard = () => {
                 <select value={newChild.school_year} onChange={e => setNewChild({ ...newChild, school_year: e.target.value })} className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-[hsl(35,92%,50%)] focus:ring-4 focus:ring-[hsl(35,92%,50%)]/20 transition">
                   {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(y => <option key={y} value={y}>{y}º Ano</option>)}
                 </select>
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Turma (obrigatória)</label>
+                <input type="text" value={newChild.class_name} onChange={e => setNewChild({ ...newChild, class_name: e.target.value.toUpperCase() })} required className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-[hsl(35,92%,50%)] focus:ring-4 focus:ring-[hsl(35,92%,50%)]/20 transition" placeholder="Ex: 5ºA" />
               </div>
               <button type="submit" className="w-full py-4 bg-[hsl(35,92%,50%)] text-white font-bold rounded-xl hover:bg-[hsl(33,90%,45%)] transition">Adicionar</button>
             </form>

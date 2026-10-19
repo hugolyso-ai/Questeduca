@@ -114,7 +114,7 @@ const WeeklyCurricularMission = ({ refreshKey }) => {
           </div>
           <div className="flex items-center gap-2 bg-white/15 px-4 py-2 rounded-xl font-bold text-sm">
             <Zap size={16} />
-            Recompensa: 200 moedas + 10 diamantes
+            Recompensa: 200 Qu€sts + 10 diamantes
           </div>
         </div>
       </div>

@@ -87,7 +87,7 @@ const DuelGame = ({ duel, onExit, onFinished }) => {
         message: `${duel.challenger_name} terminou o duelo de ${DuelSubjects.find(s => s.id === duel.subject)?.name || duel.subject} com ${myScore}/10 corretas!`,
       });
 
-      // Prémio de 50 moedas ao vencedor
+      // Prémio de 50 Qu€sts ao vencedor
       if (winnerId === user.id) {
         const { data: gs } = await supabase.from('game_states').select('coins').eq('user_id', user.id).single();
         if (gs) await supabase.from('game_states').update({ coins: gs.coins + 50 }).eq('user_id', user.id);
@@ -286,7 +286,7 @@ const QuizDuels = ({ friends, onRefresh }) => {
             </div>
             <div>
               <h3 className="text-xl font-bold" style={{ fontFamily: 'Cinzel, serif' }}>Duelos de Conhecimento</h3>
-              <p className="text-white/80 text-sm">Desafia um amigo: as mesmas 10 perguntas, quem acerta mais vence 50 moedas!</p>
+              <p className="text-white/80 text-sm">Desafia um amigo: as mesmas 10 perguntas, quem acerta mais vence 50 Qu€sts!</p>
             </div>
           </div>
           <button

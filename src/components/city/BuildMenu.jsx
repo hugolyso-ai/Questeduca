@@ -34,7 +34,7 @@ const CostRow = ({ cost, gameState }) => {
   );
 };
 
-const RESOURCE_LABELS = { coins: 'Moedas', wood: 'Madeira', stone: 'Pedra', iron: 'Ferro' };
+const RESOURCE_LABELS = { coins: 'Qu€sts', wood: 'Madeira', stone: 'Pedra', iron: 'Ferro' };
 
 // Quantos quizzes (de 10 perguntas) são precisos para juntar o que falta.
 // Ganho médio por quiz: 50 moedas (5 por acerto) ou 100 XP (10 por acerto).
@@ -47,7 +47,7 @@ const getQuizSuggestion = (gameState, cost) => {
     if (have[k] < need) {
       const missing = Math.ceil(need - have[k]);
       const quizzes = Math.max(1, Math.ceil(missing / 50));
-      const label = k === 'coins' ? 'moedas' : k === 'wood' ? 'madeira' : k === 'stone' ? 'pedra' : 'ferro';
+      const label = k === 'coins' ? 'Qu€sts' : k === 'wood' ? 'madeira' : k === 'stone' ? 'pedra' : 'ferro';
       lines.push(`${quizzes} quiz${quizzes > 1 ? 'es' : ''} de 10 perguntas para ${missing} de ${label}`);
     }
   });

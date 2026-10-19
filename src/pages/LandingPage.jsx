@@ -241,7 +241,7 @@ const LandingPage = () => {
               {
                 icon: Trophy,
                 title: 'Aprende Divertindo',
-                desc: 'Responde a perguntas do currículo português e ganha moedas e diamantes para construir o teu império!',
+                desc: 'Responde a perguntas do currículo português e ganha Qu€sts e diamantes para construir o teu império!',
                 bg: 'bg-[hsl(38,95%,90%)]',
                 fg: 'text-[hsl(28,80%,35%)]',
               },

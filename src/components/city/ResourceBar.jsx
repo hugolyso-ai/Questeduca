@@ -33,7 +33,7 @@ const ResourceBar = ({ gameState, onOpenShop }) => {
             onClick={onOpenShop}
             className="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-600 text-white px-4 py-2.5 rounded-xl font-bold shadow-lg hover:opacity-90 transition"
             data-testid="open-shop-btn"
-            title="Comprar materiais com moedas e diamantes"
+            title="Comprar materiais com Qu€sts e diamantes"
           >
             <ShoppingCart size={20} />
             <span>Loja</span>

@@ -1,6 +1,7 @@
 import React from 'react'
 import { useAuth } from '../context/AuthContext'
 import TeacherDashboardContent from '../components/TeacherDashboardContent'
+import TeacherStudentChat from '../components/TeacherStudentChat'
 
 const TeacherDashboard = () => {
   const { logout } = useAuth()
@@ -20,6 +21,9 @@ const TeacherDashboard = () => {
       </nav>
       <div className="max-w-7xl mx-auto px-4 py-6">
         <TeacherDashboardContent />
+        <div className="mt-6">
+          <TeacherStudentChat role="teacher" />
+        </div>
       </div>
     </div>
   )
