@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { GraduationCap, UserPlus, BookPlus, Trash2, Users, BookOpen, FileText, Search, CalendarPlus, Eye, ClipboardList, Send } from 'lucide-react';
 import AccessibilityPanel from './AccessibilityPanel';
+import TeacherTestsPanel from './tests/TeacherTestsPanel';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
@@ -28,7 +29,7 @@ const TeacherDashboardContent = () => {
 
       const { data: links } = await supabase
         .from('teacher_students')
-        .select('id, student_id, subject, student_profiles!teacher_students_student_id_fkey(nickname, school_year, user_id)')
+        .select('id, student_id, subject, student_profiles!teacher_students_student_id_fkey(nickname, school_year, user_id, class_name)')
         .eq('teacher_id', user.id);
       setMyStudents(links || []);
 
@@ -280,6 +281,7 @@ const TeacherDashboardContent = () => {
       <div className="flex gap-2">
         {[
           { id: 'students', label: 'Meus Alunos', icon: Users },
+          { id: 'tests', label: 'Testes Personalizados', icon: FileText },
           { id: 'assignments', label: 'Atribuições', icon: ClipboardList },
           { id: 'library', label: 'Biblioteca', icon: BookOpen },
           { id: 'events', label: 'Testes e Aulas', icon: CalendarPlus },
@@ -363,6 +365,10 @@ const TeacherDashboardContent = () => {
             )}
           </div>
         </div>
+      )}
+
+      {tab === 'tests' && (
+        <TeacherTestsPanel teacherProfile={teacherProfile} myStudents={myStudents} />
       )}
 
       {tab === 'assignments' && (

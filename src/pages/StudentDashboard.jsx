@@ -6,7 +6,7 @@ import { toast } from 'sonner'
 import {
   Castle, Coins, Gem, Trophy, LogOut, BookOpen, Home, Users, Gamepad2,
   Calendar, Award, Zap, Brain, ChevronRight, Star, TrendingUp, Settings,
-  Plus, Check, X, Timer, Flame, Shield, Sword, Wrench, LibraryBig, MessageCircle, ClipboardList
+  Plus, Check, X, Timer, Flame, Shield, Sword, Wrench, LibraryBig, MessageCircle, ClipboardList, FileText
 } from 'lucide-react'
 import IsometricCity from '../components/IsometricCity'
 import BattleAndSocial from '../components/BattleAndSocial'
@@ -28,6 +28,7 @@ import LibraryPanel from '../components/LibraryPanel'
 import FriendChat from '../components/FriendChat'
 import TeacherStudentChat from '../components/TeacherStudentChat'
 import AssignmentsPanel from '../components/AssignmentsPanel'
+import StudentTestsPanel from '../components/tests/StudentTestsPanel'
 
 const TABS = [
   { id: 'city', name: 'A Minha Cidade', icon: Castle },
@@ -39,6 +40,7 @@ const TABS = [
   { id: 'library', name: 'Biblioteca', icon: LibraryBig },
   { id: 'chat', name: 'Professor', icon: MessageCircle },
   { id: 'assignments', name: 'Atribuições', icon: ClipboardList },
+  { id: 'custom_tests', name: 'Testes', icon: FileText },
   { id: 'calendar', name: 'Calendário', icon: Calendar },
 ]
 
@@ -664,6 +666,9 @@ const StudentDashboard = () => {
         )}
         {activeTab === 'assignments' && (
           <AssignmentsPanel />
+        )}
+        {activeTab === 'custom_tests' && (
+          <StudentTestsPanel />
         )}
         {activeTab === 'calendar' && (
           <SchoolCalendar schoolYear={studentProfile?.school_year} />
