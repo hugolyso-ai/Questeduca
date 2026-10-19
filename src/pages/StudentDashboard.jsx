@@ -41,6 +41,7 @@ const TABS = [
   { id: 'chat', name: 'Professor', icon: MessageCircle },
   { id: 'assignments', name: 'Atribuições', icon: ClipboardList },
   { id: 'custom_tests', name: 'Testes', icon: FileText },
+  { id: 'teachers', name: 'Professores', icon: GraduationCap },
   { id: 'calendar', name: 'Calendário', icon: Calendar },
 ]
 
@@ -669,6 +670,9 @@ const StudentDashboard = () => {
         )}
         {activeTab === 'custom_tests' && (
           <StudentTestsPanel />
+        )}
+        {activeTab === 'teachers' && (
+          <StudentTeachersTab />
         )}
         {activeTab === 'calendar' && (
           <SchoolCalendar schoolYear={studentProfile?.school_year} />

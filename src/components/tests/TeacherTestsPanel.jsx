@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { FilePlus2, Printer, Pencil, Trash2, CheckCircle2, PauseCircle, Save, ClipboardList } from 'lucide-react'
+import { FilePlus2, Printer, Pencil, Trash2, CheckCircle2, PauseCircle, Save, ClipboardList, History } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { toast } from 'sonner'
 import { PrintTestSheet, printNow } from './PrintTestSheet'
@@ -154,7 +154,7 @@ export default function TeacherTestsPanel({ teacherProfile, myStudents }) {
   })
 
   // ---------- correção ----------
-  const openGrading = (test, sub) => {
+  const openGrading = (test, sub, isRevision = false) => {
     const auto = autoGrade(test, sub.answers || [])
     const existing = sub.corrections || []
     const merged = test.questions.map((_, i) => {
@@ -163,12 +163,25 @@ export default function TeacherTestsPanel({ teacherProfile, myStudents }) {
       const a = auto.find(c => c.index === i)
       return a && a.auto ? { index: i, percent: a.percent, comment: '' } : { index: i, percent: null, comment: '' }
     })
-    setGrading({ test, submission: sub, corrections: merged, observations: sub.teacher_observations || '' })
+    setGrading({ test, submission: sub, corrections: merged, observations: sub.teacher_observations || '', isRevision })
     setView('grade')
   }
 
-  const saveGrading = async (finish) => {
+  const saveGrading = async (finish, isRevision = false) => {
     const { submission, corrections, observations } = grading
+    if (isRevision) {
+      const { error } = await supabase.rpc('revise_submission_once', {
+        p_submission_id: submission.id,
+        p_corrections: corrections,
+        p_observations: observations || null,
+      })
+      if (error) { toast.error(error.message); return }
+      toast.success('Revisão concluída — a correção ficou bloqueada.')
+      setGrading(null)
+      setView('list')
+      fetchAll()
+      return
+    }
     const payload = {
       corrections,
       teacher_observations: observations || null,
@@ -397,14 +410,23 @@ export default function TeacherTestsPanel({ teacherProfile, myStudents }) {
             placeholder="Observações globais (aparecem no final da folha impressa)" rows={2}
             className="w-full mt-4 px-4 py-2.5 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-indigo-500 focus:outline-none" />
           <div className="flex gap-2 mt-4">
-            <button onClick={() => saveGrading(false)}
-              className="flex-1 py-3 bg-amber-500 text-white font-bold rounded-xl hover:opacity-90 transition flex items-center justify-center gap-2">
-              <PauseCircle size={18} /> Guardar em pausa
-            </button>
-            <button onClick={() => saveGrading(true)} disabled={!grading.corrections.every(c => c.percent !== null)}
-              className="flex-1 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold rounded-xl hover:opacity-90 transition disabled:opacity-40 flex items-center justify-center gap-2">
-              <CheckCircle2 size={18} /> Terminar correção
-            </button>
+            {grading.isRevision ? (
+              <button onClick={() => saveGrading(true, true)} disabled={!grading.corrections.every(c => c.percent !== null)}
+                className="flex-1 py-3 bg-slate-700 text-white font-bold rounded-xl hover:opacity-90 transition disabled:opacity-40 flex items-center justify-center gap-2">
+                <CheckCircle2 size={18} /> Concluir revisão (bloqueia)
+              </button>
+            ) : (
+              <>
+                <button onClick={() => saveGrading(false)}
+                  className="flex-1 py-3 bg-amber-500 text-white font-bold rounded-xl hover:opacity-90 transition flex items-center justify-center gap-2">
+                  <PauseCircle size={18} /> Guardar em pausa
+                </button>
+                <button onClick={() => saveGrading(true)} disabled={!grading.corrections.every(c => c.percent !== null)}
+                  className="flex-1 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold rounded-xl hover:opacity-90 transition disabled:opacity-40 flex items-center justify-center gap-2">
+                  <CheckCircle2 size={18} /> Terminar correção
+                </button>
+              </>
+            )}
             <button onClick={() => { setGrading(null); setView('list') }}
               className="px-6 py-3 bg-slate-200 font-bold rounded-xl hover:bg-slate-300 transition">Voltar</button>
           </div>
@@ -480,9 +502,15 @@ export default function TeacherTestsPanel({ teacherProfile, myStudents }) {
                             </div>
                             <div className="flex gap-1">
                               {s.status !== 'corrected' && !isOver && (
-                                <button onClick={() => openGrading(t, s)}
+                                <button onClick={() => openGrading(t, s, false)}
                                   className="px-3 py-1.5 bg-indigo-500 text-white rounded-lg text-xs font-bold hover:opacity-90 transition">
                                   {s.status === 'correcting' ? 'Continuar correção' : 'Corrigir'}
+                                </button>
+                              )}
+                              {s.status === 'corrected' && !(s.corrections || [])._reviewed && (
+                                <button onClick={() => openGrading(t, s, true)}
+                                  className="px-3 py-1.5 bg-slate-600 text-white rounded-lg text-xs font-bold hover:opacity-90 transition flex items-center gap-1">
+                                  <History size={11} /> Rever (1x)
                                 </button>
                               )}
                               <button onClick={() => printSubmission(t, s)} title="Imprimir (A4)"

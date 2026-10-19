@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { GraduationCap, UserPlus, BookPlus, Trash2, Users, BookOpen, FileText, Search, CalendarPlus, Eye, ClipboardList, Send } from 'lucide-react';
 import AccessibilityPanel from './AccessibilityPanel';
 import TeacherTestsPanel from './tests/TeacherTestsPanel';
+import TeacherAutoQuiz from './tests/TeacherAutoQuiz';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
@@ -368,7 +369,16 @@ const TeacherDashboardContent = () => {
       )}
 
       {tab === 'tests' && (
-        <TeacherTestsPanel teacherProfile={teacherProfile} myStudents={myStudents} />
+        <div className="space-y-4">
+          <section>
+            <h3 className="font-bold text-slate-700 mb-2" style={{ fontFamily: 'Cinzel, serif' }}>Testes Automáticos (perguntas sorteadas)</h3>
+            <TeacherAutoQuiz myStudents={myStudents} />
+          </section>
+          <section>
+            <h3 className="font-bold text-slate-700 mt-4 mb-2" style={{ fontFamily: 'Cinzel, serif' }}>Testes Personalizados (criados por ti)</h3>
+            <TeacherTestsPanel teacherProfile={teacherProfile} myStudents={myStudents} />
+          </section>
+        </div>
       )}
 
       {tab === 'assignments' && (
