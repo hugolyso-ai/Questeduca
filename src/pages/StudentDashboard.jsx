@@ -6,7 +6,7 @@ import { toast } from 'sonner'
 import {
   Castle, Coins, Gem, Trophy, LogOut, BookOpen, Home, Users, Gamepad2,
   Calendar, Award, Zap, Brain, ChevronRight, Star, TrendingUp, Settings,
-  Plus, Check, X, Timer, Flame, Shield, Sword, Wrench, LibraryBig, MessageCircle, ClipboardList, FileText, GraduationCap
+  Plus, Check, X, Timer, Flame, Shield, Sword, Wrench, LibraryBig, MessageCircle, ClipboardList, FileText
 } from 'lucide-react'
 import IsometricCity from '../components/IsometricCity'
 import BattleAndSocial from '../components/BattleAndSocial'
@@ -41,7 +41,6 @@ const TABS = [
   { id: 'chat', name: 'Professor', icon: MessageCircle },
   { id: 'assignments', name: 'Atribuições', icon: ClipboardList },
   { id: 'custom_tests', name: 'Testes', icon: FileText },
-  { id: 'teachers', name: 'Professores', icon: GraduationCap },
   { id: 'calendar', name: 'Calendário', icon: Calendar },
 ]
 
@@ -670,9 +669,6 @@ const StudentDashboard = () => {
         )}
         {activeTab === 'custom_tests' && (
           <StudentTestsPanel />
-        )}
-        {activeTab === 'teachers' && (
-          <StudentTeachersTab />
         )}
         {activeTab === 'calendar' && (
           <SchoolCalendar schoolYear={studentProfile?.school_year} />
