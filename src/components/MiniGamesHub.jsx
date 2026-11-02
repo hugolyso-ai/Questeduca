@@ -4,6 +4,10 @@ import { toast } from 'sonner'
 import { supabase } from '../lib/supabase'
 import MemoryMatchGame from './MemoryMatchGame'
 import SpeedMathGame from './SpeedMathGame'
+import { QuestionMathAid } from './MathVisual'
+import ReadAloudButton from './ReadAloudButton'
+import { buildQuestionSpeech } from '../lib/speech'
+import { isFirstGradeStored } from '../lib/mathAids'
 
 const FALLBACK_QUESTIONS = [
   { question_text: 'Quanto é 5 + 3?', options: ['6', '7', '8', '9'], correct_answer: 2 },
@@ -80,6 +84,7 @@ const QuizDuelGame = ({ opponent, onEnd, questions }) => {
   const [answered, setAnswered] = useState(false)
   const [selectedAnswer, setSelectedAnswer] = useState(null)
   const [showResult, setShowResult] = useState(false)
+  const isFirstYear = isFirstGradeStored()
 
   useEffect(() => {
     if (timeLeft > 0 && !answered) {
@@ -153,9 +158,15 @@ const QuizDuelGame = ({ opponent, onEnd, questions }) => {
         <div className="text-center"><p className="text-xs text-slate-500">{opponent}</p><p className="text-2xl font-bold text-slate-600">{opponentScore}</p></div>
       </div>
       <div className="bg-gradient-to-r from-[hsl(35,92%,50%)] to-cyan-600 rounded-2xl p-6 text-white mb-6">
-        <p className="text-lg font-semibold" style={{ fontFamily: 'Nunito, sans-serif' }}>{question.question_text}</p>
+        <p className={`font-semibold ${isFirstYear ? 'text-3xl' : 'text-lg'}`} style={{ fontFamily: 'Nunito, sans-serif' }}>{question.question_text}</p>
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <QuestionMathAid text={question.question_text} revealed={answered} />
+      {isFirstYear && (
+        <div className="flex justify-center mb-4">
+          <ReadAloudButton text={buildQuestionSpeech(question.question_text, question.options)} label="Ouvir a pergunta" />
+        </div>
+      )}
+      <div className={`grid gap-3 ${isFirstYear ? 'grid-cols-1' : 'grid-cols-2'}`}>
         {question.options.map((option, index) => {
           let buttonClass = 'bg-white border-2 border-slate-200 hover:border-[hsl(35,60%,60%)] hover:bg-[hsl(38,80%,93%)]'
           if (answered) {
@@ -164,10 +175,11 @@ const QuizDuelGame = ({ opponent, onEnd, questions }) => {
             else buttonClass = 'bg-slate-100 border-2 border-slate-200 opacity-50'
           }
           return (
-            <button key={index} onClick={() => handleAnswer(index)} disabled={answered} className={`p-4 rounded-xl font-medium transition ${buttonClass}`}>
-              <span className="text-sm">{option}</span>
-              {answered && index === question.correct_answer && <Check className="inline ml-2 text-[hsl(28,85%,40%)]" size={18} />}
-              {answered && index === selectedAnswer && index !== question.correct_answer && <X className="inline ml-2 text-red-600" size={18} />}
+            <button key={index} onClick={() => handleAnswer(index)} disabled={answered} className={`rounded-xl font-medium transition flex items-center gap-3 text-left ${isFirstYear ? 'p-6 text-2xl' : 'p-4'} ${buttonClass}`}>
+              <span className={`flex items-center justify-center rounded-full bg-slate-100 text-slate-700 font-extrabold shrink-0 ${isFirstYear ? 'w-12 h-12 text-xl' : 'w-8 h-8 text-sm'}`}>{String.fromCharCode(65 + index)}</span>
+              <span className={isFirstYear ? '' : 'text-sm'}>{option}</span>
+              {answered && index === question.correct_answer && <Check className="ml-auto text-[hsl(28,85%,40%)]" size={18} />}
+              {answered && index === selectedAnswer && index !== question.correct_answer && <X className="ml-auto text-red-600" size={18} />}
             </button>
           )
         })}
@@ -189,7 +201,9 @@ const MiniGamesHub = ({ childId, childName, onClose }) => {
     try {
       if (game.id === 'quiz_duel') {
         // Tenta buscar perguntas do banco (aleatórias, por ano se possível)
-        const { data } = await supabase.from('quiz_questions').select('*').limit(50)
+        let query = supabase.from('quiz_questions').select('*').limit(50)
+        if (isFirstGradeStored()) query = query.eq('school_year', '1')
+        const { data } = await query
         const valid = (data || []).filter(q => q && q.question && Array.isArray(q.options) && q.options.length >= 2 && Number.isInteger(q.correct_answer))
         if (valid.length >= 3) {
           const shuffled = [...valid].sort(() => Math.random() - 0.5).slice(0, 5)

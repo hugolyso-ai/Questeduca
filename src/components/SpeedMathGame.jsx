@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Clock, Trophy, Zap, Check, X, RotateCcw, Calculator } from 'lucide-react';
+import MathVisual from './MathVisual';
+import { useMathAidsEnabled } from '../lib/mathAids';
 
 // Gerar problema matemático com base na dificuldade
 const generateProblem = (difficulty, streak) => {
@@ -66,6 +68,9 @@ const generateProblem = (difficulty, streak) => {
   
   return {
     question: `${a} ${op} ${b} = ?`,
+    a,
+    op,
+    b,
     answer,
     options,
     timeLimit: Math.max(5, 10 - Math.floor(streak / 3)) // Menos tempo com mais streak
@@ -86,6 +91,7 @@ const SpeedMathGame = ({ onGameEnd, difficulty = 'medium' }) => {
   const [gameStatus, setGameStatus] = useState('playing');
   const [questionsAnswered, setQuestionsAnswered] = useState(0);
   const inputRef = useRef(null);
+  const showAids = useMathAidsEnabled();
 
   // Gerar novo problema
   const nextProblem = useCallback(() => {
@@ -294,6 +300,9 @@ const SpeedMathGame = ({ onGameEnd, difficulty = 'medium' }) => {
       </div>
 
       {/* Opções */}
+      {showAids && (
+        <MathVisual a={problem.a} op={problem.op} b={problem.b} result={problem.answer} revealed={answered} />
+      )}
       <div className="grid grid-cols-2 gap-3">
         {problem.options.map((option, index) => {
           let buttonClass = 'bg-white border-2 border-slate-200 hover:border-purple-400 hover:bg-purple-50 text-slate-800';

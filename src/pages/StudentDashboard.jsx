@@ -8,7 +8,9 @@ import {
   Calendar, Award, Zap, Brain, ChevronRight, Star, TrendingUp, Settings,
   Plus, Check, X, Timer, Flame, Shield, Sword, Wrench, LibraryBig, MessageCircle, ClipboardList, FileText
 } from 'lucide-react'
-import IsometricCity from '../components/IsometricCity'
+import { QuestionMathAid } from '../components/MathVisual'
+import ReadAloudButton from '../components/ReadAloudButton'
+import { buildQuestionSpeech } from '../lib/speech'
 import BattleAndSocial from '../components/BattleAndSocial'
 import { PortugalFriendMap } from '../components/PortugalMap'
 import SchoolRanking from '../components/SchoolRanking'
@@ -121,6 +123,7 @@ const generateQuizQuestions = (subject, year, count = 10) => {
 }
 
 const QuizView = ({ gameState, setGameState, userId, schoolYear }) => {
+  const isFirstYear = String(schoolYear) === '1'
   const [mode, setMode] = useState(null) // null | 'treino' | 'desafio'
   const [selectedSubject, setSelectedSubject] = useState(null)
   const [questions, setQuestions] = useState([])
@@ -137,7 +140,7 @@ const QuizView = ({ gameState, setGameState, userId, schoolYear }) => {
   const [hintUsed, setHintUsed] = useState(false)
   const [hintsAvailable, setHintsAvailable] = useState(0)
   const [timeLeft, setTimeLeft] = useState(null)
-  const [speakEnabled, setSpeakEnabled] = useState(() => localStorage.getItem('questeduca_speak') === 'true')
+  const [speakEnabled, setSpeakEnabled] = useState(() => localStorage.getItem('questeduca_speak') === 'true' || isFirstYear)
   const [answers, setAnswers] = useState([])
   const [teacherTestToday, setTeacherTestToday] = useState(false)
 
@@ -434,6 +437,12 @@ const QuizView = ({ gameState, setGameState, userId, schoolYear }) => {
             {speakEnabled ? '🔊' : '🔇'}
           </button>
         </div>
+        {isFirstYear && question && (
+          <div className="flex justify-center mb-4">
+            <ReadAloudButton text={buildQuestionSpeech(question.question, question.options)} label="Ouvir a pergunta" />
+          </div>
+        )}
+        <QuestionMathAid text={question.question} revealed={answered} />
         {hintsAvailable > 0 && !hintUsed && (
           <button onClick={useHint} className="mb-4 px-4 py-2 bg-yellow-100 text-yellow-800 font-bold rounded-xl hover:bg-yellow-200 transition flex items-center gap-2">
             💡 Usar dica da Biblioteca ({hintsAvailable} restantes)
@@ -442,7 +451,7 @@ const QuizView = ({ gameState, setGameState, userId, schoolYear }) => {
         {libraryLevel === 0 && (
           <p className="mb-4 text-xs text-slate-400">Constrói uma Biblioteca na cidade para ganhar dicas!</p>
         )}
-        <div className="grid grid-cols-2 gap-3">
+        <div className={`grid gap-3 ${isFirstYear ? 'grid-cols-1' : 'grid-cols-2'}`}>
           {question.options.map((option, index) => {
             let buttonClass = 'bg-white border-2 border-slate-200 hover:border-[hsl(35,60%,60%)] hover:bg-[hsl(38,80%,93%)]'
             if (answered) {
@@ -453,8 +462,9 @@ const QuizView = ({ gameState, setGameState, userId, schoolYear }) => {
               buttonClass = 'bg-slate-100 border-2 border-slate-200 opacity-30 line-through'
             }
             return (
-              <button key={index} onClick={() => handleAnswer(index)} disabled={answered || eliminated.includes(index)} className={`p-4 rounded-xl font-medium transition ${buttonClass}`}>
-                <span className="text-base">{option}</span>
+              <button key={index} onClick={() => handleAnswer(index)} disabled={answered || eliminated.includes(index)} className={`rounded-xl font-medium transition flex items-center gap-3 text-left ${isFirstYear ? 'p-6' : 'p-4'} ${buttonClass}`}>
+                {isFirstYear && <span className="flex items-center justify-center w-12 h-12 rounded-full bg-slate-100 text-slate-700 font-extrabold text-xl shrink-0">{String.fromCharCode(65 + index)}</span>}
+                <span className={isFirstYear ? 'text-2xl font-bold' : 'text-base'}>{option}</span>
                 {answered && index === question.correct_answer && <Check className="inline ml-2 text-[hsl(28,85%,40%)]" size={18} />}
                 {answered && index === selectedAnswer && index !== question.correct_answer && <X className="inline ml-2 text-red-600" size={18} />}
               </button>

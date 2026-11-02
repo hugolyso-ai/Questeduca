@@ -6,6 +6,8 @@ import { useAccessibility } from '../context/AccessibilityContext';
 import { toast } from 'sonner';
 import { speakText, stopSpeaking, buildQuestionSpeech } from '../lib/speech';
 import ReadAloudButton from './ReadAloudButton';
+import { QuestionMathAid } from './MathVisual';
+import { isFirstGradeStored } from '../lib/mathAids';
 
 const DuelSubjects = [
   { id: 'matematica', name: 'Matemática' },
@@ -18,7 +20,7 @@ const DuelSubjects = [
 const DuelGame = ({ duel, onExit, onFinished }) => {
   const { user } = useAuth();
   const { settings } = useAccessibility();
-  const isFirstYear = localStorage.getItem('questeduca_school_year') === '1';
+  const isFirstYear = isFirstGradeStored();
   const questions = React.useMemo(() => {
     let raw = duel.questions;
     if (typeof raw === 'string') {
@@ -169,6 +171,7 @@ const DuelGame = ({ duel, onExit, onFinished }) => {
           <ReadAloudButton text={buildQuestionSpeech(q.question, q.options)} label={isFirstYear ? 'Ouvir a pergunta' : 'Ouvir pergunta e opções'} />
         </div>
       )}
+      <QuestionMathAid text={q.question} revealed={answered} />
       <div className={`grid gap-3 ${isFirstYear ? 'grid-cols-1' : 'grid-cols-2'}`}>
         {q.options.map((opt, i) => {
           let cls = 'bg-white border-2 border-slate-200 hover:border-red-400';

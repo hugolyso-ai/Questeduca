@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Clock, Trophy, RotateCcw, Sparkles, BookOpen } from 'lucide-react';
+import { isFirstGradeStored } from '../lib/mathAids';
 
 // Emojis para as cartas
 const CARD_SYMBOLS = ['🎓', '📚', '🎨', '🔬', '🌍', '🎵', '🧮', '🏆', '⭐', '🚀', '🌈', '🎯'];
@@ -258,6 +259,7 @@ const MemoryMatchGame = ({ onGameEnd, difficulty = 'medium' }) => {
   return (
     <div>
       {/* Seletor de modo */}
+      {!isFirstGradeStored() && (
       <div className="mb-5">
         <p className="text-sm font-bold text-slate-600 mb-2 flex items-center gap-2">
           <BookOpen size={16} />
@@ -285,6 +287,7 @@ const MemoryMatchGame = ({ onGameEnd, difficulty = 'medium' }) => {
           ))}
         </div>
       </div>
+      )}
 
       {/* Header com info do jogo */}
       <div className="flex justify-between items-center mb-6">
