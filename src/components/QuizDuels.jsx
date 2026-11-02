@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { speakText, stopSpeaking, buildQuestionSpeech } from '../lib/speech';
 import ReadAloudButton from './ReadAloudButton';
 import { QuestionMathAid } from './MathVisual';
+import QuestionGallery from './QuestionGallery';
 import { isFirstGradeStored } from '../lib/mathAids';
 
 const DuelSubjects = [
@@ -172,6 +173,7 @@ const DuelGame = ({ duel, onExit, onFinished }) => {
         </div>
       )}
       <QuestionMathAid text={q.question} revealed={answered} />
+      {isFirstYear && <QuestionGallery text={q.question} />}
       <div className={`grid gap-3 ${isFirstYear ? 'grid-cols-1' : 'grid-cols-2'}`}>
         {q.options.map((opt, i) => {
           let cls = 'bg-white border-2 border-slate-200 hover:border-red-400';

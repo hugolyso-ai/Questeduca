@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { QuestionMathAid } from '../components/MathVisual'
 import ReadAloudButton from '../components/ReadAloudButton'
+import QuestionGallery from '../components/QuestionGallery'
 import { buildQuestionSpeech } from '../lib/speech'
 import BattleAndSocial from '../components/BattleAndSocial'
 import { PortugalFriendMap } from '../components/PortugalMap'
@@ -443,6 +444,7 @@ const QuizView = ({ gameState, setGameState, userId, schoolYear }) => {
           </div>
         )}
         <QuestionMathAid text={question.question} revealed={answered} />
+        {isFirstYear && <QuestionGallery text={question.question} />}
         {hintsAvailable > 0 && !hintUsed && (
           <button onClick={useHint} className="mb-4 px-4 py-2 bg-yellow-100 text-yellow-800 font-bold rounded-xl hover:bg-yellow-200 transition flex items-center gap-2">
             💡 Usar dica da Biblioteca ({hintsAvailable} restantes)

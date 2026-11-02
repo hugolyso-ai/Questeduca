@@ -6,6 +6,7 @@ import MemoryMatchGame from './MemoryMatchGame'
 import SpeedMathGame from './SpeedMathGame'
 import { QuestionMathAid } from './MathVisual'
 import ReadAloudButton from './ReadAloudButton'
+import QuestionGallery from './QuestionGallery'
 import { buildQuestionSpeech } from '../lib/speech'
 import { isFirstGradeStored } from '../lib/mathAids'
 
@@ -161,6 +162,7 @@ const QuizDuelGame = ({ opponent, onEnd, questions }) => {
         <p className={`font-semibold ${isFirstYear ? 'text-3xl' : 'text-lg'}`} style={{ fontFamily: 'Nunito, sans-serif' }}>{question.question_text}</p>
       </div>
       <QuestionMathAid text={question.question_text} revealed={answered} />
+      {isFirstYear && <QuestionGallery text={question.question_text} />}
       {isFirstYear && (
         <div className="flex justify-center mb-4">
           <ReadAloudButton text={buildQuestionSpeech(question.question_text, question.options)} label="Ouvir a pergunta" />
