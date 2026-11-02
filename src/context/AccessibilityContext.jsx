@@ -4,27 +4,24 @@ const AccessibilityContext = createContext(null)
 
 export const useAccessibility = () => useContext(AccessibilityContext)
 
+const DEFAULT_SETTINGS = {
+  textSize: 'medium',
+  dyslexiaMode: false,
+  dyscalculiaMode: false,
+  highContrast: false,
+  darkMode: false,
+  colorblindMode: 'none',
+  reduceMotion: false,
+  readAloud: false,
+}
+
 export const AccessibilityProvider = ({ children }) => {
   const [settings, setSettings] = useState(() => {
     try {
       const stored = localStorage.getItem('questeduca_accessibility')
-      return stored ? JSON.parse(stored) : {
-        textSize: 'medium',
-        dyslexiaMode: false,
-        highContrast: false,
-        darkMode: false,
-        colorblindMode: 'none',
-        reduceMotion: false,
-      }
+      return stored ? { ...DEFAULT_SETTINGS, ...JSON.parse(stored) } : DEFAULT_SETTINGS
     } catch {
-      return {
-        textSize: 'medium',
-        dyslexiaMode: false,
-        highContrast: false,
-        darkMode: false,
-        colorblindMode: 'none',
-        reduceMotion: false,
-      }
+      return DEFAULT_SETTINGS
     }
   })
 
@@ -32,9 +29,10 @@ export const AccessibilityProvider = ({ children }) => {
     localStorage.setItem('questeduca_accessibility', JSON.stringify(settings))
 
     const root = document.documentElement
-    root.classList.remove('dyslexia-mode', 'high-contrast', 'dark-mode', 'text-size-small', 'text-size-medium', 'text-size-large', 'text-size-xlarge')
+    root.classList.remove('dyslexia-mode', 'dyscalculia-mode', 'high-contrast', 'dark-mode', 'text-size-small', 'text-size-medium', 'text-size-large', 'text-size-xlarge', 'colorblind-protanopia', 'colorblind-deuteranopia', 'colorblind-tritanopia')
 
     if (settings.dyslexiaMode) root.classList.add('dyslexia-mode')
+    if (settings.dyscalculiaMode) root.classList.add('dyscalculia-mode')
     if (settings.highContrast) root.classList.add('high-contrast')
     if (settings.darkMode) root.classList.add('dark-mode')
     root.classList.add(`text-size-${settings.textSize}`)
@@ -46,14 +44,7 @@ export const AccessibilityProvider = ({ children }) => {
   }
 
   const reset = () => {
-    setSettings({
-      textSize: 'medium',
-      dyslexiaMode: false,
-      highContrast: false,
-      darkMode: false,
-      colorblindMode: 'none',
-      reduceMotion: false,
-    })
+    setSettings(DEFAULT_SETTINGS)
   }
 
   return (

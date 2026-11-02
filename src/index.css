@@ -58,6 +58,16 @@
   font-family: 'Comic Sans MS', 'Nunito', sans-serif !important;
 }
 
+/* Discalculia: algarismos com espaçamento uniforme e linhas mais arejadas */
+.dyscalculia-mode {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  line-height: 1.7;
+}
+.dyscalculia-mode :is(.font-mono, [data-math]) {
+  letter-spacing: 0.12em;
+}
+
 /* High contrast */
 .high-contrast {
   --background: 0 0% 0%;
@@ -67,6 +77,36 @@
   --border: 0 0% 50%;
 }
 .high-contrast .bg-white { background-color: #000 !important; color: #fff !important; }
+
+/* Modo daltónico: substitui vermelho/verde (protanopia, deuteranopia) ou azul/amarelo (tritanopia) */
+.colorblind-protanopia :is(.text-red-500, .text-red-600, .text-red-700, .text-green-500, .text-green-600, .text-green-700),
+.colorblind-deuteranopia :is(.text-red-500, .text-red-600, .text-red-700, .text-green-500, .text-green-600, .text-green-700) {
+  color: #b45309 !important;
+}
+.colorblind-protanopia :is(.bg-red-500, .bg-red-600, .bg-red-700, .bg-green-500, .bg-green-600, .bg-green-700),
+.colorblind-deuteranopia :is(.bg-red-500, .bg-red-600, .bg-red-700, .bg-green-500, .bg-green-600, .bg-green-700) {
+  background-color: #2563eb !important;
+}
+.colorblind-protanopia :is(.bg-red-50, .bg-red-100, .bg-green-50, .bg-green-100),
+.colorblind-deuteranopia :is(.bg-red-50, .bg-red-100, .bg-green-50, .bg-green-100) {
+  background-color: #dbeafe !important;
+}
+.colorblind-protanopia :is(.border-red-200, .border-red-300, .border-red-500, .border-green-200, .border-green-300, .border-green-500),
+.colorblind-deuteranopia :is(.border-red-200, .border-red-300, .border-red-500, .border-green-200, .border-green-300, .border-green-500) {
+  border-color: #93c5fd !important;
+}
+.colorblind-tritanopia :is(.text-blue-500, .text-blue-600, .text-blue-700, .text-amber-500, .text-amber-600, .text-yellow-600) {
+  color: #be185d !important;
+}
+.colorblind-tritanopia :is(.bg-blue-500, .bg-blue-600, .bg-blue-700, .bg-amber-500, .bg-amber-600, .bg-yellow-500) {
+  background-color: #db2777 !important;
+}
+.colorblind-tritanopia :is(.bg-blue-50, .bg-blue-100, .bg-amber-50, .bg-amber-100, .bg-yellow-100) {
+  background-color: #fce7f3 !important;
+}
+.colorblind-tritanopia :is(.border-blue-200, .border-blue-300, .border-amber-200, .border-amber-300) {
+  border-color: #f9a8d4 !important;
+}
 
 /* Focus visível para navegação por teclado (acessibilidade) */
 :focus-visible {

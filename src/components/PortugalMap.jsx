@@ -5,11 +5,27 @@ import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
 import { MAP_DATA } from '../lib/mapData';
 
-const B = MAP_DATA.bounds;
-const W = Math.ceil(B.maxX + 30);
-const H = Math.ceil(B.maxY + 30);
+const MAINLAND_SHIFT = 150;
+const ISLAND_LAYOUT = {
+  acores: { x: 8, y: 250, width: 110 },
+  madeira: { x: 8, y: 640, width: 150 },
+};
+const ISLAND_LABEL_POS = { Acores: [63, 396], Madeira: [83, 726] };
 
 const toPathD = (points) => points.map(([x, y], i) => `${i === 0 ? 'M' : 'L'}${x},${y}`).join(' ') + ' Z';
+
+const boundsOf = (points) => points.reduce(
+  (b, [x, y]) => ({ minX: Math.min(b.minX, x), minY: Math.min(b.minY, y), maxX: Math.max(b.maxX, x), maxY: Math.max(b.maxY, y) }),
+  { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity }
+);
+
+const MAINLAND_BOUNDS = boundsOf(
+  Object.values(MAP_DATA.districts)
+    .filter(d => !ISLAND_LAYOUT[d.region])
+    .flatMap(d => d.paths.flat())
+);
+const W = Math.ceil(MAINLAND_BOUNDS.maxX + MAINLAND_SHIFT + 30);
+const H = Math.ceil(MAINLAND_BOUNDS.maxY + 30);
 
 const DISTRICT_LABELS = {
   'Aveiro': [130, 200], 'Beja': [150, 560], 'Braga': [130, 100], 'Bragança': [280, 100],
@@ -22,7 +38,24 @@ const DISTRICT_LABELS = {
 const DISTRICT_LABEL_LINES = {
   'Castelo Branco': ['CASTELO', 'BRANCO'],
   'Viana do Castelo': ['VIANA DO', 'CASTELO'],
+  Acores: ['AÇORES'],
+  Madeira: ['MADEIRA'],
 };
+
+// Cada região recebe um transform para os caminhos e uma posição para a etiqueta
+const PLACEMENTS = Object.fromEntries(Object.entries(MAP_DATA.districts).map(([name, d]) => {
+  const island = ISLAND_LAYOUT[d.region];
+  if (!island) {
+    const [lx, ly] = DISTRICT_LABELS[name] || [0, 0];
+    return [name, { pathTransform: `translate(${MAINLAND_SHIFT}, 0)`, lp: [lx + MAINLAND_SHIFT, ly] }];
+  }
+  const b = boundsOf(d.paths.flat());
+  const s = island.width / (b.maxX - b.minX);
+  return [name, {
+    pathTransform: `translate(${island.x - b.minX * s}, ${island.y - b.minY * s}) scale(${s})`,
+    lp: ISLAND_LABEL_POS[name] || [0, 0],
+  }];
+}));
 
 // Municípios agrupados por distrito
 const MUNIS_BY_DISTRICT = {};
@@ -42,10 +75,11 @@ function PortugalMap({ onDistrictSelect, selectedDistrict, studentsPerDistrict =
           const isHovered = hovered === name;
           const studentCount = studentsPerDistrict[name] || 0;
           const friendsHere = friendPins.filter(f => f.district === name);
-          const lp = DISTRICT_LABELS[name] || [0, 0];
+          const { pathTransform, lp } = PLACEMENTS[name];
           const lines = DISTRICT_LABEL_LINES[name] || [name.toUpperCase()];
           return (
             <g key={name}>
+              <g transform={pathTransform}>
               {d.paths.map((pts, i) => (
                 <path
                   key={i}
@@ -60,6 +94,7 @@ function PortugalMap({ onDistrictSelect, selectedDistrict, studentsPerDistrict =
                   onMouseLeave={() => setHovered(null)}
                 />
               ))}
+              </g>
               <text
                 x={lp[0]} y={lp[1]}
                 textAnchor="middle"

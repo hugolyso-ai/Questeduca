@@ -2,7 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Swords, Clock, Send, X, Trophy, CheckCircle2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
+import { useAccessibility } from '../context/AccessibilityContext';
 import { toast } from 'sonner';
+import { speakText, stopSpeaking, buildQuestionSpeech } from '../lib/speech';
+import ReadAloudButton from './ReadAloudButton';
 
 const DuelSubjects = [
   { id: 'matematica', name: 'Matemática' },
@@ -14,6 +17,8 @@ const DuelSubjects = [
 
 const DuelGame = ({ duel, onExit, onFinished }) => {
   const { user } = useAuth();
+  const { settings } = useAccessibility();
+  const isFirstYear = localStorage.getItem('questeduca_school_year') === '1';
   const questions = React.useMemo(() => {
     let raw = duel.questions;
     if (typeof raw === 'string') {
@@ -30,6 +35,14 @@ const DuelGame = ({ duel, onExit, onFinished }) => {
   const [picked, setPicked] = useState(null);
   const [startTime] = useState(Date.now());
   const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    const current = questions[idx];
+    if (settings.readAloud && current && !done) {
+      speakText(buildQuestionSpeech(current.question, current.options));
+    }
+    return () => stopSpeaking();
+  }, [idx, questions, done, settings.readAloud]);
 
   if (questions.length === 0) {
     return (
@@ -149,9 +162,14 @@ const DuelGame = ({ duel, onExit, onFinished }) => {
         </div>
       </div>
       <div className="bg-gradient-to-r from-red-500 to-orange-500 rounded-2xl p-6 text-white text-center mb-4">
-        <p className="text-xl font-bold" style={{ fontFamily: 'Cinzel, serif' }}>{q.question}</p>
+        <p className={`font-bold ${isFirstYear ? 'text-3xl' : 'text-xl'}`} style={{ fontFamily: 'Cinzel, serif' }}>{q.question}</p>
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      {(settings.readAloud || isFirstYear) && (
+        <div className="flex justify-center mb-4">
+          <ReadAloudButton text={buildQuestionSpeech(q.question, q.options)} label={isFirstYear ? 'Ouvir a pergunta' : 'Ouvir pergunta e opções'} />
+        </div>
+      )}
+      <div className={`grid gap-3 ${isFirstYear ? 'grid-cols-1' : 'grid-cols-2'}`}>
         {q.options.map((opt, i) => {
           let cls = 'bg-white border-2 border-slate-200 hover:border-red-400';
           if (answered) {
@@ -160,8 +178,9 @@ const DuelGame = ({ duel, onExit, onFinished }) => {
             else cls = 'bg-slate-100 border-2 border-slate-200 opacity-50';
           }
           return (
-            <button key={i} onClick={() => answer(i)} disabled={answered} className={`p-4 rounded-xl font-medium transition ${cls}`}>
-              {opt}
+            <button key={i} onClick={() => answer(i)} disabled={answered} className={`rounded-xl font-medium transition flex items-center gap-4 text-left ${isFirstYear ? 'p-6 text-2xl min-h-24' : 'p-4'} ${cls}`}>
+              <span className={`flex items-center justify-center rounded-full bg-slate-100 text-slate-700 font-extrabold shrink-0 ${isFirstYear ? 'w-12 h-12 text-xl' : 'w-8 h-8 text-sm'}`}>{String.fromCharCode(65 + i)}</span>
+              <span>{opt}</span>
             </button>
           );
         })}

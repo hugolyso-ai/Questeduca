@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAccessibility } from '../context/AccessibilityContext';
-import { Eye, Type, Palette, RotateCcw, Check, Moon, Sun, Glasses, Focus, ScanLine } from 'lucide-react';
+import { Eye, Type, Palette, RotateCcw, Check, Moon, Glasses, Focus, ScanLine, Calculator, Volume2 } from 'lucide-react';
 
 // Linha de alternância reutilizável dentro do painel
 const ToggleRow = ({ icon, title, description, enabled, darkMode, onToggle }) => (
@@ -225,6 +225,41 @@ const AccessibilityPanel = ({ isOpen = true, onClose, embedded = false }) => {
                 enabled={!!settings.readingGuides}
                 darkMode={settings.darkMode}
                 onToggle={() => updateSetting('readingGuides', !settings.readingGuides)}
+              />
+            </div>
+          </div>
+
+          {/* Learning helpers */}
+          <div className={`rounded-2xl p-5 ${settings.darkMode ? 'bg-slate-700' : 'bg-slate-50'}`}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="bg-gradient-to-br from-amber-400 to-orange-500 p-3 rounded-xl">
+                <Volume2 className="text-white" size={24} />
+              </div>
+              <div>
+                <h3 className={`font-bold ${settings.darkMode ? 'text-white' : 'text-slate-800'}`} style={{ fontFamily: 'Cinzel, serif' }}>
+                  Apoios de Aprendizagem
+                </h3>
+                <p className={`text-sm ${settings.darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                  Ajuda com números e com a leitura
+                </p>
+              </div>
+            </div>
+            <div className="space-y-3">
+              <ToggleRow
+                icon={<Calculator size={20} />}
+                title="Discalculia"
+                description="Números mais espaçados e legíveis"
+                enabled={settings.dyscalculiaMode}
+                darkMode={settings.darkMode}
+                onToggle={() => updateSetting('dyscalculiaMode', !settings.dyscalculiaMode)}
+              />
+              <ToggleRow
+                icon={<Volume2 size={20} />}
+                title="Ler em Voz Alta"
+                description="Lê as perguntas e as opções de resposta"
+                enabled={settings.readAloud}
+                darkMode={settings.darkMode}
+                onToggle={() => updateSetting('readAloud', !settings.readAloud)}
               />
             </div>
           </div>
