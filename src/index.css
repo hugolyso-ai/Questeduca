@@ -95,6 +95,13 @@
 .colorblind-deuteranopia :is(.border-red-200, .border-red-300, .border-red-500, .border-green-200, .border-green-300, .border-green-500) {
   border-color: #93c5fd !important;
 }
+/* Tons de "certo" baseados em hsl(142...) usados em vários componentes */
+.colorblind-protanopia :is([style*="hsl(142"], [class*="hsl(142"]),
+.colorblind-deuteranopia :is([style*="hsl(142"], [class*="hsl(142"]) {
+  background-color: #dbeafe !important;
+  border-color: #2563eb !important;
+  color: #1e40af !important;
+}
 .colorblind-tritanopia :is(.text-blue-500, .text-blue-600, .text-blue-700, .text-amber-500, .text-amber-600, .text-yellow-600) {
   color: #be185d !important;
 }
@@ -106,6 +113,38 @@
 }
 .colorblind-tritanopia :is(.border-blue-200, .border-blue-300, .border-amber-200, .border-amber-300) {
   border-color: #f9a8d4 !important;
+}
+
+/* Estados de resposta (certo/errado) — variáveis retocadas pelo modo daltónico */
+:root {
+  --correct-bg: hsl(142 45% 88%);
+  --correct-border: hsl(142 60% 45%);
+  --correct-text: hsl(142 70% 30%);
+  --wrong-bg: #fee2e2;
+  --wrong-border: #ef4444;
+  --wrong-text: #b91c1c;
+}
+.quiz-correct { background-color: var(--correct-bg) !important; border-color: var(--correct-border) !important; }
+.quiz-correct .quiz-mark { color: var(--correct-text); }
+.quiz-wrong { background-color: var(--wrong-bg) !important; border-color: var(--wrong-border) !important; }
+.quiz-wrong .quiz-mark { color: var(--wrong-text); }
+
+/* Modo daltónico: troca verde/vermelho por azul/âmbar (proto/deuter) ou rosa/verde (trit) */
+.colorblind-protanopia, .colorblind-deuteranopia {
+  --correct-bg: #dbeafe;
+  --correct-border: #2563eb;
+  --correct-text: #1e40af;
+  --wrong-bg: #fef3c7;
+  --wrong-border: #d97706;
+  --wrong-text: #92400e;
+}
+.colorblind-tritanopia {
+  --correct-bg: #dcfce7;
+  --correct-border: #16a34a;
+  --correct-text: #15803d;
+  --wrong-bg: #fce7f3;
+  --wrong-border: #db2777;
+  --wrong-text: #be185d;
 }
 
 /* Focus visível para navegação por teclado (acessibilidade) */

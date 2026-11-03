@@ -458,8 +458,8 @@ const QuizView = ({ gameState, setGameState, userId, schoolYear }) => {
           {question.options.map((option, index) => {
             let buttonClass = 'bg-white border-2 border-slate-200 hover:border-[hsl(35,60%,60%)] hover:bg-[hsl(38,80%,93%)]'
             if (answered) {
-              if (index === question.correct_answer) buttonClass = 'bg-[hsl(142,45%,88%)] border-2 border-[hsl(35,92%,50%)]'
-              else if (index === selectedAnswer) buttonClass = 'bg-red-100 border-2 border-red-500'
+              if (index === question.correct_answer) buttonClass = 'quiz-correct border-2'
+              else if (index === selectedAnswer) buttonClass = 'quiz-wrong border-2'
               else buttonClass = 'bg-slate-100 border-2 border-slate-200 opacity-50'
             } else if (eliminated.includes(index)) {
               buttonClass = 'bg-slate-100 border-2 border-slate-200 opacity-30 line-through'
@@ -468,8 +468,8 @@ const QuizView = ({ gameState, setGameState, userId, schoolYear }) => {
               <button key={index} onClick={() => handleAnswer(index)} disabled={answered || eliminated.includes(index)} className={`rounded-xl font-medium transition flex items-center gap-3 text-left ${isFirstYear ? 'p-6' : 'p-4'} ${buttonClass}`}>
                 {isFirstYear && <span className="flex items-center justify-center w-12 h-12 rounded-full bg-slate-100 text-slate-700 font-extrabold text-xl shrink-0">{String.fromCharCode(65 + index)}</span>}
                 <span className={isFirstYear ? 'text-2xl font-bold' : 'text-base'}>{option}</span>
-                {answered && index === question.correct_answer && <Check className="inline ml-2 text-[hsl(28,85%,40%)]" size={18} />}
-                {answered && index === selectedAnswer && index !== question.correct_answer && <X className="inline ml-2 text-red-600" size={18} />}
+                {answered && index === question.correct_answer && <Check className="quiz-mark inline ml-2" size={18} />}
+                {answered && index === selectedAnswer && index !== question.correct_answer && <X className="quiz-mark inline ml-2" size={18} />}
               </button>
             )
           })}
@@ -629,13 +629,13 @@ const StudentDashboard = () => {
 
       {/* Tabs */}
       <div className="bg-white border-b border-slate-200 sticky top-16 z-30">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex gap-1 overflow-x-auto">
+        <div className="max-w-7xl mx-auto px-2 sm:px-4">
+          <div className="flex flex-wrap justify-center gap-x-1 gap-y-0.5 py-1">
             {TABS.map(tab => {
               const Icon = tab.icon
               return (
-                <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center gap-2 px-4 py-3 font-semibold text-sm whitespace-nowrap border-b-2 transition ${activeTab === tab.id ? 'border-[hsl(35,92%,50%)] text-[hsl(28,85%,40%)]' : 'border-transparent text-slate-500 hover:text-slate-700'}`}>
-                  <Icon size={16} />{tab.name}
+                <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center gap-1.5 px-3 py-2 font-semibold text-xs sm:text-sm whitespace-nowrap border-b-2 transition ${activeTab === tab.id ? 'border-[hsl(35,92%,50%)] text-[hsl(28,85%,40%)]' : 'border-transparent text-slate-500 hover:text-slate-700'}`}>
+                  <Icon size={15} />{tab.name}
                 </button>
               )
             })}
