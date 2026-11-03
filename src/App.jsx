@@ -4,6 +4,8 @@ import { Toaster } from 'sonner'
 import { AuthProvider } from './context/AuthContext'
 import { AccessibilityProvider } from './context/AccessibilityContext'
 import CookieConsent from './components/CookieConsent'
+import ErrorBoundary from './components/ErrorBoundary'
+import SessionTimeout from './components/SessionTimeout'
 import ProtectedRoute from './components/ProtectedRoute'
 import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
@@ -28,6 +30,8 @@ function App() {
       <AccessibilityProvider>
         <AuthProvider>
           <Toaster position="top-right" richColors />
+          <SessionTimeout />
+          <ErrorBoundary>
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<LoginPage />} />
@@ -53,6 +57,7 @@ function App() {
             <Route path="/admin/dashboard" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
             <Route path="*" element={<LandingPage />} />
           </Routes>
+          </ErrorBoundary>
           <CookieConsent />
         </AuthProvider>
       </AccessibilityProvider>
