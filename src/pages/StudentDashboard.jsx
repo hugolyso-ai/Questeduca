@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useAccessibility } from '../context/AccessibilityContext'
 import { supabase } from '../lib/supabase'
 import { toast } from 'sonner'
 import {
@@ -11,7 +12,7 @@ import {
 import { QuestionMathAid } from '../components/MathVisual'
 import ReadAloudButton from '../components/ReadAloudButton'
 import QuestionGallery from '../components/QuestionGallery'
-import { buildQuestionSpeech } from '../lib/speech'
+import { buildOptionSpeech, buildQuestionSpeech, speakText } from '../lib/speech'
 import BattleAndSocial from '../components/BattleAndSocial'
 import IsometricCity from '../components/IsometricCity'
 import { PortugalFriendMap } from '../components/PortugalMap'
@@ -125,6 +126,7 @@ const generateQuizQuestions = (subject, year, count = 10) => {
 }
 
 const QuizView = ({ gameState, setGameState, userId, schoolYear }) => {
+  const { settings } = useAccessibility()
   const isFirstYear = String(schoolYear) === '1'
   const [mode, setMode] = useState(null) // null | 'treino' | 'desafio'
   const [selectedSubject, setSelectedSubject] = useState(null)
@@ -143,8 +145,17 @@ const QuizView = ({ gameState, setGameState, userId, schoolYear }) => {
   const [hintsAvailable, setHintsAvailable] = useState(0)
   const [timeLeft, setTimeLeft] = useState(null)
   const [speakEnabled, setSpeakEnabled] = useState(() => localStorage.getItem('questeduca_speak') === 'true' || isFirstYear)
+  const [pointerless, setPointerless] = useState(false)
   const [answers, setAnswers] = useState([])
   const [teacherTestToday, setTeacherTestToday] = useState(false)
+
+  useEffect(() => {
+    const media = window.matchMedia('(hover: none), (pointer: coarse)')
+    const updatePointerMode = () => setPointerless(media.matches)
+    updatePointerMode()
+    media.addEventListener?.('change', updatePointerMode)
+    return () => media.removeEventListener?.('change', updatePointerMode)
+  }, [])
 
   // Testes marcados por professores para hoje: dão ganhos extra conforme a pontuação
   useEffect(() => {
@@ -171,19 +182,19 @@ const QuizView = ({ gameState, setGameState, userId, schoolYear }) => {
   }, [gameState?.buildings])
 
   const speak = useCallback((text) => {
-    if (!speakEnabled || !window.speechSynthesis || !text) return
-    window.speechSynthesis.cancel()
-    const utter = new SpeechSynthesisUtterance(text)
-    utter.lang = 'pt-PT'
-    utter.rate = 0.9
-    window.speechSynthesis.speak(utter)
-  }, [speakEnabled])
+    if ((!speakEnabled && !settings.readAloud) || !text) return
+    speakText(text)
+  }, [settings.readAloud, speakEnabled])
 
   useEffect(() => {
-    if (quizActive && questions[currentQuestion]) {
-      speak(questions[currentQuestion].question)
+    const question = questions[currentQuestion]
+    if (!quizActive || !question) return
+    if (pointerless && settings.readAloud) {
+      speak(buildQuestionSpeech(question.question, question.options))
+    } else if (speakEnabled) {
+      speak(question.question)
     }
-  }, [quizActive, currentQuestion, questions, speak])
+  }, [quizActive, currentQuestion, questions, pointerless, settings.readAloud, speakEnabled, speak])
 
   // Cronómetro do modo desafio
   useEffect(() => {
@@ -427,8 +438,8 @@ const QuizView = ({ gameState, setGameState, userId, schoolYear }) => {
           <button onClick={() => { setQuizActive(false); setMode(null); setSelectedSubject(null) }} className="p-2 hover:bg-slate-100 rounded-xl transition"><X size={20} /></button>
         </div>
         <div className="flex items-center justify-between gap-3 mb-6">
-          <div className={`flex-1 bg-gradient-to-r rounded-2xl p-8 text-white text-center ${mode === 'desafio' ? 'from-orange-500 to-red-600' : 'from-[hsl(35,92%,50%)] to-cyan-600'}`}>
-            <p className="text-2xl font-bold" style={{ fontFamily: 'Cinzel, serif' }}>{question.question}</p>
+          <div className={`question-accessibility-target flex-1 bg-gradient-to-r rounded-2xl p-8 text-white text-center ${mode === 'desafio' ? 'from-orange-500 to-red-600' : 'from-[hsl(35,92%,50%)] to-cyan-600'}`}>
+            <p className="accessibility-math text-2xl font-bold" style={{ fontFamily: 'Cinzel, serif' }}>{question.question}</p>
             {(question.difficulty || 1) >= 3 && <span className="inline-block mt-2 px-3 py-1 bg-white/20 rounded-full text-xs font-bold">Difícil · vale mais pontos!</span>}
           </div>
           <button
@@ -439,9 +450,9 @@ const QuizView = ({ gameState, setGameState, userId, schoolYear }) => {
             {speakEnabled ? '🔊' : '🔇'}
           </button>
         </div>
-        {isFirstYear && question && (
+        {(settings.readAloud || isFirstYear) && question && (
           <div className="flex justify-center mb-4">
-            <ReadAloudButton text={buildQuestionSpeech(question.question, question.options)} label="Ouvir a pergunta" />
+            <ReadAloudButton text={buildQuestionSpeech(question.question, question.options)} />
           </div>
         )}
         <QuestionMathAid text={question.question} revealed={answered} />
@@ -465,7 +476,7 @@ const QuizView = ({ gameState, setGameState, userId, schoolYear }) => {
               buttonClass = 'bg-slate-100 border-2 border-slate-200 opacity-30 line-through'
             }
             return (
-              <button key={index} onClick={() => handleAnswer(index)} disabled={answered || eliminated.includes(index)} className={`rounded-xl font-medium transition flex items-center gap-3 text-left ${isFirstYear ? 'p-6' : 'p-4'} ${buttonClass}`}>
+              <button key={index} onMouseEnter={() => !pointerless && settings.readAloud && speakText(buildOptionSpeech(option, index))} onFocus={() => !pointerless && settings.readAloud && speakText(buildOptionSpeech(option, index))} onClick={() => handleAnswer(index)} disabled={answered || eliminated.includes(index)} className={`accessibility-math rounded-xl font-medium transition flex items-center gap-3 text-left ${isFirstYear ? 'p-6' : 'p-4'} ${buttonClass}`}>
                 {isFirstYear && <span className="flex items-center justify-center w-12 h-12 rounded-full bg-slate-100 text-slate-700 font-extrabold text-xl shrink-0">{String.fromCharCode(65 + index)}</span>}
                 <span className={isFirstYear ? 'text-2xl font-bold' : 'text-base'}>{option}</span>
                 {answered && index === question.correct_answer && <Check className="quiz-mark inline ml-2" size={18} />}

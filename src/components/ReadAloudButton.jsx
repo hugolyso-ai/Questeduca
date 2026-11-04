@@ -2,7 +2,7 @@ import React from 'react';
 import { Volume2 } from 'lucide-react';
 import { speakText } from '../lib/speech';
 
-const ReadAloudButton = ({ text, label = 'Ouvir pergunta' }) => (
+const ReadAloudButton = ({ text, label = 'Ouvir pergunta e opções' }) => (
   <button
     type="button"
     onClick={() => speakText(text)}

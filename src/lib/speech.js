@@ -13,5 +13,7 @@ export const stopSpeaking = () => {
   if (canSpeak()) window.speechSynthesis.cancel()
 }
 
-export const buildQuestionSpeech = (question, options) =>
+export const buildQuestionSpeech = (question, options = []) =>
   [question, ...options.map((opt, i) => `Opção ${i + 1}: ${opt}`)].join('. ')
+
+export const buildOptionSpeech = (option, index) => `Opção ${index + 1}: ${option}`

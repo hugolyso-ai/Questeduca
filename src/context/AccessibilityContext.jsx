@@ -13,6 +13,8 @@ const DEFAULT_SETTINGS = {
   colorblindMode: 'none',
   reduceMotion: false,
   readAloud: false,
+  highlightQuestion: false,
+  readingGuides: false,
 }
 
 export const AccessibilityProvider = ({ children }) => {
@@ -37,6 +39,8 @@ export const AccessibilityProvider = ({ children }) => {
     if (settings.darkMode) root.classList.add('dark-mode')
     root.classList.add(`text-size-${settings.textSize}`)
     if (settings.colorblindMode !== 'none') root.classList.add(`colorblind-${settings.colorblindMode}`)
+    if (settings.highlightQuestion) root.classList.add('highlight-question')
+    if (settings.readingGuides) root.classList.add('reading-guides')
   }, [settings])
 
   const updateSetting = (key, value) => {

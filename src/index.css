@@ -58,14 +58,45 @@
   font-family: 'Comic Sans MS', 'Nunito', sans-serif !important;
 }
 
-/* Discalculia: algarismos com espaçamento uniforme e linhas mais arejadas */
+/* Discalculia: números e operações mais separados e fáceis de seguir */
 .dyscalculia-mode {
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.04em;
-  line-height: 1.7;
+  line-height: 1.75;
 }
-.dyscalculia-mode :is(.font-mono, [data-math]) {
-  letter-spacing: 0.12em;
+.dyscalculia-mode :is([data-math], .accessibility-math) {
+  letter-spacing: 0.14em !important;
+  word-spacing: 0.22em;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.dyscalculia-mode :is([data-math] *, .accessibility-math *) {
+  letter-spacing: inherit;
+}
+
+/* Tamanho global do texto */
+html.text-size-small { font-size: 14px; }
+html.text-size-medium { font-size: 16px; }
+html.text-size-large { font-size: 19px; }
+html.text-size-xlarge { font-size: 22px; }
+
+/* Foco e guias de leitura */
+.highlight-question .question-accessibility-target {
+  outline: 4px solid hsl(35 92% 50%);
+  outline-offset: 6px;
+  box-shadow: 0 0 0 10px hsl(35 92% 50% / 0.18);
+}
+.reading-guides::after {
+  content: '';
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 48vh;
+  height: 2.25rem;
+  border-top: 2px solid hsl(35 92% 50% / 0.7);
+  border-bottom: 2px solid hsl(35 92% 50% / 0.7);
+  background: hsl(35 92% 50% / 0.08);
+  pointer-events: none;
+  z-index: 200;
 }
 
 /* High contrast */
@@ -113,6 +144,31 @@
 }
 .colorblind-tritanopia :is(.border-blue-200, .border-blue-300, .border-amber-200, .border-amber-300) {
   border-color: #f9a8d4 !important;
+}
+.colorblind-protanopia :is([class*="from-red"], [class*="to-red"], [class*="bg-red"]),
+.colorblind-deuteranopia :is([class*="from-red"], [class*="to-red"], [class*="bg-red"]) {
+  --tw-gradient-from: #2563eb !important;
+  --tw-gradient-to: #1d4ed8 !important;
+  background-color: #2563eb !important;
+}
+.colorblind-protanopia :is([class*="text-red"], [class*="border-red"], [class*="from-green"], [class*="to-green"], [class*="bg-green"]),
+.colorblind-deuteranopia :is([class*="text-red"], [class*="border-red"], [class*="from-green"], [class*="to-green"], [class*="bg-green"]) {
+  color: #1e40af !important;
+  border-color: #2563eb !important;
+}
+.colorblind-protanopia :is([class*="text-green"], [class*="border-green"]),
+.colorblind-deuteranopia :is([class*="text-green"], [class*="border-green"]) {
+  color: #1e40af !important;
+  border-color: #2563eb !important;
+}
+.colorblind-tritanopia :is([class*="from-blue"], [class*="to-blue"], [class*="bg-blue"]) {
+  --tw-gradient-from: #db2777 !important;
+  --tw-gradient-to: #be185d !important;
+  background-color: #db2777 !important;
+}
+.colorblind-tritanopia :is([class*="text-blue"], [class*="border-blue"], [class*="from-amber"], [class*="to-amber"], [class*="bg-amber"]) {
+  color: #be185d !important;
+  border-color: #db2777 !important;
 }
 
 /* Estados de resposta (certo/errado) — variáveis retocadas pelo modo daltónico */

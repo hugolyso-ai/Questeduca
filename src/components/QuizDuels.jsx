@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { useAccessibility } from '../context/AccessibilityContext';
 import { toast } from 'sonner';
-import { speakText, stopSpeaking, buildQuestionSpeech } from '../lib/speech';
+import { speakText, stopSpeaking, buildOptionSpeech, buildQuestionSpeech } from '../lib/speech';
 import ReadAloudButton from './ReadAloudButton';
 import { QuestionMathAid } from './MathVisual';
 import QuestionGallery from './QuestionGallery';
@@ -38,14 +38,26 @@ const DuelGame = ({ duel, onExit, onFinished }) => {
   const [picked, setPicked] = useState(null);
   const [startTime] = useState(Date.now());
   const [done, setDone] = useState(false);
+  const [pointerless, setPointerless] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia('(hover: none), (pointer: coarse)');
+    const updatePointerMode = () => setPointerless(media.matches);
+    updatePointerMode();
+    media.addEventListener?.('change', updatePointerMode);
+    return () => {
+      media.removeEventListener?.('change', updatePointerMode);
+      stopSpeaking();
+    };
+  }, []);
 
   useEffect(() => {
     const current = questions[idx];
-    if (settings.readAloud && current && !done) {
+    if (settings.readAloud && pointerless && current && !done) {
       speakText(buildQuestionSpeech(current.question, current.options));
     }
     return () => stopSpeaking();
-  }, [idx, questions, done, settings.readAloud]);
+  }, [idx, questions, done, pointerless, settings.readAloud]);
 
   if (questions.length === 0) {
     return (
@@ -183,7 +195,7 @@ const DuelGame = ({ duel, onExit, onFinished }) => {
             else cls = 'bg-slate-100 border-2 border-slate-200 opacity-50';
           }
           return (
-            <button key={i} onClick={() => answer(i)} disabled={answered} className={`rounded-xl font-medium transition flex items-center gap-4 text-left ${isFirstYear ? 'p-6 text-2xl min-h-24' : 'p-4'} ${cls}`}>
+            <button key={i} onMouseEnter={() => !pointerless && settings.readAloud && speakText(buildOptionSpeech(opt, i))} onFocus={() => !pointerless && settings.readAloud && speakText(buildOptionSpeech(opt, i))} onClick={() => answer(i)} disabled={answered} className={`accessibility-math rounded-xl font-medium transition flex items-center gap-4 text-left ${isFirstYear ? 'p-6 text-2xl min-h-24' : 'p-4'} ${cls}`}>
               <span className={`flex items-center justify-center rounded-full bg-slate-100 text-slate-700 font-extrabold shrink-0 ${isFirstYear ? 'w-12 h-12 text-xl' : 'w-8 h-8 text-sm'}`}>{String.fromCharCode(65 + i)}</span>
               <span>{opt}</span>
             </button>
