@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 import { generateClassReport, ExportReportButton } from '../components/ReportExport'
 import {
   Castle, LogOut, Users, School, TrendingUp, DollarSign,
-  Check, X, Eye, BarChart3, Building2, Coins, Trophy, FileText, Printer
+  Check, X, Eye, BarChart3, Building2, Coins, Trophy, FileText, Printer, Ban, Gift
 } from 'lucide-react'
 
 const AdminDashboard = () => {
@@ -66,6 +66,35 @@ const AdminDashboard = () => {
       toast.error('Erro ao aprovar')
     }
   }
+
+  const runAdminAction = async (rpc, params, successMessage) => {
+    try {
+      const { error } = await supabase.rpc(rpc, params)
+      if (error) throw error
+      toast.success(successMessage)
+      fetchAdminData()
+    } catch (error) {
+      toast.error(error.message || 'Erro ao executar ação')
+    }
+  }
+
+  const toggleBlocked = (u) => runAdminAction(
+    'admin_set_user_blocked',
+    { p_user_id: u.id, p_blocked: u.is_active !== false },
+    u.is_active !== false ? 'Conta bloqueada.' : 'Conta desbloqueada.',
+  )
+
+  const setApproval = (u, status) => runAdminAction(
+    'admin_set_approval',
+    { p_user_id: u.id, p_status: status },
+    status === 'approved' ? 'Conta aprovada.' : 'Conta rejeitada.',
+  )
+
+  const grantSubscription = (u, plan) => runAdminAction(
+    'admin_grant_subscription',
+    { p_user_id: u.id, p_plan: plan },
+    plan === 'annual' ? 'Subscrição anual oferecida.' : 'Subscrição mensal oferecida.',
+  )
 
   const reviewRoleRequest = async (userId, approve) => {
     try {
@@ -213,12 +242,26 @@ const AdminDashboard = () => {
             <h2 className="text-xl font-bold text-white mb-4" style={{ fontFamily: 'Cinzel, serif' }}>Utilizadores Recentes</h2>
             <div className="space-y-2">
               {recentUsers.map(u => (
-                <div key={u.id} className="bg-slate-700/50 rounded-xl p-3 flex items-center justify-between">
+                <div key={u.id} className="bg-slate-700/50 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <p className="font-semibold text-white">{u.name}</p>
+                    <p className="font-semibold text-white">{u.name} {u.is_active === false && <span className="text-xs text-red-400">(bloqueada)</span>}</p>
                     <p className="text-sm text-slate-400">{u.email}</p>
+                    <p className="text-xs text-slate-500">Aprovação: {u.approval_status || '—'}</p>
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${u.role === 'admin' ? 'bg-red-500/20 text-red-400' : u.role === 'association' ? 'bg-amber-500/20 text-amber-400' : u.role === 'parent' ? 'bg-[hsl(35,92%,50%)]/20 text-blue-400' : 'bg-[hsl(35,92%,50%)]/20 text-[hsl(38,95%,60%)]'}`}>{u.role}</span>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${u.role === 'admin' ? 'bg-red-500/20 text-red-400' : u.role === 'association' ? 'bg-amber-500/20 text-amber-400' : u.role === 'parent' ? 'bg-[hsl(35,92%,50%)]/20 text-blue-400' : 'bg-[hsl(35,92%,50%)]/20 text-[hsl(38,95%,60%)]'}`}>{u.role}</span>
+                    {u.approval_status !== 'approved' && (
+                      <button onClick={() => setApproval(u, 'approved')} className="px-3 py-1 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition flex items-center gap-1"><Check size={14} /> Aprovar</button>
+                    )}
+                    {u.approval_status !== 'rejected' && u.role !== 'admin' && (
+                      <button onClick={() => setApproval(u, 'rejected')} className="px-3 py-1 bg-slate-600 text-white text-sm font-semibold rounded-lg hover:bg-slate-500 transition flex items-center gap-1"><X size={14} /> Rejeitar</button>
+                    )}
+                    <button onClick={() => grantSubscription(u, 'monthly')} className="px-3 py-1 bg-slate-600 text-white text-sm font-semibold rounded-lg hover:bg-slate-500 transition flex items-center gap-1"><Gift size={14} /> Mensal</button>
+                    <button onClick={() => grantSubscription(u, 'annual')} className="px-3 py-1 bg-slate-600 text-white text-sm font-semibold rounded-lg hover:bg-slate-500 transition flex items-center gap-1"><Gift size={14} /> Anual</button>
+                    {u.role !== 'admin' && (
+                      <button onClick={() => toggleBlocked(u)} className={`px-3 py-1 text-white text-sm font-semibold rounded-lg transition flex items-center gap-1 ${u.is_active === false ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`}><Ban size={14} /> {u.is_active === false ? 'Desbloquear' : 'Bloquear'}</button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>

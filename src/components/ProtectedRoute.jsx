@@ -21,7 +21,7 @@ function ProtectedRoute({ allowedRoles, children }) {
   }
 
   // Conta rejeitada ou pendente de aprovação → ecrã de espera
-  if (profile && (profile.approval_status === 'pending' || profile.approval_status === 'rejected')) {
+  if (profile && (profile.approval_status === 'pending' || profile.approval_status === 'rejected' || profile.is_active === false)) {
     return <Navigate to="/pending-approval" replace />
   }
 

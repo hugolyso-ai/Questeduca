@@ -66,7 +66,7 @@ const LoginPage = () => {
         setError('Não foi possível carregar o seu perfil. Tente novamente dentro de momentos.')
         return
       }
-      if (prof.approval_status === 'pending' || prof.approval_status === 'rejected') {
+      if (prof.approval_status === 'pending' || prof.approval_status === 'rejected' || prof.is_active === false) {
         navigate('/pending-approval')
         return
       }
