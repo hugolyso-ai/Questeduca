@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 import { generateClassReport, ExportReportButton } from '../components/ReportExport'
 import {
   Castle, LogOut, Users, School, TrendingUp, DollarSign,
-  Check, X, Eye, BarChart3, Building2, Coins, Trophy, FileText, Printer, Ban, Gift
+  Check, X, Eye, BarChart3, Building2, Coins, Trophy, FileText, Printer, Ban, Gift, Ticket, Wallet
 } from 'lucide-react'
 
 const AdminDashboard = () => {
@@ -15,6 +15,11 @@ const AdminDashboard = () => {
   const [pendingTeachers, setPendingTeachers] = useState([])
   const [recentUsers, setRecentUsers] = useState([])
   const [classStudents, setClassStudents] = useState([])
+  const [giftcards, setGiftcards] = useState([])
+  const [giftcardPlan, setGiftcardPlan] = useState('monthly')
+  const [giftcardQty, setGiftcardQty] = useState(1)
+  const [commissions, setCommissions] = useState([])
+  const [subscriptions, setSubscriptions] = useState([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('overview')
 
@@ -31,10 +36,16 @@ const AdminDashboard = () => {
         .in('chosen_role', ['teacher', 'association'])
         .is('reviewed_at', null)
       const { data: users } = await supabase.from('user_profiles').select('*').order('created_at', { ascending: false }).limit(20)
-      setStats({ users: usersCount || 0, students: studentsCount || 0, parents: parentsCount || 0, associations: assocCount || 0, revenue: 0 })
+      const { data: cards } = await supabase.from('giftcards').select('*').order('created_at', { ascending: false }).limit(50)
+      const { data: comms } = await supabase.from('commissions').select('*, association_profiles(association_name)').order('created_at', { ascending: false }).limit(50)
+      const { data: subs } = await supabase.from('subscriptions').select('*, user_profiles(email, name)').order('created_at', { ascending: false }).limit(50)
+      setStats({ users: usersCount || 0, students: studentsCount || 0, parents: parentsCount || 0, associations: assocCount || 0, revenue: (subs || []).filter(s => s.status === 'active').reduce((sum, s) => sum + (s.type === 'annual' ? 69.90 : 6.99), 0) })
       setPendingAssociations(pending || [])
       setPendingTeachers((pendingRoles || []).filter(r => r.chosen_role === 'teacher'))
       setRecentUsers(users || [])
+      setGiftcards(cards || [])
+      setCommissions(comms || [])
+      setSubscriptions(subs || [])
 
       // Alunos com resumo de jogo, para o relatório de turma
       const { data: students } = await supabase
@@ -96,6 +107,23 @@ const AdminDashboard = () => {
     plan === 'annual' ? 'Subscrição anual oferecida.' : 'Subscrição mensal oferecida.',
   )
 
+  const createGiftcards = async () => {
+    try {
+      const { data, error } = await supabase.rpc('admin_create_giftcard', { p_plan: giftcardPlan, p_quantity: giftcardQty })
+      if (error) throw error
+      toast.success(`${(data || []).length} gift card(s) criado(s).`)
+      fetchAdminData()
+    } catch (error) {
+      toast.error(error.message || 'Erro ao criar gift cards')
+    }
+  }
+
+  const markCommissionPaid = (id) => runAdminAction(
+    'admin_mark_commission_paid',
+    { p_commission_id: id },
+    'Comissão marcada como paga.',
+  )
+
   const reviewRoleRequest = async (userId, approve) => {
     try {
       let reason = null
@@ -147,6 +175,8 @@ const AdminDashboard = () => {
           </button>
           <button onClick={() => setActiveTab('users')} className={`px-6 py-2 rounded-lg font-semibold transition ${activeTab === 'users' ? 'bg-[hsl(35,92%,50%)] text-white' : 'text-slate-400 hover:text-white'}`}>Utilizadores</button>
           <button onClick={() => setActiveTab('class')} className={`px-6 py-2 rounded-lg font-semibold transition ${activeTab === 'class' ? 'bg-[hsl(35,92%,50%)] text-white' : 'text-slate-400 hover:text-white'}`}>Turma</button>
+          <button onClick={() => setActiveTab('giftcards')} className={`px-6 py-2 rounded-lg font-semibold transition ${activeTab === 'giftcards' ? 'bg-[hsl(35,92%,50%)] text-white' : 'text-slate-400 hover:text-white'}`}>Gift Cards</button>
+          <button onClick={() => setActiveTab('revenue')} className={`px-6 py-2 rounded-lg font-semibold transition ${activeTab === 'revenue' ? 'bg-[hsl(35,92%,50%)] text-white' : 'text-slate-400 hover:text-white'}`}>Receita</button>
         </div>
 
         {activeTab === 'overview' && (
@@ -314,6 +344,95 @@ const AdminDashboard = () => {
                           studentData={{ user_id: s.user_id, nickname: s.nickname, school_year: s.school_year }}
                         />
                       </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'giftcards' && (
+          <div className="space-y-6">
+            <div className="bg-slate-800 rounded-2xl p-6 border border-slate-700">
+              <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2" style={{ fontFamily: 'Cinzel, serif' }}><Ticket size={22} /> Gerar Gift Cards</h2>
+              <div className="flex flex-wrap items-end gap-4">
+                <div>
+                  <label className="block text-sm text-slate-400 mb-1">Plano</label>
+                  <select value={giftcardPlan} onChange={e => setGiftcardPlan(e.target.value)} className="bg-slate-700 text-white rounded-lg px-3 py-2 border border-slate-600">
+                    <option value="monthly">Mensal (6,99€)</option>
+                    <option value="annual">Anual (69,90€)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm text-slate-400 mb-1">Quantidade</label>
+                  <input type="number" min={1} max={100} value={giftcardQty} onChange={e => setGiftcardQty(Math.min(100, Math.max(1, Number(e.target.value) || 1)))} className="bg-slate-700 text-white rounded-lg px-3 py-2 border border-slate-600 w-24" />
+                </div>
+                <button onClick={createGiftcards} className="px-5 py-2 bg-[hsl(35,92%,50%)] text-white font-semibold rounded-xl hover:bg-[hsl(33,90%,45%)] transition flex items-center gap-2"><Gift size={18} /> Gerar</button>
+              </div>
+            </div>
+
+            <div className="bg-slate-800 rounded-2xl p-6 border border-slate-700">
+              <h3 className="text-lg font-bold text-white mb-4" style={{ fontFamily: 'Cinzel, serif' }}>Gift Cards ({giftcards.length})</h3>
+              {giftcards.length === 0 ? (
+                <p className="text-slate-400 text-center py-8">Nenhum gift card criado.</p>
+              ) : (
+                <div className="space-y-2">
+                  {giftcards.map(gc => (
+                    <div key={gc.id} className="bg-slate-700/50 rounded-xl p-3 flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <p className="font-mono font-bold text-white text-lg">{gc.code}</p>
+                        <p className="text-xs text-slate-400">{gc.plan === 'annual' ? 'Anual' : 'Mensal'} · {Number(gc.amount).toFixed(2)}€ · {gc.status}{gc.redeemed_by ? ' · resgatado' : ''}</p>
+                      </div>
+                      <button onClick={() => { navigator.clipboard?.writeText(gc.code); toast.success('Código copiado') }} className="px-3 py-1 bg-slate-600 text-white text-sm font-semibold rounded-lg hover:bg-slate-500 transition">Copiar</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'revenue' && (
+          <div className="space-y-6">
+            <div className="bg-slate-800 rounded-2xl p-6 border border-slate-700">
+              <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2" style={{ fontFamily: 'Cinzel, serif' }}><Wallet size={22} /> Subscrições ({subscriptions.length})</h2>
+              {subscriptions.length === 0 ? (
+                <p className="text-slate-400 text-center py-8">Nenhuma subscrição registada.</p>
+              ) : (
+                <div className="space-y-2">
+                  {subscriptions.map(s => (
+                    <div key={s.id} className="bg-slate-700/50 rounded-xl p-3 flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <p className="font-semibold text-white">{s.user_profiles?.email || '—'}</p>
+                        <p className="text-xs text-slate-400">{s.user_profiles?.name} · {s.type === 'annual' ? 'Anual' : 'Mensal'} · {s.status}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-slate-400">Início</p>
+                        <p className="text-sm text-white">{new Date(s.start_date).toLocaleDateString('pt-PT')}</p>
+                        {s.end_date && <p className="text-xs text-slate-500">Até {new Date(s.end_date).toLocaleDateString('pt-PT')}</p>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="bg-slate-800 rounded-2xl p-6 border border-slate-700">
+              <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2" style={{ fontFamily: 'Cinzel, serif' }}><Coins size={22} /> Comissões de Associações ({commissions.length})</h2>
+              {commissions.length === 0 ? (
+                <p className="text-slate-400 text-center py-8">Nenhuma comissão registada.</p>
+              ) : (
+                <div className="space-y-2">
+                  {commissions.map(c => (
+                    <div key={c.id} className="bg-slate-700/50 rounded-xl p-3 flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <p className="font-semibold text-white">{c.association_profiles?.association_name || 'Associação'}</p>
+                        <p className="text-xs text-slate-400">{Number(c.amount).toFixed(2)}€ · {c.paid ? 'Paga' : 'Pendente'}{c.paid_at ? ` · ${new Date(c.paid_at).toLocaleDateString('pt-PT')}` : ''}</p>
+                      </div>
+                      {!c.paid && (
+                        <button onClick={() => markCommissionPaid(c.id)} className="px-3 py-1 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition flex items-center gap-1"><Check size={14} /> Marcar paga</button>
+                      )}
                     </div>
                   ))}
                 </div>
